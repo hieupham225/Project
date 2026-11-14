@@ -14,4 +14,4 @@ watch_dir = ["public", "src"]
 binding = "DB"
 database_name = "phieu-ket-qua"
 # Tạo bằng: npx wrangler d1 create phieu-ket-qua --location apac (đổi id nếu deploy vào tài khoản khác)
-database_id = "f3a77dfd-cac6-4203-ba7a-09f23ad4b5f1"
+database_id = "d2b3f42c-dd31-48a2-bbc7-98de15b20d7b"
