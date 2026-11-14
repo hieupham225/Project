@@ -2041,7 +2041,8 @@
     cheTH = che; try { localStorage.setItem('cheTH', che); } catch (e) {}
     [].forEach.call(document.querySelectorAll('.phan-doan button'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.che === che)); });
     $('khungBangTH').classList.toggle('an', che !== 'bang'); $('khungBieuDoTH').classList.toggle('an', che === 'bang');
-    $('nutSaoChepTH').classList.toggle('an', che !== 'bang');
+    $('nutSaoChepTH').textContent = che === 'bang' ? 'Sao chép bảng' : 'Sao chép biểu đồ';
+    $('nutSaoChepTH').title = che === 'bang' ? 'Sao chép bảng để dán vào Excel' : 'Sao chép ảnh biểu đồ để dán vào Zalo, Word…';
     if (che === 'bieu-do') veBieuDoTH();
   }
   [].forEach.call(document.querySelectorAll('.phan-doan button'), function (b) { b.onclick = function () { datCheTH(b.dataset.che); }; });
@@ -2117,7 +2118,7 @@
     });
     $('bdGoiY').textContent = n === 1 ? 'Lớp mới có 1 lần thi — khi có thêm lần thi, các đường sẽ cho thấy xu hướng tiến bộ.' : 'Điểm quy về thang 10. Lần vắng thi được bỏ qua, đường nối giữa các lần có điểm.';
     // con trỏ dọc + chú thích
-    var truc = sv('line', { y1: T.t, y2: T.t + h, stroke: 'rgba(21,17,12,.35)', 'stroke-width': 1, visibility: 'hidden' }, svg);
+    var truc = sv('line', { class: 'bd-truc', y1: T.t, y2: T.t + h, stroke: 'rgba(21,17,12,.35)', 'stroke-width': 1, visibility: 'hidden' }, svg);
     var tip = the('div', { class: 'bd-tip an' }); k.appendChild(tip);
     var hien = function (ev) {
       var r = svg.getBoundingClientRect(), x = (ev.clientX - r.left) * W / r.width;
@@ -2138,7 +2139,51 @@
   }
   $('locNhomTH').onchange = veTongHop;
   datCheTH(cheTH);
+  /* Ảnh PNG của biểu đồ đang xem: tiêu đề + chú giải + biểu đồ, nền trắng, độ nét gấp đôi */
+  function anhBieuDoTH() {
+    return new Promise(function (xong, loi) {
+      var svg = $('bdVe').querySelector('svg'); if (!svg) return loi(new Error('Chưa có biểu đồ.'));
+      var D = duLieuTH, vb = svg.viewBox.baseVal, W = vb.width, H = vb.height;
+      var ban = svg.cloneNode(true);
+      ban.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); ban.setAttribute('width', W); ban.setAttribute('height', H);
+      ban.setAttribute('font-family', 'Figtree, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif');
+      [].forEach.call(ban.querySelectorAll('.bd-truc, .hs-duong, title'), function (e) { e.remove(); });
+      var anh = new Image();
+      anh.onload = function () {
+        var s = 2, dem = 20, dau = 64, cv = document.createElement('canvas');
+        cv.width = (W + dem * 2) * s; cv.height = (H + dau + dem) * s;
+        var g = cv.getContext('2d'); g.scale(s, s);
+        g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, W + dem * 2, H + dau + dem);
+        var font = 'Figtree, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+        g.fillStyle = '#15110C'; g.font = '700 16px ' + font; g.textBaseline = 'alphabetic';
+        g.fillText('Tổng hợp điểm · lớp ' + D.nhom + ' (thang 10)', dem, dem + 14);
+        // chú giải
+        var x = dem, y = dem + 40, tenChon = (D.hs.filter(function (h) { return h.maHs === D.chon; })[0] || {}).hoTen;
+        g.font = '500 12px ' + font;
+        [['TB lớp', MAU_TB, [6, 4]], tenChon ? [tenChon, MAU_HS, []] : null, ['Học sinh khác', 'rgba(78,96,111,.45)', []]].forEach(function (m) {
+          if (!m) return;
+          g.strokeStyle = m[1]; g.lineWidth = 2; g.setLineDash(m[2]); g.beginPath(); g.moveTo(x, y - 4); g.lineTo(x + 18, y - 4); g.stroke(); g.setLineDash([]);
+          g.fillStyle = '#4E606F'; g.fillText(m[0], x + 24, y); x += 24 + g.measureText(m[0]).width + 18;
+        });
+        g.drawImage(anh, dem, dau, W, H);
+        cv.toBlob(function (b) { b ? xong(b) : loi(new Error('Không tạo được ảnh.')); }, 'image/png');
+      };
+      anh.onerror = function () { loi(new Error('Không tạo được ảnh.')); };
+      anh.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(ban));
+    });
+  }
+  function saoChepBieuDoTH() {
+    var anh = anhBieuDoTH(), tenTep = 'bieu-do-' + (duLieuTH ? khoaTen(duLieuTH.nhom).replace(/\s+/g, '-') : 'lop') + '.png';
+    var taiVe = function () { anh.then(function (b) { var a = the('a', { href: URL.createObjectURL(b), download: tenTep }); document.body.appendChild(a); a.click(); a.remove(); bao('Trình duyệt chưa cho sao chép ảnh — đã tải ảnh biểu đồ về máy.'); }).catch(baoLoi); };
+    if (!(navigator.clipboard && navigator.clipboard.write && window.ClipboardItem)) return taiVe();
+    try {
+      // Safari cần tạo ClipboardItem ngay trong lúc bấm, truyền Promise ảnh vào
+      navigator.clipboard.write([new ClipboardItem({ 'image/png': anh })])
+        .then(function () { bao('Đã sao chép ảnh biểu đồ. Dán (Ctrl/⌘ + V) vào Zalo, Word, email…'); }, taiVe);
+    } catch (e) { taiVe(); }
+  }
   $('nutSaoChepTH').onclick = function () {
+    if (cheTH === 'bieu-do') return saoChepBieuDoTH();
     if (!bangTHText) return;
     var xong = function () { bao('Đã sao chép. Dán vào Excel/Google Sheet.'); };
     var thuCach2 = function () { var ta = the('textarea'); ta.value = bangTHText; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); xong(); };
