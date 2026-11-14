@@ -1,15 +1,17 @@
-# Cloudflare Worker: phục vụ cả giao diện (thư mục public/) và API (/api/*).
+# Cloudflare Worker: phục vụ cả giao diện (thư mục public/, đóng gói sẵn) và API (/api/*).
 name = "phieu-ket-qua"
+workers_dev = true
+preview_urls = false
 main = "src/index.js"
 compatibility_date = "2025-06-01"
 
-[assets]
-directory = "./public"
-binding = "ASSETS"
-not_found_handling = "404-page"
+# Các trang trong public/ được đóng gói vào src/trang.js trước mỗi lần chạy / deploy
+[build]
+command = "node scripts/dong-goi-trang.mjs"
+watch_dir = ["public", "src"]
 
 [[d1_databases]]
 binding = "DB"
 database_name = "phieu-ket-qua"
-# Điền database_id sau khi chạy: npx wrangler d1 create phieu-ket-qua
-database_id = "00000000-0000-0000-0000-000000000000"
+# Tạo bằng: npx wrangler d1 create phieu-ket-qua --location apac (đổi id nếu deploy vào tài khoản khác)
+database_id = "f3a77dfd-cac6-4203-ba7a-09f23ad4b5f1"

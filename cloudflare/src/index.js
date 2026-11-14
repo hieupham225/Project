@@ -9,6 +9,7 @@
  * Phiếu không lưu dạng PDF: lưu dữ liệu đã chấm, trình duyệt dựng phiếu và tạo PDF.
  */
 import * as L from './logic.js';
+import TRANG from './trang.js';
 
 const COOKIE = 'kq_phien';
 const PHIEN_NGAY = 30;
@@ -33,9 +34,28 @@ export default {
         return json({ ok: false, loi: 'Có lỗi xảy ra, vui lòng thử lại.' }, 500);
       }
     }
-    return env.ASSETS.fetch(req);
+    return phucVuTrang(url, req);
   }
 };
+
+/* Trang tĩnh (đóng gói từ public/): / -> index.html, /gv -> gv.html */
+const DAU_BAO_MAT = {
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'X-Frame-Options': 'SAMEORIGIN',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
+};
+function phucVuTrang(url, req) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return new Response('Phương thức không hợp lệ.', { status: 405 });
+  let duong = url.pathname.replace(/\/+$/, '') || '/index.html';
+  if (!duong.includes('.')) duong += '.html';
+  const t = TRANG[duong];
+  const loai = t ? t.loai : 'text/html; charset=utf-8';
+  return new Response(req.method === 'HEAD' ? null : (t || TRANG['/404.html']).noiDung, {
+    status: t ? 200 : 404,
+    headers: { 'Content-Type': loai, 'Cache-Control': loai.startsWith('text/html') ? 'no-cache' : 'public, max-age=3600', ...DAU_BAO_MAT }
+  });
+}
 
 /* =====================================================================
  * ĐỊNH TUYẾN API
