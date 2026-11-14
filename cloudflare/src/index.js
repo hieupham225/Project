@@ -746,36 +746,61 @@ const HAM = {
     const conChon = g.dong.filter((x) => x.canChon || x.canLop).length;
     if (conChon) return { ok: false, loi: 'Còn ' + conChon + ' dòng chưa xác định lớp hoặc học sinh (xem bảng ghép).' };
 
-    const dsDot = [], boQua = [];
+    // Tính hết trong bộ nhớ rồi ghi theo vài đợt gộp: số lần gọi D1 không tăng theo số lớp
+    // (gói miễn phí giới hạn 50 truy vấn / lần gọi).
+    const boQua = [];
     kq.hocSinh.forEach((h, i) => { const x = g.dong[i]; if (x.loi) boQua.push((h.hoTen || h.maHs) + ': ' + x.loi); });
+    const lt = await c.lanThi(), homNay = ngayVN();
+    const lenhLop = [], lenhCuoi = [], keHoach = [], moi = [], chiSoMoi = [];
+    const lopHs = {}; // id học sinh -> danh sách id lớp sau khi thêm
+    let lopToi = c.tatCaLop ? null : [...c.nd.lop];
     for (const nh of g.nhom) {
       const dongTao = nh.chiSo.filter((i) => g.dong[i].hs || g.dong[i].moi);
       if (!dongTao.length) continue; // cả lớp đều bỏ qua
-      const idLop = nh.lopMoi ? await taoLop(c, nh.nhom) : c.lopTheoTen(nh.nhom).id;
-      const cacLan = (await c.lanThi()).filter((d) => d.lopId === idLop && L.khongDau_(d.baiThi) === L.khongDau_(baiThiGoc));
+      let idLop;
+      if (nh.lopMoi) {
+        idLop = taoId();
+        lenhLop.push(c.db.prepare('INSERT INTO lop (id, kg, ten, khoa, ngay_tao) VALUES (?, ?, ?, ?, ?)').bind(idLop, c.kg, nh.nhom, L.khongDau_(nh.nhom), homNay));
+        if (lopToi) lopToi.push(idLop); // giáo viên tự tạo lớp -> tự giao cho mình
+      } else idLop = c.lopTheoTen(nh.nhom).id;
+      const cacLan = lt.filter((d) => d.lopId === idLop && L.khongDau_(d.baiThi) === L.khongDau_(baiThiGoc));
       let lan = 1, baiThi = baiThiGoc;
       if (cacLan.length) {
         const ganNhat = cacLan.reduce((a, b) => (b.lan > a.lan ? b : a));
         baiThi = ganNhat.baiThi;
-        if (tuyChon.ghiDe) { lan = ganNhat.lan; await c.db.prepare('DELETE FROM lan_thi WHERE id = ?').bind(ganNhat.maDot).run(); } else lan = ganNhat.lan + 1;
+        if (tuyChon.ghiDe) { lan = ganNhat.lan; lenhCuoi.push(c.db.prepare('DELETE FROM lan_thi WHERE id = ?').bind(ganNhat.maDot)); } else lan = ganNhat.lan + 1;
       }
-      // học sinh đã có -> thêm vào lớp nếu chưa; học sinh mới -> tạo
-      const maTheoDong = {}, theoHs = {}, moi = [], chiSoMoi = [];
+      const maTheoDong = {};
       dongTao.forEach((i) => {
         const x = g.dong[i], h = kq.hocSinh[i];
-        if (x.hs) { maTheoDong[i] = x.hs.maHs; if (!x.hs.nhomId.includes(idLop)) theoHs[x.hs.id] = [...x.hs.nhomId, idLop]; } else {
-          moi.push({ hoTen: h.hoTen, nhomId: [idLop], sdt: h.sdt, maHs: h.maHs }); chiSoMoi.push(i);
-        }
+        if (x.hs) {
+          maTheoDong[i] = x.hs.maHs;
+          const ds = lopHs[x.hs.id] || [...x.hs.nhomId];
+          if (!ds.includes(idLop)) { ds.push(idLop); lopHs[x.hs.id] = ds; }
+        } else { moi.push({ hoTen: h.hoTen, nhomId: [idLop], sdt: h.sdt, maHs: h.maHs }); chiSoMoi.push({ i, maTheoDong }); }
       });
-      await c.datLop(theoHs);
-      (await c.themHocSinh(moi)).forEach((ma, j) => { maTheoDong[chiSoMoi[j]] = ma; });
       const maDot = taoId();
-      await c.db.prepare('INSERT INTO lan_thi (id, kg, lop, bai_thi, lan, ngay_thi, thu_tu, cong_bo, ngay_tao) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)')
-        .bind(maDot, c.kg, idLop, baiThi, lan, ngayThi, L.soThuTuNgay_(ngayThi), ngayVN()).run();
-      c.xoaBoNho();
-      dsDot.push({ maDot, nhom: nh.nhom, lopMoi: nh.lopMoi, baiThi, lan, canTao: dongTao.map((i) => ({ i, maHs: maTheoDong[i] })),
-        vang: nh.vang.map((x) => x.hoTen + ' (' + x.maHs + ')') });
+      lenhCuoi.push(c.db.prepare('INSERT INTO lan_thi (id, kg, lop, bai_thi, lan, ngay_thi, thu_tu, cong_bo, ngay_tao) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)')
+        .bind(maDot, c.kg, idLop, baiThi, lan, ngayThi, L.soThuTuNgay_(ngayThi), homNay));
+      keHoach.push({ maDot, nhom: nh.nhom, lopMoi: nh.lopMoi, baiThi, lan, dongTao, maTheoDong, vang: nh.vang.map((x) => x.hoTen + ' (' + x.maHs + ')') });
     }
+    if (!keHoach.length) return { ok: false, loi: 'Không có dòng nào để tạo phiếu (tất cả đều bỏ qua hoặc lỗi).' };
+    // 1) lớp mới (phải có trước khi gắn học sinh vào lớp)
+    if (lenhLop.length) {
+      if (lopToi) { lenhLop.push(c.db.prepare('UPDATE thanh_vien SET lop = ? WHERE kg = ? AND tai_khoan = ?').bind(JSON.stringify(lopToi), c.kg, c.nd.tkId)); c.nd.lop = lopToi; }
+      await chay(c.db, lenhLop);
+      await c.napLop();
+    }
+    // 2) học sinh mới (1 lần kiểm tra mã tra cứu + 1 đợt ghi)
+    (await c.themHocSinh(moi)).forEach((ma, j) => { chiSoMoi[j].maTheoDong[chiSoMoi[j].i] = ma; });
+    // 3) học sinh đã có -> thêm vào lớp; ghi đè; tạo các lần thi — 1 đợt
+    const ids = Object.keys(lopHs), dongLop = [];
+    ids.forEach((h) => lopHs[h].forEach((l, k) => dongLop.push([h, l, k])));
+    await chay(c.db, [...lenhXoaTheo(c.db, 'hoc_sinh_lop', 'hoc_sinh', ids),
+      ...lenhChenNhieu(c.db, 'hoc_sinh_lop', ['hoc_sinh', 'lop', 'thu_tu'], dongLop, 'INSERT OR IGNORE'), ...lenhCuoi]);
+    c.xoaBoNho();
+    const dsDot = keHoach.map((k) => ({ maDot: k.maDot, nhom: k.nhom, lopMoi: k.lopMoi, baiThi: k.baiThi, lan: k.lan,
+      canTao: k.dongTao.map((i) => ({ i, maHs: k.maTheoDong[i] })), vang: k.vang }));
     if (!dsDot.length) return { ok: false, loi: 'Không có dòng nào để tạo phiếu (tất cả đều bỏ qua hoặc lỗi).' };
     return { ok: true, baiThi: dsDot[0].baiThi, dsDot, boQua };
   },
