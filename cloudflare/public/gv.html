@@ -201,6 +201,13 @@
   .thanh-chon-ghep select.qd { width: auto; max-width: 180px; height: var(--cao-nho); }
   tr.dang-chon td { background: var(--xanh-duong-nen) !important; }
   .chu-ngan { display: none; }
+  /* Popup tạo phiếu */
+  .hop-tao { width: min(560px, 94vw); }
+  .so-tien-do { margin-bottom: 4px; } .so-tien-do b { font-size: 22px; } .so-tien-do span { color: var(--phu); }
+  .dong-xong { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  ul.ds-xong { list-style: none; padding: 0; margin: 0; }
+  ul.ds-xong li { padding: 10px 0; border-bottom: 1px solid var(--vien); margin: 0; }
+  ul.ds-xong li:last-child { border-bottom: 0; }
   /* Tab Lớp học */
   .luoi-lop { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
   .the-lop { background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); padding: 18px; box-shadow: var(--bong-thap); display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: box-shadow .125s var(--em), transform .125s var(--em); }
@@ -563,12 +570,6 @@
             <button id="nutXemThu" class="phu">👁 Xem thử phiếu</button>
             <button id="nutTaoPhieu">Tạo phiếu</button>
           </div>
-          <div id="khuTienDo" class="an">
-            <div class="tien-do"><div id="thanhTienDo"></div></div>
-            <div id="chuTienDo" class="goi-y"></div>
-            <button id="nutTiepTuc" class="an" style="margin-top:10px">↻ Tiếp tục tạo phiếu</button>
-          </div>
-          <div id="khuXong" class="an"></div>
         </div>
       </div>
     </section>
@@ -668,6 +669,14 @@
     </section>
   </div>
 
+  <!-- Hộp tạo phiếu: tiến độ -> thành công (không đóng bằng bấm ra ngoài / Esc) -->
+  <div id="hopTao" class="phu-trang an" data-khong-dong style="z-index:18">
+    <div class="hop hop-hoi hop-tao" role="dialog" aria-modal="true" aria-labelledby="taoTieuDe">
+      <div class="dau-hop"><h2 id="taoTieuDe">Đang tạo phiếu…</h2></div>
+      <div id="taoNoiDung"></div>
+      <div id="taoNut" class="chan-hop"></div>
+    </div>
+  </div>
   <!-- Hộp thoại dùng chung -->
   <div id="hop" class="phu-trang an" style="z-index:20">
     <div class="hop">
@@ -1261,7 +1270,7 @@
     if (!soHienTai.kq) { trangFile(id, '✔ ' + tenNguon + ' — giờ chọn bảng kết quả học sinh.', 'ok'); return Promise.resolve(); }
     trangFile(id, 'Đang đọc ' + tenNguon + '…');
     var lanDau = loai === 'kq';
-    if (lanDau) { xemTruoc = null; quyetDinhKq = {}; quyetDinhLop = {}; chonGhep = {}; dangTao = null; $('nutTiepTuc').classList.add('an'); $('khuXong').classList.add('an'); $('khuTienDo').classList.add('an'); }
+    if (lanDau) { xemTruoc = null; quyetDinhKq = {}; quyetDinhLop = {}; chonGhep = {}; dangTao = null; }
     return taiXemTruoc(lanDau).then(function (ok) {
       trangFile(id, ok ? '✔ ' + tenNguon : '✖ ' + tenNguon + ' — xem thông báo lỗi', ok ? 'ok' : 'loi');
       if (ok && loai === 'kq' && !soHienTai.da) trangFile('tenFileDa', xemTruoc && xemTruoc.maDe.length ? 'Chưa chọn — đang dùng đáp án chép trong bảng kết quả (' + xemTruoc.maDe.length + ' mã đề).' : 'Chưa chọn file đáp án.', '');
@@ -1488,7 +1497,6 @@
   };
 
   $('nutTaoPhieu').onclick = function () { taoPhieu(); };
-  $('nutTiepTuc').onclick = function () { chayLo(); };
 
   /* Bài thi đã có trong lớp? -> lần làm tiếp theo (tính riêng cho từng lớp trong file) */
   function cacLanCuaBai(nhom, bai) {
@@ -1541,87 +1549,135 @@
     var thu = function (lan) {
       return goi.apply(null, [ham].concat(thamSo)).catch(function (e) {
         if (lan >= soLan || /hết hạn|phụ trách|Không tìm thấy/.test(e.message || '')) throw e;
-        $('chuTienDo').textContent = 'Mạng chập chờn — đang thử lại (' + (lan + 1) + '/' + soLan + ')…';
+        if (dangTao && !$('hopTao').classList.contains('an')) veTienDo('Mạng chập chờn — đang thử lại (' + (lan + 1) + '/' + soLan + ')…');
         return nghi(1000 * Math.pow(2, lan - 1)).then(function () { return thu(lan + 1); });
       });
     };
     return thu(1);
   }
-  function batTatNut(dangChay) { $('nutTaoPhieu').disabled = dangChay; $('nutXemThu').disabled = dangChay; }
-  function veTienDo() {
-    var s = dangTao, d = s.kq.dsDot[s.k];
-    $('thanhTienDo').style.width = Math.round(s.daXong / Math.max(s.tong, 1) * 100) + '%';
-    $('chuTienDo').textContent = (d ? 'Lớp ' + d.nhom + ' — ' : '') + 'đã tạo ' + s.daXong + ' / ' + s.tong + ' phiếu…';
+  /* ---- Popup tạo phiếu ---- */
+  function hopTao(tieuDe, noiDung, nut) {
+    $('taoTieuDe').textContent = tieuDe;
+    var k = $('taoNoiDung'); k.textContent = ''; (noiDung || []).forEach(function (x) { if (x) k.appendChild(x); });
+    var n = $('taoNut'); n.textContent = ''; (nut || []).forEach(function (x) { if (x) n.appendChild(x); });
+    $('hopTao').classList.remove('an');
+  }
+  function dongHopTao() { $('hopTao').classList.add('an'); }
+  function veTienDo(ghiChu) {
+    var s = dangTao, d = s && s.kq.dsDot[s.k], pt = s ? Math.round(s.daXong / Math.max(s.tong, 1) * 100) : 0;
+    var thanh = the('div', { class: 'tien-do' }, [the('div', { style: 'width:' + pt + '%' })]);
+    hopTao(s && s.huy ? 'Đang dừng…' : 'Đang tạo phiếu…', [
+      the('div', { class: 'so-tien-do' }, [the('b', { text: s ? s.daXong + ' / ' + s.tong : '…' }), the('span', { text: ' phiếu · ' + pt + '%' })]),
+      thanh,
+      the('p', { class: 'goi-y', style: 'margin:0', text: ghiChu || (d ? 'Lớp ' + d.nhom + (s.kq.dsDot.length > 1 ? ' (' + (s.k + 1) + '/' + s.kq.dsDot.length + ' lớp)' : '') : 'Đang chuẩn bị…') }),
+      the('p', { class: 'goi-y', style: 'margin:8px 0 0', text: 'Giữ màn hình mở cho tới khi xong.' })
+    ], [(function () { var b = the('button', { class: 'phu', text: 'Hủy', onclick: huyTao }); b.disabled = !!(s && s.huy); return b; })()]);
   }
   function chayTaoPhieu(ghiDe) {
     var nt = $('gNgayThi').value.split('-');
     var tuyChon = { baiThi: $('gBaiThi').value, ngayThi: nt.length === 3 ? nt[2] + '/' + nt[1] + '/' + nt[0] : '',
       themHsMoi: $('themHsMoi').checked, ghiDe: ghiDe, quyetDinh: quyetDinhKq, quyetDinhLop: quyetDinhLop };
-    batTatNut(true);
-    $('khuXong').classList.add('an'); $('khuTienDo').classList.remove('an'); $('nutTiepTuc').classList.add('an');
-    $('thanhTienDo').style.width = '0'; $('chuTienDo').textContent = 'Đang chuẩn bị…';
+    dangTao = null; veTienDo('Đang tạo lần thi cho các lớp…');
+    $('taoNut').textContent = ''; // chưa hủy được ở bước này (đang ghi lần thi)
     // Bước tạo lần thi KHÔNG tự thử lại (gửi lại có thể tạo thêm 1 lần thi)
     goi('gvBatDauDot', soHienTai, tuyChon).then(function (kq) {
-      if (!kq.ok) { batTatNut(false); $('khuTienDo').classList.add('an'); return bao(kq.loi, true); }
-      dangTao = { kq: kq, k: 0, i: 0, soDot: 0, daXong: 0, ketQua: [], loi: kq.boQua.slice(),
+      if (!kq.ok) { dongHopTao(); return bao(kq.loi, true); }
+      dangTao = { kq: kq, k: 0, i: 0, soDot: 0, daXong: 0, ketQua: [], loi: kq.boQua.slice(), ghiDe: ghiDe,
         tong: kq.dsDot.reduce(function (s, d) { return s + d.canTao.length; }, 0) };
       return chayLo();
     }).catch(function (e) {
-      batTatNut(false); $('khuTienDo').classList.add('an');
+      dongHopTao();
       baoLoi(new Error(e.message + ' Nếu lỗi do mạng, xem thẻ "Bài thi": lần thi có thể đã được tạo — khi gửi lại hãy tích "ghi đè lần gần nhất".'));
     });
   }
   function chayLo() {
     var s = dangTao; if (!s) return Promise.resolve();
-    batTatNut(true); $('nutTiepTuc').classList.add('an'); $('khuTienDo').classList.remove('an'); veTienDo();
+    s.huy = false; veTienDo();
     var buoc = function () {
+      if (s.huy) return Promise.reject({ huy: true });
       if (s.k >= s.kq.dsDot.length) return Promise.resolve();
       var d = s.kq.dsDot[s.k];
       if (s.i >= d.canTao.length) { s.ketQua.push({ dot: d, soPhieu: s.soDot }); s.k++; s.i = 0; s.soDot = 0; return buoc(); }
       return goiThuLai('gvTaoPhieuLo', [d.maDot, soHienTai, d.canTao.slice(s.i, s.i + LO_PHIEU)], 4).then(function (r) {
-        s.daXong += r.xong; s.soDot += r.xong; s.loi = s.loi.concat(r.loi); s.i += LO_PHIEU; veTienDo();
+        s.daXong += r.xong; s.soDot += r.xong; s.loi = s.loi.concat(r.loi); s.i += LO_PHIEU;
+        if (!s.huy) veTienDo();
         return buoc();
       });
     };
     return buoc().then(function () {
-      dangTao = null; batTatNut(false); $('khuTienDo').classList.add('an');
+      dangTao = null;
       hienKetQuaTao(s.ketQua, s.loi);
       return goi('gvTaiDuLieu').then(capNhat);
     }, function (e) {
-      // giữ dangTao để chạy tiếp
-      batTatNut(false); $('nutTiepTuc').classList.remove('an');
-      $('chuTienDo').textContent = '⚠ Dừng ở ' + s.daXong + ' / ' + s.tong + ' phiếu: ' + (e.message || e) + ' Bấm "Tiếp tục" để tạo nốt (không tạo lần thi mới).';
-      baoLoi(e);
+      if (e && e.huy) return xoaLanVuaTao(s);
+      // lỗi mạng quá số lần thử -> cho tiếp tục hoặc hủy
+      hopTao('Tạm dừng — mất kết nối', [
+        the('div', { class: 'so-tien-do' }, [the('b', { text: s.daXong + ' / ' + s.tong }), the('span', { text: ' phiếu đã tạo' })]),
+        the('div', { class: 'tien-do' }, [the('div', { style: 'width:' + Math.round(s.daXong / Math.max(s.tong, 1) * 100) + '%' })]),
+        the('p', { class: 'goi-y', style: 'margin:0', text: (e.message || String(e)) + ' Bấm "Tiếp tục" để tạo nốt từ chỗ dừng (không tạo lần thi mới).' })
+      ], [the('button', { class: 'phu', text: 'Hủy', onclick: huyTao }), the('span', { class: 'gian' }), the('button', { text: '↻ Tiếp tục', onclick: function () { chayLo(); } })]);
     });
+  }
+  function huyTao() {
+    var s = dangTao;
+    hoi('Hủy tạo phiếu?\n\nCác lần thi vừa tạo (kèm ' + (s ? s.daXong : 0) + ' phiếu đã tạo) sẽ bị xóa để không để lại dữ liệu dở dang.' +
+      (s && s.ghiDe ? '\nLưu ý: lần cũ đã bị ghi đè sẽ không khôi phục được.' : ''), { nut: 'Hủy tạo phiếu', nguyHiem: true }).then(function (ok) {
+      if (!ok || !dangTao) return;
+      var dangChay = !$('taoNut').querySelector('button:not(.phu)'); // không có nút "Tiếp tục" -> vòng lặp đang chạy
+      dangTao.huy = true;
+      if (dangChay) veTienDo('Đang dừng sau lô hiện tại…'); else xoaLanVuaTao(dangTao);
+    });
+  }
+  function xoaLanVuaTao(s) {
+    veTienDo('Đang xóa các lần thi vừa tạo…'); $('taoNut').textContent = '';
+    var ds = s.kq.dsDot.map(function (d) { return d.maDot; });
+    var xoa = function (i) { return i >= ds.length ? Promise.resolve() : goiThuLai('gvXoaDot', [ds[i]], 3).catch(function () {}).then(function () { return xoa(i + 1); }); };
+    return xoa(0).then(function () {
+      dangTao = null; dongHopTao();
+      bao('Đã hủy. Không tạo phiếu nào (đã xóa ' + ds.length + ' lần thi vừa tạo).');
+      return goi('gvTaiDuLieu').then(capNhat).then(function () { if (xemTruoc) capNhatLanInfo(); });
+    });
+  }
+  // Sau khi tạo xong: đưa trang Gửi kết quả về trạng thái ban đầu (tránh bấm Tạo phiếu lần nữa ngoài ý muốn)
+  function datLaiGui() {
+    soHienTai = null; xemTruoc = null; quyetDinhKq = {}; quyetDinhLop = {}; chonGhep = {}; dangTao = null;
+    $('khuXemTruoc').classList.add('an'); trangFile('tenFileKq', ''); trangFile('tenFileDa', '');
+    $('linkKq').value = ''; $('linkDa').value = ''; $('nutBoDa').classList.add('an');
+    $('gBaiThi').value = ''; delete $('gNgayThi').dataset.daSua; $('gGhiDe').checked = false;
+    window.scrollTo(0, 0);
   }
 
   function hienKetQuaTao(ketQua, loi) {
-    var k = $('khuXong'); k.textContent = ''; k.classList.remove('an');
     var tongPhieu = ketQua.reduce(function (s, x) { return s + x.soPhieu; }, 0);
-    k.appendChild(the('p', {}, [the('b', { text: '✔ Đã tạo ' + tongPhieu + ' phiếu cho ' + ketQua.length + ' lớp:' })]));
     var ul = the('ul', { class: 'ds-xong' });
     ketQua.forEach(function (x) {
       var d = x.dot;
-      ul.appendChild(the('li', {}, [the('b', { text: d.nhom }), d.lopMoi ? ' (lớp mới)' : '', ' · ' + d.baiThi + ' – Lần ' + d.lan + ': ' + x.soPhieu + ' phiếu ',
-        the('button', { class: 'phu nho', text: 'Xem các phiếu', onclick: function () { hopDsPhieu({ maDot: d.maDot, baiThi: d.baiThi, lan: d.lan, nhom: d.nhom }); } }),
+      ul.appendChild(the('li', {}, [
+        the('div', { class: 'dong-xong' }, [the('div', {}, [the('b', { text: d.nhom }), d.lopMoi ? the('span', { class: 'nhan moi', text: 'Lớp mới', style: 'margin-left:6px' }) : null,
+          the('div', { class: 'goi-y', text: d.baiThi + ' – Lần ' + d.lan + ' · ' + x.soPhieu + ' phiếu' })]),
+          the('button', { class: 'phu nho', text: 'Xem phiếu', onclick: function () { hopDsPhieu({ maDot: d.maDot, baiThi: d.baiThi, lan: d.lan, nhom: d.nhom }); } })]),
         d.vang.length ? the('div', { class: 'goi-y', text: 'Không có kết quả: ' + d.vang.join(', ') }) : null]));
     });
-    k.appendChild(ul);
+    var khuLoi = null;
     if (loi.length) {
       var ulLoi = the('ul', { class: 'canh-bao' });
       loi.forEach(function (x) { ulLoi.appendChild(the('li', { text: x })); });
-      k.appendChild(the('p', { text: 'Bỏ qua ' + loi.length + ' dòng:' })); k.appendChild(ulLoi);
+      khuLoi = the('div', {}, [the('p', { style: 'margin:10px 0 4px', text: 'Bỏ qua ' + loi.length + ' dòng:' }), ulLoi]);
     }
-    var nut = the('button', { text: '📢 Công bố cho phụ huynh xem' + (ketQua.length > 1 ? ' (' + ketQua.length + ' lớp)' : ''), onclick: function () {
-      nut.disabled = true;
+    var trangThai = the('p', { class: 'goi-y', style: 'margin:10px 0 0', text: 'Phụ huynh chỉ xem được sau khi công bố. Nên xem vài phiếu trước; có thể công bố sau ở thẻ "Bài thi".' });
+    var nutCB = the('button', { text: '📢 Công bố' + (ketQua.length > 1 ? ' (' + ketQua.length + ' lớp)' : ''), onclick: function () {
+      nutCB.disabled = true;
       var chay = function (i, dl) {
         if (i >= ketQua.length) return Promise.resolve(dl);
-        return goi('gvCongBo', ketQua[i].dot.maDot, true).then(function (dl2) { return chay(i + 1, dl2); });
+        return goiThuLai('gvCongBo', [ketQua[i].dot.maDot, true], 3).then(function (dl2) { return chay(i + 1, dl2); });
       };
-      chay(0).then(function (dl) { capNhat(dl); nut.textContent = '✔ Đã công bố'; bao('Đã công bố. Phụ huynh có thể tra cứu ngay.'); })
-        .catch(function (e) { nut.disabled = false; baoLoi(e); });
+      chay(0).then(function (dl) {
+        capNhat(dl); nutCB.textContent = '✔ Đã công bố'; trangThai.textContent = 'Đã công bố — phụ huynh tra cứu được ngay bằng mã tra cứu.';
+        bao('Đã công bố. Phụ huynh có thể tra cứu ngay.');
+      }).catch(function (e) { nutCB.disabled = false; baoLoi(e); });
     } });
-    k.appendChild(the('div', { class: 'thanh' }, [nut, the('span', { class: 'goi-y', text: 'Nên xem vài phiếu trước khi công bố. Có thể công bố sau ở thẻ "Bài thi".' })]));
+    hopTao('✔ Đã tạo ' + tongPhieu + ' phiếu' + (ketQua.length > 1 ? ' cho ' + ketQua.length + ' lớp' : ''), [ul, khuLoi, trangThai],
+      [the('button', { class: 'phu', text: 'Xong', onclick: function () { dongHopTao(); datLaiGui(); } }), the('span', { class: 'gian' }), nutCB]);
   }
 
   /* =================== BÀI THI (nhóm → bài thi → các lần) =================== */
@@ -1967,12 +2023,12 @@
   ['formHs', 'formNhieu', 'formTk'].forEach(function (id) { document.body.insertBefore($(id), $('hop')); });
   // Hộp thoại form: đóng bằng nút ✕, bấm ra ngoài, hoặc phím Esc
   document.querySelectorAll('.phu-trang').forEach(function (nen) {
-    nen.addEventListener('mousedown', function (e) { if (e.target === nen && nen.id !== 'hopHoi') nen.classList.add('an'); });
+    nen.addEventListener('mousedown', function (e) { if (e.target === nen && nen.id !== 'hopHoi' && !nen.hasAttribute('data-khong-dong')) nen.classList.add('an'); });
   });
   document.querySelectorAll('[data-dong]').forEach(function (b) { b.onclick = function () { b.closest('.phu-trang').classList.add('an'); }; });
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
-    var mo = [].filter.call(document.querySelectorAll('.phu-trang'), function (x) { return !x.classList.contains('an') && x.id !== 'hopHoi'; });
+    var mo = [].filter.call(document.querySelectorAll('.phu-trang'), function (x) { return !x.classList.contains('an') && x.id !== 'hopHoi' && !x.hasAttribute('data-khong-dong'); });
     if (mo.length && $('hopHoi').classList.contains('an')) mo[mo.length - 1].classList.add('an');
   });
   // Khóa cuộn trang nền khi có hộp thoại mở
