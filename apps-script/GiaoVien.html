@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<base target="_blank">
+<meta charset="utf-8">
+<style>
+  :root { --mau: #1a73e8; --mau-nhat: #e8f0fe; --nen: #f6f8fc; --chu: #1f2937; --phu: #6b7280; --vien: #e2e8f0; --do: #c62828; --xanh: #1e8e3e; --vang: #b06000; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--chu); background: var(--nen); }
+  .tabs { display: flex; gap: 4px; padding: 10px 16px 0; background: #fff; border-bottom: 1px solid var(--vien); position: sticky; top: 0; z-index: 5; }
+  .tab { padding: 10px 16px; border: 0; background: none; font-size: 15px; font-weight: 600; color: var(--phu); border-bottom: 3px solid transparent; cursor: pointer; }
+  .tab.chon { color: var(--mau); border-bottom-color: var(--mau); }
+  .noi-dung { padding: 16px; }
+  .an { display: none !important; }
+  .the { background: #fff; border: 1px solid var(--vien); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+  h2 { font-size: 16px; margin: 0 0 10px; }
+  .thanh { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .gian { flex: 1; }
+  button, .nut { font: inherit; font-weight: 600; padding: 7px 14px; border-radius: 6px; border: 1px solid var(--mau); background: var(--mau); color: #fff; cursor: pointer; text-decoration: none; display: inline-block; }
+  button.phu, .nut.phu { background: #fff; color: var(--mau); }
+  button.nguy { background: #fff; color: var(--do); border-color: #f1b0b0; }
+  button.nho { padding: 3px 8px; font-size: 13px; font-weight: 500; }
+  button:disabled { opacity: .55; cursor: default; }
+  input[type=text], input[type=search], select, textarea { font: inherit; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; }
+  textarea { width: 100%; min-height: 120px; }
+  label.o { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 13px; }
+  .luoi { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  table.ds { width: 100%; border-collapse: collapse; background: #fff; }
+  table.ds th, table.ds td { padding: 7px 8px; border-bottom: 1px solid var(--vien); text-align: left; vertical-align: middle; }
+  table.ds th { background: #f1f5f9; font-size: 13px; color: #475569; position: sticky; top: 49px; }
+  .ma { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; letter-spacing: 1px; }
+  .nhan { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; }
+  .nhan.co { background: #e6f4ea; color: var(--xanh); }
+  .nhan.moi { background: #fef7e0; color: var(--vang); }
+  .nhan.loi { background: #fce8e6; color: var(--do); }
+  .goi-y { color: var(--phu); font-size: 13px; }
+  .thong-bao { position: fixed; right: 16px; bottom: 16px; max-width: 420px; padding: 12px 16px; border-radius: 8px; background: #323232; color: #fff; z-index: 20; white-space: pre-line; }
+  .thong-bao.loi { background: var(--do); }
+  .tien-do { height: 10px; background: var(--vien); border-radius: 5px; overflow: hidden; margin: 10px 0; }
+  .tien-do div { height: 100%; width: 0; background: var(--mau); transition: width .3s; }
+  .phu-trang { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 15; }
+  .hop { background: #fff; border-radius: 10px; padding: 18px; width: min(820px, 94vw); max-height: 90vh; overflow: auto; }
+  iframe.xem { width: 100%; height: 520px; border: 1px solid var(--vien); border-radius: 6px; background: #fff; }
+  .buoc { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--mau); color: #fff; font-size: 13px; margin-right: 6px; }
+  .dang-tai { padding: 40px; text-align: center; color: var(--phu); }
+  ul.canh-bao { margin: 6px 0; padding-left: 20px; color: var(--vang); }
+</style>
+</head>
+<body>
+  <div class="tabs">
+    <button class="tab chon" data-tab="tabHs">👩‍🎓 Học sinh</button>
+    <button class="tab" data-tab="tabGui">📤 Gửi kết quả thi</button>
+    <button class="tab" data-tab="tabDot">🗂️ Các đợt thi</button>
+    <button class="tab" data-tab="tabCaiDat">⚙️ Cài đặt</button>
+  </div>
+
+  <div class="noi-dung">
+    <div id="dangTai" class="dang-tai">Đang tải dữ liệu…</div>
+
+    <!-- ============ HỌC SINH ============ -->
+    <section id="tabHs" class="an">
+      <div class="thanh">
+        <input id="timHs" type="search" placeholder="Tìm theo tên, mã HS, SĐT…" style="width:260px">
+        <select id="locLop"></select>
+        <span id="demHs" class="goi-y"></span>
+        <span class="gian"></span>
+        <button id="nutThemHs">+ Thêm học sinh</button>
+        <button id="nutThemNhieu" class="phu">Thêm nhiều / nhập Excel</button>
+        <button id="nutTinNhanTatCa" class="phu">Tin nhắn gửi mã (cả lớp)</button>
+      </div>
+
+      <div id="formHs" class="the an">
+        <h2 id="formHsTieuDe">Thêm học sinh</h2>
+        <div class="luoi">
+          <label class="o">Họ và tên *<input id="fTen" type="text"></label>
+          <label class="o">Lớp<input id="fLop" type="text" list="dsLop"></label>
+          <label class="o">Ngày sinh<input id="fNgaySinh" type="text" placeholder="dd/mm/yyyy"></label>
+          <label class="o">SĐT phụ huynh<input id="fSdt" type="text"></label>
+          <label class="o">Ghi chú<input id="fGhiChu" type="text"></label>
+        </div>
+        <datalist id="dsLop"></datalist>
+        <div class="thanh" style="margin:12px 0 0"><button id="nutLuuHs">Lưu</button><button id="nutHuyHs" class="phu">Hủy</button></div>
+      </div>
+
+      <div id="formNhieu" class="the an">
+        <h2>Thêm nhiều học sinh</h2>
+        <p class="goi-y">Cách 1: Sao chép các cột <b>Họ tên – Lớp – SĐT phụ huynh</b> từ Excel và dán vào ô dưới (mỗi dòng 1 học sinh).<br>
+          Cách 2: Chọn file Excel có dòng tiêu đề "Họ và tên", "Lớp", "SĐT phụ huynh"… (có thể dùng luôn file kết quả thi).<br>
+          Học sinh đã có (trùng họ tên + lớp) sẽ được bỏ qua. Mỗi em được tự cấp Mã HS và mã tra cứu.</p>
+        <textarea id="danNhieu" placeholder="Nguyễn Văn An	Toán 2	0912345678&#10;Trần Thị Bình	Toán 2	0987654321"></textarea>
+        <div class="thanh" style="margin:10px 0 0">
+          <button id="nutLuuNhieu">Thêm từ ô dán</button>
+          <label class="nut phu">Chọn file Excel…<input id="fileHs" type="file" accept=".xlsx,.xls,.csv" class="an"></label>
+          <button id="nutHuyNhieu" class="phu">Đóng</button>
+        </div>
+      </div>
+
+      <table class="ds">
+        <thead><tr><th>#</th><th>Mã HS</th><th>Họ tên</th><th>Lớp</th><th>SĐT phụ huynh</th><th>Mã tra cứu</th><th style="width:300px"></th></tr></thead>
+        <tbody id="bangHs"></tbody>
+      </table>
+    </section>
+
+    <!-- ============ GỬI KẾT QUẢ ============ -->
+    <section id="tabGui" class="an">
+      <div class="the">
+        <h2><span class="buoc">1</span>Chọn file kết quả thi</h2>
+        <p class="goi-y">File Excel phải theo <b>mẫu</b> (gồm các tab KetQua, DeThi, ThongTin).
+          <a href="#" id="linkTaoMau" target="_self">Tạo file mẫu trên Drive</a> <span id="ketQuaMau"></span></p>
+        <div class="thanh">
+          <label class="nut">📄 Chọn file Excel…<input id="fileKq" type="file" accept=".xlsx,.xls" class="an"></label>
+          <span class="goi-y">hoặc</span>
+          <input id="linkKq" type="text" placeholder="Dán link Google Sheet kết quả" style="width:340px">
+          <button id="nutDocLink" class="phu">Đọc link</button>
+          <span id="tenFileKq" class="goi-y"></span>
+        </div>
+      </div>
+
+      <div id="khuXemTruoc" class="an">
+        <div class="the">
+          <h2><span class="buoc">2</span>Kiểm tra dữ liệu</h2>
+          <div id="tomTat"></div>
+          <ul id="canhBao" class="canh-bao"></ul>
+          <table class="ds">
+            <thead><tr><th>STT</th><th>Họ tên</th><th>Lớp</th><th>Mã đề</th><th>Tổng điểm</th><th>Trạng thái</th></tr></thead>
+            <tbody id="bangXemTruoc"></tbody>
+          </table>
+        </div>
+        <div class="the">
+          <h2><span class="buoc">3</span>Tạo phiếu PDF</h2>
+          <div class="luoi" style="grid-template-columns: 2fr 1fr;">
+            <label class="o">Tên đợt thi (phụ huynh sẽ thấy tên này)<input id="tenDot" type="text"></label>
+            <label class="o" style="flex-direction:row;align-items:center;gap:8px;font-weight:500;margin-top:18px">
+              <input id="themHsMoi" type="checkbox" checked> Tự thêm học sinh mới vào danh sách</label>
+          </div>
+          <div class="thanh" style="margin-top:12px">
+            <button id="nutXemThu" class="phu">👁 Xem thử phiếu</button>
+            <button id="nutTaoPhieu">Tạo phiếu PDF</button>
+          </div>
+          <div id="khuTienDo" class="an">
+            <div class="tien-do"><div id="thanhTienDo"></div></div>
+            <div id="chuTienDo" class="goi-y"></div>
+          </div>
+          <div id="khuXong" class="an"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CÁC ĐỢT THI ============ -->
+    <section id="tabDot" class="an">
+      <p class="goi-y">Phụ huynh chỉ xem được phiếu của các đợt đã <b>Công bố</b>. Xóa đợt sẽ chuyển các file PDF vào Thùng rác.</p>
+      <table class="ds">
+        <thead><tr><th>Tên đợt</th><th>Ngày tạo</th><th>Số phiếu</th><th>Công bố</th><th>Thư mục PDF</th><th></th></tr></thead>
+        <tbody id="bangDot"></tbody>
+      </table>
+    </section>
+
+    <!-- ============ CÀI ĐẶT ============ -->
+    <section id="tabCaiDat" class="an">
+      <div class="the">
+        <h2>Trang tra cứu cho phụ huynh</h2>
+        <label class="o">Link trang tra cứu (Web App, kết thúc bằng /exec)<input id="cLink" type="text" style="width:100%"></label>
+        <p class="goi-y">Chưa có link? Trong cửa sổ Apps Script: <b>Triển khai → Tùy chọn triển khai mới → Ứng dụng web</b>,
+          "Thực thi với tư cách: <b>Tôi</b>", "Người có quyền truy cập: <b>Bất kỳ ai</b>" → Triển khai → sao chép link dán vào đây.</p>
+        <label class="o">Tiêu đề trang tra cứu<input id="cTieuDeTraCuu" type="text" placeholder="Tra cứu kết quả học tập"></label>
+      </div>
+      <div class="the">
+        <h2>Thông tin in trên phiếu</h2>
+        <div class="luoi">
+          <label class="o">Tên trung tâm / trường<input id="cTrungTam" type="text" placeholder="VD: PYTAGO MATH"></label>
+          <label class="o">Khẩu hiệu<input id="cKhauHieu" type="text" placeholder="VD: Dạy tận tâm, học dễ dàng"></label>
+          <label class="o">Link ảnh logo trên Google Drive (PNG/JPG)<input id="cLogo" type="text"></label>
+        </div>
+      </div>
+      <button id="nutLuuCaiDat">Lưu cài đặt</button>
+    </section>
+  </div>
+
+  <!-- Hộp thoại dùng chung -->
+  <div id="hop" class="phu-trang an">
+    <div class="hop">
+      <div class="thanh"><h2 id="hopTieuDe" class="gian" style="margin:0"></h2><button id="nutDongHop" class="phu">Đóng</button></div>
+      <div id="hopNoiDung"></div>
+    </div>
+  </div>
+  <div id="thongBao" class="thong-bao an"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+  var $ = function (id) { return document.getElementById(id); };
+  var DL = { hocSinh: [], dot: [], caiDat: {}, linkTraCuu: '' };
+  var soHienTai = null, xemTruoc = null;
+
+  /* ---------- tiện ích ---------- */
+  function goi(ten) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return new Promise(function (ok, loi) {
+      var r = google.script.run.withSuccessHandler(ok).withFailureHandler(loi);
+      r[ten].apply(r, args);
+    });
+  }
+  function the(tag, thuocTinh, con) {
+    var el = document.createElement(tag);
+    Object.keys(thuocTinh || {}).forEach(function (k) {
+      if (k === 'text') el.textContent = thuocTinh[k];
+      else if (k === 'class') el.className = thuocTinh[k];
+      else if (k.indexOf('on') === 0) el.addEventListener(k.slice(2), thuocTinh[k]);
+      else el.setAttribute(k, thuocTinh[k]);
+    });
+    (con || []).forEach(function (c) { if (c != null) el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return el;
+  }
+  var hetHanTB;
+  function bao(msg, laLoi) {
+    var tb = $('thongBao');
+    tb.textContent = msg; tb.className = 'thong-bao' + (laLoi ? ' loi' : '');
+    clearTimeout(hetHanTB); hetHanTB = setTimeout(function () { tb.classList.add('an'); }, laLoi ? 8000 : 4000);
+  }
+  function baoLoi(e) { bao((e && e.message ? e.message : String(e)).replace(/^Error: /, ''), true); }
+  function moHop(tieuDe, noiDung) {
+    $('hopTieuDe').textContent = tieuDe;
+    var k = $('hopNoiDung'); k.textContent = ''; k.appendChild(noiDung);
+    $('hop').classList.remove('an');
+  }
+  $('nutDongHop').onclick = function () { $('hop').classList.add('an'); };
+  function capNhat(dl) { if (dl) { DL = dl; veHocSinh(); veDot(); veCaiDat(); } if (dl && dl.thongBao) bao(dl.thongBao); }
+
+  /* ---------- tabs ---------- */
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.onclick = function () {
+      document.querySelectorAll('.tab').forEach(function (x) { x.classList.toggle('chon', x === t); });
+      ['tabHs', 'tabGui', 'tabDot', 'tabCaiDat'].forEach(function (id) { $(id).classList.toggle('an', id !== t.dataset.tab); });
+    };
+  });
+
+  /* ---------- đọc Excel bằng SheetJS -> { tênTab: [[...]] } ---------- */
+  function docExcel(file) {
+    return new Promise(function (ok, loi) {
+      if (!window.XLSX) return loi(new Error('Không tải được thư viện đọc Excel. Kiểm tra kết nối mạng hoặc dùng link Google Sheet.'));
+      var fr = new FileReader();
+      fr.onload = function () {
+        try {
+          var wb = XLSX.read(new Uint8Array(fr.result), { type: 'array' });
+          var so = {};
+          wb.SheetNames.forEach(function (ten) {
+            var rows = XLSX.utils.sheet_to_json(wb.Sheets[ten], { header: 1, raw: false, defval: '', blankrows: false });
+            so[ten] = rows.map(function (r) { return r.map(function (x) { return x == null ? '' : String(x); }); });
+          });
+          ok(so);
+        } catch (e) { loi(new Error('Không đọc được file Excel: ' + e.message)); }
+      };
+      fr.onerror = function () { loi(new Error('Không đọc được file.')); };
+      fr.readAsArrayBuffer(file);
+    });
+  }
+
+  /* =================== HỌC SINH =================== */
+  function tinNhan(h) {
+    return 'Kính gửi phụ huynh em ' + h.hoTen + (h.lop ? ' (lớp ' + h.lop + ')' : '') + ',\n' +
+      'Quý phụ huynh xem kết quả học tập của con tại: ' + (DL.linkTraCuu || '[chưa có link — vào Cài đặt]') + '\n' +
+      'Mã tra cứu: ' + h.maTraCuu + '\n' +
+      'Vui lòng KHÔNG chia sẻ mã này cho người khác. Mã dùng được cho cả năm học.';
+  }
+  function hopTinNhan(tieuDe, noiDung) {
+    var ta = the('textarea', { style: 'min-height:320px' }); ta.value = noiDung;
+    var nut = the('button', { text: 'Sao chép', onclick: function () {
+      ta.select();
+      var xong = function () { bao('Đã sao chép. Dán vào Zalo và gửi RIÊNG cho phụ huynh.'); };
+      if (navigator.clipboard) navigator.clipboard.writeText(ta.value).then(xong, function () { document.execCommand('copy'); xong(); });
+      else { document.execCommand('copy'); xong(); }
+    } });
+    moHop(tieuDe, the('div', {}, [ta, the('div', { class: 'thanh', style: 'margin-top:10px' }, [nut,
+      the('span', { class: 'goi-y', text: 'Gửi qua tin nhắn riêng (1-1), không gửi vào nhóm.' })])]));
+  }
+
+  function veHocSinh() {
+    var lopChon = $('locLop').value, tu = $('timHs').value.trim().toLowerCase();
+    var dsLop = Array.from(new Set(DL.hocSinh.map(function (h) { return h.lop; }).filter(Boolean))).sort();
+    $('locLop').textContent = '';
+    $('locLop').appendChild(the('option', { value: '', text: 'Tất cả lớp' }));
+    dsLop.forEach(function (l) { $('locLop').appendChild(the('option', { value: l, text: l })); });
+    $('locLop').value = dsLop.indexOf(lopChon) >= 0 ? lopChon : '';
+    $('dsLop').textContent = '';
+    dsLop.forEach(function (l) { $('dsLop').appendChild(the('option', { value: l })); });
+
+    var ds = DL.hocSinh.filter(function (h) {
+      if ($('locLop').value && h.lop !== $('locLop').value) return false;
+      if (!tu) return true;
+      return [h.hoTen, h.maHs, h.sdt, h.lop].join(' ').toLowerCase().indexOf(tu) >= 0;
+    });
+    $('demHs').textContent = ds.length + ' / ' + DL.hocSinh.length + ' học sinh';
+    var tb = $('bangHs'); tb.textContent = '';
+    if (!DL.hocSinh.length) {
+      tb.appendChild(the('tr', {}, [the('td', { colspan: 7, class: 'goi-y', text: 'Chưa có học sinh. Bấm "+ Thêm học sinh", "Thêm nhiều / nhập Excel", hoặc gửi kết quả thi lần đầu (hệ thống tự thêm).' })]));
+    }
+    ds.forEach(function (h, i) {
+      tb.appendChild(the('tr', {}, [
+        the('td', { text: i + 1 }), the('td', { text: h.maHs }), the('td', {}, [the('b', { text: h.hoTen })]),
+        the('td', { text: h.lop }), the('td', { text: h.sdt }), the('td', { class: 'ma', text: h.maTraCuu }),
+        the('td', {}, [
+          the('button', { class: 'phu nho', text: 'Sửa', onclick: function () { moFormHs(h); } }), ' ',
+          the('button', { class: 'phu nho', text: 'Tin nhắn', onclick: function () { hopTinNhan('Tin nhắn gửi phụ huynh em ' + h.hoTen, tinNhan(h)); } }), ' ',
+          the('button', { class: 'phu nho', text: 'Cấp lại mã', onclick: function () {
+            if (!confirm('Cấp mã tra cứu mới cho ' + h.hoTen + '?\nMã cũ sẽ không dùng được nữa.')) return;
+            goi('gvCapLaiMa', h.maHs).then(function (dl) { capNhat(dl); bao('Đã cấp mã mới cho ' + h.hoTen + '. Nhớ gửi lại cho phụ huynh.'); }).catch(baoLoi);
+          } }), ' ',
+          the('button', { class: 'nguy nho', text: 'Xóa', onclick: function () {
+            if (!confirm('Xóa học sinh ' + h.hoTen + ' (' + h.maHs + ')?\nPhụ huynh sẽ không tra cứu được nữa.')) return;
+            goi('gvXoaHocSinh', h.maHs).then(function (dl) { capNhat(dl); bao('Đã xóa ' + h.hoTen + '.'); }).catch(baoLoi);
+          } })
+        ])
+      ]));
+    });
+  }
+  $('timHs').oninput = veHocSinh;
+  $('locLop').onchange = veHocSinh;
+
+  var dangSua = null;
+  function moFormHs(h) {
+    dangSua = h ? h.maHs : null;
+    $('formHsTieuDe').textContent = h ? 'Sửa thông tin: ' + h.hoTen + ' (' + h.maHs + ')' : 'Thêm học sinh';
+    $('fTen').value = h ? h.hoTen : ''; $('fLop').value = h ? h.lop : ($('locLop').value || '');
+    $('fNgaySinh').value = h ? h.ngaySinh : ''; $('fSdt').value = h ? h.sdt : ''; $('fGhiChu').value = h ? h.ghiChu : '';
+    $('formNhieu').classList.add('an'); $('formHs').classList.remove('an'); $('fTen').focus();
+  }
+  $('nutThemHs').onclick = function () { moFormHs(null); };
+  $('nutHuyHs').onclick = function () { $('formHs').classList.add('an'); };
+  $('nutLuuHs').onclick = function () {
+    var b = this; b.disabled = true;
+    goi('gvLuuHocSinh', { maHs: dangSua, hoTen: $('fTen').value, lop: $('fLop').value, ngaySinh: $('fNgaySinh').value, sdt: $('fSdt').value, ghiChu: $('fGhiChu').value })
+      .then(function (dl) { capNhat(dl); bao(dangSua ? 'Đã lưu thay đổi.' : 'Đã thêm học sinh và tạo mã tra cứu.'); if (dangSua) $('formHs').classList.add('an'); else moFormHs(null); })
+      .catch(baoLoi).then(function () { b.disabled = false; });
+  };
+
+  $('nutThemNhieu').onclick = function () { $('formHs').classList.add('an'); $('formNhieu').classList.remove('an'); };
+  $('nutHuyNhieu').onclick = function () { $('formNhieu').classList.add('an'); };
+  $('nutLuuNhieu').onclick = function () {
+    var bang = $('danNhieu').value.split(/\r?\n/).filter(function (d) { return d.trim(); }).map(function (d) { return d.split('\t'); });
+    if (!bang.length) return bao('Hãy dán danh sách vào ô trước.', true);
+    goi('gvThemNhieuHocSinh', bang).then(function (dl) { capNhat(dl); $('danNhieu').value = ''; }).catch(baoLoi);
+  };
+  $('fileHs').onchange = function () {
+    var f = this.files[0]; this.value = '';
+    if (!f) return;
+    docExcel(f).then(function (so) {
+      var ten = Object.keys(so).filter(function (t) { return /ket\s*qua|kết\s*quả|ketqua/i.test(t); })[0] || Object.keys(so)[0];
+      return goi('gvThemNhieuHocSinh', so[ten]);
+    }).then(capNhat).catch(baoLoi);
+  };
+  $('nutTinNhanTatCa').onclick = function () {
+    var ds = DL.hocSinh.filter(function (h) { return !$('locLop').value || h.lop === $('locLop').value; });
+    if (!ds.length) return bao('Chưa có học sinh.', true);
+    hopTinNhan('Tin nhắn gửi mã (' + ds.length + ' học sinh)', ds.map(tinNhan).join('\n\n--------------------\n\n'));
+  };
+
+  /* =================== GỬI KẾT QUẢ =================== */
+  $('linkTaoMau').onclick = function (e) {
+    e.preventDefault();
+    $('ketQuaMau').textContent = ' — đang tạo…';
+    goi('gvTaoFileMau').then(function (url) {
+      $('ketQuaMau').textContent = ' — ';
+      $('ketQuaMau').appendChild(the('a', { href: url, text: 'Mở file mẫu' }));
+      $('ketQuaMau').appendChild(document.createTextNode(' (Tệp → Tải xuống → Microsoft Excel để có file .xlsx)'));
+    }).catch(function (e) { $('ketQuaMau').textContent = ''; baoLoi(e); });
+  };
+
+  function batDauXemTruoc(so, tenNguon) {
+    soHienTai = so; xemTruoc = null;
+    $('tenFileKq').textContent = 'Đang đọc ' + tenNguon + '…';
+    $('khuXemTruoc').classList.add('an'); $('khuXong').classList.add('an'); $('khuTienDo').classList.add('an');
+    return goi('gvXemTruoc', so).then(function (kq) {
+      if (!kq.ok) { $('tenFileKq').textContent = ''; return bao(kq.loi, true); }
+      xemTruoc = kq;
+      $('tenFileKq').textContent = '✔ ' + tenNguon;
+      var dem = { co: 0, moi: 0, loi: 0 };
+      kq.hocSinh.forEach(function (h) { dem[h.trangThai]++; });
+      $('tomTat').textContent = '';
+      $('tomTat').appendChild(the('p', {}, [the('b', { text: kq.tieuDe }), ' — Phần I: ' + kq.soCau.I + ' câu, Phần II: ' + kq.soCau.II + ' câu, Phần III: ' + kq.soCau.III + ' câu.']));
+      $('tomTat').appendChild(the('p', {}, [kq.hocSinh.length + ' học sinh: ',
+        the('span', { class: 'nhan co', text: dem.co + ' đã có trong danh sách' }), ' ',
+        the('span', { class: 'nhan moi', text: dem.moi + ' học sinh mới' }), ' ',
+        the('span', { class: 'nhan loi', text: dem.loi + ' lỗi' })]));
+      $('canhBao').textContent = '';
+      kq.canhBao.forEach(function (c) { $('canhBao').appendChild(the('li', { text: c })); });
+      var tb = $('bangXemTruoc'); tb.textContent = '';
+      kq.hocSinh.forEach(function (h) {
+        var nhan = h.trangThai === 'co' ? the('span', { class: 'nhan co', text: '✔ ' + h.maHs })
+          : h.trangThai === 'moi' ? the('span', { class: 'nhan moi', text: 'Mới — sẽ thêm vào danh sách' })
+          : the('span', { class: 'nhan loi', text: h.loi });
+        tb.appendChild(the('tr', {}, [the('td', { text: h.stt }), the('td', { text: h.hoTen }), the('td', { text: h.lop }),
+          the('td', { text: h.maDe }), the('td', { text: h.tongDiem + ' / ' + h.maxTong }), the('td', {}, [nhan])]));
+      });
+      $('tenDot').value = kq.tieuDe;
+      $('khuXemTruoc').classList.remove('an');
+    }).catch(function (e) { $('tenFileKq').textContent = ''; baoLoi(e); });
+  }
+
+  $('fileKq').onchange = function () {
+    var f = this.files[0]; this.value = '';
+    if (!f) return;
+    docExcel(f).then(function (so) { return batDauXemTruoc(so, f.name); }).catch(baoLoi);
+  };
+  $('nutDocLink').onclick = function () {
+    var url = $('linkKq').value.trim();
+    if (!url) return bao('Hãy dán link Google Sheet.', true);
+    $('tenFileKq').textContent = 'Đang đọc link…';
+    goi('gvDocLinkSheet', url).then(function (so) { return batDauXemTruoc(so, 'Google Sheet'); }).catch(function (e) { $('tenFileKq').textContent = ''; baoLoi(e); });
+  };
+
+  $('nutXemThu').onclick = function () {
+    if (!xemTruoc || !xemTruoc.htmlXemTruoc) return bao('Không có học sinh hợp lệ để xem thử.', true);
+    var f = the('iframe', { class: 'xem', sandbox: '' });
+    f.srcdoc = xemTruoc.htmlXemTruoc;
+    moHop('Xem thử phiếu (học sinh đầu tiên)', the('div', {}, [f,
+      the('p', { class: 'goi-y', text: 'Bản PDF thật có thể khác đôi chút về khoảng cách/cỡ chữ. Bố cục phiếu nằm trong file Phieu.html.' })]));
+  };
+
+  $('nutTaoPhieu').onclick = function () { taoPhieu(false); };
+
+  function taoPhieu(ghiDe) {
+    if (!soHienTai) return;
+    var nut = $('nutTaoPhieu'); nut.disabled = true; $('nutXemThu').disabled = true;
+    $('khuXong').classList.add('an'); $('khuTienDo').classList.remove('an');
+    $('thanhTienDo').style.width = '0'; $('chuTienDo').textContent = 'Đang chuẩn bị…';
+    var xong = function () { nut.disabled = false; $('nutXemThu').disabled = false; };
+    goi('gvBatDauDot', soHienTai, $('tenDot').value, $('themHsMoi').checked, ghiDe).then(function (kq) {
+      if (!kq.ok && kq.canXacNhan) {
+        xong(); $('khuTienDo').classList.add('an');
+        if (confirm(kq.loi + '\n\nTiếp tục?')) taoPhieu(true);
+        return;
+      }
+      if (!kq.ok) { xong(); $('khuTienDo').classList.add('an'); return bao(kq.loi, true); }
+      var ds = kq.canTao, LO = 4, daXong = 0, loi = kq.boQua.slice();
+      var chay = function (i) {
+        if (i >= ds.length) return Promise.resolve();
+        return goi('gvTaoPhieuLo', kq.maDot, soHienTai, ds.slice(i, i + LO)).then(function (r) {
+          daXong += r.xong; loi = loi.concat(r.loi);
+          var pt = Math.round(Math.min(i + LO, ds.length) / ds.length * 100);
+          $('thanhTienDo').style.width = pt + '%';
+          $('chuTienDo').textContent = 'Đã tạo ' + daXong + ' / ' + ds.length + ' phiếu…';
+          return chay(i + LO);
+        });
+      };
+      return chay(0).then(function () {
+        xong(); $('khuTienDo').classList.add('an');
+        hienKetQuaTao(kq, daXong, loi);
+        return goi('gvTaiDuLieu').then(capNhat);
+      });
+    }).catch(function (e) { xong(); baoLoi(e); });
+  }
+
+  function hienKetQuaTao(kq, soPhieu, loi) {
+    var k = $('khuXong'); k.textContent = ''; k.classList.remove('an');
+    k.appendChild(the('p', {}, [the('b', { text: '✔ Đã tạo ' + soPhieu + ' phiếu PDF. ' }),
+      the('a', { href: kq.thuMuc, text: 'Mở thư mục PDF để kiểm tra' })]));
+    if (loi.length) {
+      var ul = the('ul', { class: 'canh-bao' });
+      loi.forEach(function (x) { ul.appendChild(the('li', { text: x })); });
+      k.appendChild(the('p', { text: 'Bỏ qua ' + loi.length + ' học sinh:' })); k.appendChild(ul);
+    }
+    var nut = the('button', { text: '📢 Công bố cho phụ huynh xem', onclick: function () {
+      nut.disabled = true;
+      goi('gvCongBo', kq.maDot, true).then(function (dl) { capNhat(dl); nut.textContent = '✔ Đã công bố'; bao('Đã công bố. Phụ huynh có thể tra cứu ngay.'); })
+        .catch(function (e) { nut.disabled = false; baoLoi(e); });
+    } });
+    k.appendChild(the('div', { class: 'thanh' }, [nut, the('span', { class: 'goi-y', text: 'Nên mở vài phiếu kiểm tra trước khi công bố. Có thể công bố sau ở thẻ "Các đợt thi".' })]));
+  }
+
+  /* =================== CÁC ĐỢT THI =================== */
+  function veDot() {
+    var tb = $('bangDot'); tb.textContent = '';
+    if (!DL.dot.length) tb.appendChild(the('tr', {}, [the('td', { colspan: 6, class: 'goi-y', text: 'Chưa có đợt thi nào.' })]));
+    DL.dot.forEach(function (d) {
+      var cb = the('input', { type: 'checkbox' }); cb.checked = d.congBo;
+      cb.onchange = function () {
+        goi('gvCongBo', d.maDot, cb.checked).then(function (dl) { capNhat(dl); bao(cb.checked ? 'Đã công bố "' + d.tenDot + '".' : 'Đã ẩn "' + d.tenDot + '" với phụ huynh.'); })
+          .catch(function (e) { cb.checked = !cb.checked; baoLoi(e); });
+      };
+      tb.appendChild(the('tr', {}, [
+        the('td', {}, [the('b', { text: d.tenDot })]), the('td', { text: d.ngayTao }), the('td', { text: d.soPhieu }),
+        the('td', {}, [the('label', {}, [cb, d.congBo ? ' Đang công bố' : ' Chưa công bố'])]),
+        the('td', {}, [d.thuMuc ? the('a', { href: d.thuMuc, text: 'Mở thư mục' }) : '']),
+        the('td', {}, [the('button', { class: 'nguy nho', text: 'Xóa đợt', onclick: function () {
+          if (!confirm('Xóa đợt "' + d.tenDot + '" và ' + d.soPhieu + ' phiếu PDF?')) return;
+          goi('gvXoaDot', d.maDot).then(function (dl) { capNhat(dl); bao('Đã xóa đợt.'); }).catch(baoLoi);
+        } })])
+      ]));
+    });
+  }
+
+  /* =================== CÀI ĐẶT =================== */
+  function veCaiDat() {
+    var c = DL.caiDat || {};
+    $('cLink').value = DL.linkTraCuu || ''; $('cTieuDeTraCuu').value = c.tieuDeTraCuu || '';
+    $('cTrungTam').value = c.tenTrungTam || ''; $('cKhauHieu').value = c.khauHieu || ''; $('cLogo').value = c.logo || '';
+  }
+  $('nutLuuCaiDat').onclick = function () {
+    var link = $('cLink').value.trim();
+    if (link && !/^https:\/\/script\.google\.com\/.+\/exec$/.test(link)) return bao('Link trang tra cứu phải bắt đầu bằng https://script.google.com/ và kết thúc bằng /exec', true);
+    goi('gvLuuCaiDat', { linkTraCuu: link, tieuDeTraCuu: $('cTieuDeTraCuu').value, tenTrungTam: $('cTrungTam').value, khauHieu: $('cKhauHieu').value, logo: $('cLogo').value })
+      .then(function (dl) { capNhat(dl); bao('Đã lưu cài đặt.'); }).catch(baoLoi);
+  };
+
+  /* ---------- khởi động ---------- */
+  goi('gvTaiDuLieu').then(function (dl) {
+    capNhat(dl);
+    $('dangTai').classList.add('an'); $('tabHs').classList.remove('an');
+    if (!dl.linkTraCuu) bao('Chưa có link trang tra cứu. Vào thẻ "Cài đặt" để thêm.');
+  }).catch(function (e) { $('dangTai').textContent = 'Lỗi: ' + (e.message || e); });
+  </script>
+</body>
+</html>

@@ -165,38 +165,22 @@
       (kq.phieu || []).forEach(function (p) {
         var b = taoThe('button', 'phu');
         b.type = 'button';
-        b.appendChild(taoThe('span', null, '📄 ' + p.dot));
-        if (p.thoiGian) b.appendChild(taoThe('span', 'ngay', p.thoiGian));
-        b.addEventListener('click', function () { moPhieu(p.dot); });
+        b.appendChild(taoThe('span', null, '📄 ' + p.tenDot));
+        b.appendChild(taoThe('span', 'ngay', [p.tongDiem ? 'Điểm: ' + p.tongDiem : '', p.ngay].filter(Boolean).join(' · ')));
+        b.addEventListener('click', function () { moPhieu(p); });
         dsP.appendChild(b);
       });
       var coPhieu = (kq.phieu || []).length > 0;
       $('khungPhieu').classList.toggle('an', !coPhieu);
 
-      // Bảng điểm (nếu giáo viên dùng tab "Điểm ...")
       var ds = $('dsBang');
       ds.textContent = '';
-      (kq.bangDiem || []).forEach(function (bang) {
-        var the = taoThe('div', 'the');
-        the.appendChild(taoThe('h2', null, bang.tenBang));
-        var tb = document.createElement('table');
-        bang.muc.forEach(function (m) {
-          var tr = document.createElement('tr');
-          tr.appendChild(taoThe('td', 'ten', m.ten));
-          tr.appendChild(taoThe('td', 'gt', m.giaTri || '—'));
-          tb.appendChild(tr);
-        });
-        the.appendChild(tb);
-        ds.appendChild(the);
-      });
-      if (!coPhieu && !(kq.bangDiem || []).length) {
-        ds.appendChild(taoThe('div', 'the', 'Chưa có kết quả nào được công bố.'));
-      }
+      if (!coPhieu) ds.appendChild(taoThe('div', 'the', 'Chưa có phiếu kết quả nào được công bố.'));
       hien('manKetQua');
     }
 
-    function moPhieu(dot) {
-      $('tenPhieu').textContent = dot;
+    function moPhieu(p) {
+      $('tenPhieu').textContent = p.tenDot;
       var khung = $('trangPdf');
       khung.textContent = '';
       khung.appendChild(taoThe('div', 'dang-tai', 'Đang tải phiếu...'));
@@ -212,7 +196,7 @@
           veTrangPdf(bytes.slice(0), khung);
         })
         .withFailureHandler(function () { khung.textContent = ''; khung.appendChild(taoThe('div', 'the loi', 'Không kết nối được. Vui lòng thử lại.')); })
-        .layPhieu(maDangDung, dot);
+        .layPhieu(maDangDung, p.maPhieu);
     }
 
     function veTrangPdf(bytes, khung) {

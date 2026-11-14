@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; margin: 0; }
+  table { border-collapse: collapse; }
+  .dau { width: 100%; margin-bottom: 6px; }
+  .dau td { vertical-align: middle; border: 0; }
+  .trung-tam { text-align: center; color: #1b7a34; font-weight: bold; font-size: 13pt; }
+  .khau-hieu { text-align: center; color: #1b7a34; font-size: 8pt; }
+  .tieu-de { text-align: center; font-weight: bold; font-size: 14pt; }
+  .mo-ta { text-align: center; font-weight: bold; font-style: italic; }
+  .stt { text-align: center; font-weight: bold; }
+  h3 { font-size: 12pt; margin: 10px 0 4px; }
+  .ke { border-top: 1.5px solid #000; margin: 4px 0 6px; }
+  .tt td { padding: 2px 4px; border: 0; }
+  .bang { width: 100%; margin: 4px 0 8px; }
+  .bang th, .bang td { border: 1px solid #000; padding: 3px 5px; font-size: 11pt; vertical-align: middle; }
+  .bang th { font-weight: bold; text-align: center; }
+  .giua { text-align: center; }
+  .nho { font-size: 10.5pt; }
+  .nd { white-space: pre-line; }
+  .do { color: #d40000; font-weight: bold; }
+  .xanh { color: #00a040; font-weight: bold; }
+  .nhan-xet-tieu-de { color: #d40000; font-weight: bold; font-style: italic; }
+  .chan-trang { margin-top: 14px; font-size: 9pt; color: #555; text-align: right; }
+  p { margin: 3px 0; }
+</style>
+</head>
+<body>
+<? var c = d.cham, dm = c.diem; ?>
+
+<table class="dau">
+  <tr>
+    <td style="width:32%">
+      <? if (d.logo) { ?><div style="text-align:center"><img src="<?!= d.logo ?>" style="max-height:70px;max-width:180px"></div><? } ?>
+      <? if (d.trungTam) { ?><div class="trung-tam"><?= d.trungTam ?></div><? } ?>
+      <? if (d.khauHieu) { ?><div class="khau-hieu"><?= d.khauHieu ?></div><? } ?>
+    </td>
+    <td>
+      <div class="tieu-de"><?= d.tieuDe ?></div>
+      <? if (d.moTa) { ?><div class="mo-ta">(<?= d.moTa ?>)</div><? } ?>
+      <? if (d.stt) { ?><div class="stt">(STT: <?= d.stt ?>)</div><? } ?>
+    </td>
+  </tr>
+</table>
+
+<h3>A. THÔNG TIN CHUNG</h3>
+<table class="tt" style="width:100%">
+  <tr>
+    <td><b>1. Họ và tên:</b> <span class="do"><?= d.hoTen ?></span></td>
+    <td><b>2. <?= d.nhanLop ?>:</b> <span class="do"><?= d.lop ?></span></td>
+    <td><? if (d.maDe) { ?><b>3. Mã đề thi:</b> <span class="do"><?= d.maDe ?></span><? } ?></td>
+  </tr>
+  <tr>
+    <td colspan="3"><b><?= d.maDe ? '4' : '3' ?>. Kết quả cụ thể:</b>
+      <? if (c.phan1.length) { ?>Phần 1: <span class="do"><?= dm.p1 ?></span>/<?= dm.max1 ?>; <? } ?>
+      <? if (c.phan2.length) { ?>Phần 2: <span class="do"><?= dm.p2 ?></span>/<?= dm.max2 ?>; <? } ?>
+      <? if (c.phan3.length) { ?>Phần 3: <span class="do"><?= dm.p3 ?></span>/<?= dm.max3 ?>; <? } ?>
+      <b>Tổng điểm: <span class="do"><?= dm.tong ?></span>/<?= dm.maxTong ?></b>
+    </td>
+  </tr>
+</table>
+<div class="ke"></div>
+
+<h3>B. PHÂN TÍCH BÀI THI</h3>
+<? var soMuc = 0; ?>
+
+<? if (c.phan1.length) { soMuc++; ?>
+<p><b><?= soMuc ?>. PHẦN I: <?= d.tenPhan.I ?></b></p>
+<? if (d.moTaPhan.I) { ?><p><?= d.moTaPhan.I ?></p><? } ?>
+<table class="bang">
+  <tr><th style="width:6%">Câu</th><th style="width:24%">Chủ đề kiến thức</th><th>Nội dung phân tích cụ thể</th>
+      <th style="width:10%">Đáp án<br>của bạn</th><th style="width:10%">Đáp án<br>đúng</th></tr>
+  <? c.phan1.forEach(function (q) { ?>
+  <tr>
+    <td class="giua"><?= q.cau ?></td>
+    <td><?= q.chuDe ?><? if (q.mucDo) { ?><br>(<?= q.mucDo ?>)<? } ?></td>
+    <td class="nho"><?= q.noiDung ?></td>
+    <td class="giua <?= q.ok ? 'xanh' : 'do' ?>"><?= q.hs || '—' ?></td>
+    <td class="giua xanh"><?= q.dung ?></td>
+  </tr>
+  <? }); ?>
+  <tr><td colspan="3" class="giua"><b>Tổng điểm</b></td><td class="giua do"><?= dm.p1 ?></td><td></td></tr>
+</table>
+<? } ?>
+
+<? if (c.phan2.length) { soMuc++; ?>
+<p><b><?= soMuc ?>. PHẦN II: <?= d.tenPhan.II ?></b></p>
+<? if (d.moTaPhan.II) { ?><p><?= d.moTaPhan.II ?></p><? } ?>
+<table class="bang">
+  <tr><th style="width:6%">Câu</th><th style="width:20%">Chủ đề kiến thức</th><th>Nội dung phân tích cụ thể</th>
+      <th style="width:12%">Đáp án<br>của bạn</th><th style="width:10%">Đáp án<br>đúng</th></tr>
+  <? c.phan2.forEach(function (q) { ?>
+  <tr>
+    <td class="giua"><?= q.cau ?></td>
+    <td><?= q.chuDe ?><? if (q.mucDo) { ?><br>(<?= q.mucDo ?>)<? } ?></td>
+    <td class="nho nd"><?= q.noiDung ?></td>
+    <td class="giua"><? if (!q.kyTu.length) { ?><span class="do">—</span><? } ?><? q.kyTu.forEach(function (k, i) { ?><?= i ? ',' : '' ?><span class="<?= k.ok ? 'xanh' : 'do' ?>"><?= k.c ?></span><? }); ?></td>
+    <td class="giua xanh"><?= q.dung ?></td>
+  </tr>
+  <? }); ?>
+  <tr><td colspan="3" class="giua"><b>Tổng điểm</b></td><td class="giua do"><?= dm.p2 ?></td><td></td></tr>
+</table>
+<? } ?>
+
+<? if (c.phan3.length) { soMuc++; ?>
+<p><b><?= soMuc ?>. PHẦN III: <?= d.tenPhan.III ?></b></p>
+<? if (d.moTaPhan.III) { ?><p><?= d.moTaPhan.III ?></p><? } ?>
+<table class="bang">
+  <tr><th style="width:6%">Câu</th><th style="width:20%">Chủ đề kiến thức</th><th>Nội dung phân tích cụ thể</th>
+      <? if (c.coTraLoiIII) { ?><th style="width:12%">Đáp án<br>của bạn</th><? } ?><th style="width:12%">Đáp số</th></tr>
+  <? c.phan3.forEach(function (q) { ?>
+  <tr>
+    <td class="giua"><?= q.cau ?></td>
+    <td><?= q.chuDe ?><? if (q.mucDo) { ?><br>(<?= q.mucDo ?>)<? } ?></td>
+    <td class="nho"><?= q.noiDung ?></td>
+    <? if (c.coTraLoiIII) { ?><td class="giua <?= q.ok ? 'xanh' : 'do' ?>"><?= q.hs || '—' ?></td><? } ?>
+    <td class="giua xanh"><?= q.dung ?></td>
+  </tr>
+  <? }); ?>
+  <tr><td colspan="<?= c.coTraLoiIII ? 4 : 3 ?>" class="giua"><b>Tổng điểm của bạn</b></td><td class="giua do"><?= dm.p3 ?>/<?= dm.max3 ?></td></tr>
+</table>
+<? } ?>
+
+<? var nx = d.nhanXet; ?>
+<? if (nx.uu || nx.nhuoc) { ?>
+<p class="nhan-xet-tieu-de">- Ưu và nhược điểm qua bài thi:</p>
+<? if (nx.uu) { ?><p style="margin-left:24px"><i>+ Ưu điểm: <?= nx.uu ?></i></p><? } ?>
+<? if (nx.nhuoc) { ?><p style="margin-left:24px"><i>+ Nhược điểm: <?= nx.nhuoc ?></i></p><? } ?>
+<? } ?>
+<? if (nx.khacPhuc) { ?><p><span class="nhan-xet-tieu-de">- Hướng khắc phục:</span> <i><?= nx.khacPhuc ?></i></p><? } ?>
+<p><b>Lời khuyên:</b>
+  <? if (nx.loiKhuyen) { ?><?= nx.loiKhuyen ?><? } else { ?>Dựa vào phân tích trên, trong thời gian tới, em hãy cố gắng khắc phục những hạn chế và phát huy những ưu điểm. Chúc <span class="do"><?= d.hoTen ?></span> đạt được kết quả cao trong kỳ thi tiếp theo!<? } ?>
+</p>
+
+<div class="chan-trang">Mã phiếu: <?= d.maPhieu ?> · Ngày tạo: <?= d.ngay ?></div>
+</body>
+</html>
