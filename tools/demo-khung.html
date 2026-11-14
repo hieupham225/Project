@@ -204,7 +204,7 @@ window.__worker = index_default;
         return x;
       });
       if (coLoi && dong.length > 3) {
-        dong[1][2] = dong[1][2].replace(/\S+$/, 'Sai Chính Tả'); dong[1][1] = ''; // gõ sai tên, quên Mã HS
+        dong[1][2] = dong[1][2].replace(/(\S)$/, '$1$1'); dong[1][1] = ''; // gõ sai tên (thừa 1 chữ), quên Mã HS
         dong.splice(dong.length - 1, 1);                                     // 1 em vắng thi
         if (dong[2]) dong[2][3] = '';                                          // quên ghi lớp -> hệ thống tự lấy lớp của em đó
       }

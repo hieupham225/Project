@@ -170,7 +170,7 @@ export function chamBai_(kq, h) {
  *   2. Không có  -> theo họ tên trong lớp (duy nhất)
  *   3. Còn lại   -> hỏi giáo viên: chọn em trong lớp / em ở lớp khác / học sinh mới / bỏ qua
  * quyetDinh = { chỉ số dòng: Mã HS | 'moi' | 'boqua' }.
- * tuThemMoi: khi LỚP CHƯA CÓ HỌC SINH NÀO, dòng không trùng tên ai trong hệ thống -> tự coi là học sinh mới của lớp.
+ * tuThemMoi: dòng không tìm thấy trong lớp (không trùng tên ai, không gần giống em nào trong lớp) -> tự coi là học sinh mới của lớp.
  * Trả về { dong: [ {hs, themVaoLop} | {moi} | {boQua} | {canChon, ungVien} | {loi} ], vang: [học sinh lớp không có kết quả], siSo }
  */
 export function ghepTheoLop_(dsKq, dsHs, nhom, quyetDinh, tuThemMoi) {
@@ -195,9 +195,13 @@ export function ghepTheoLop_(dsKq, dsHs, nhom, quyetDinh, tuThemMoi) {
     if (trongLop.length === 1) return { hs: trongLop[0] };
     if (trongLop.length > 1) return { canChon: 'trungTen', ungVien: trongLop };
     var khac = cungTen(h);
-    // Lớp chưa có danh sách (lần gửi đầu) -> tự thêm. Lớp đã có danh sách -> tên lạ thường là gõ sai, phải hỏi giáo viên.
-    if (!khac.length && tuThemMoi && !lop.length) return { moi: true, tuDong: true };
-    return { canChon: 'khongCo', ungVien: khac };
+    if (khac.length) return { canChon: 'khongCo', ungVien: khac }; // trùng tên em ở lớp khác -> hỏi: cùng 1 em (gộp mã) hay em khác
+    // Tên gần giống 1 em trong lớp (sai 1–2 ký tự) -> nhiều khả năng gõ sai -> hỏi giáo viên
+    var gan = lop.filter(function (x) { return ganGiongTen_(x.hoTen, h.hoTen); });
+    if (gan.length) return { canChon: 'ganGiong', ungVien: gan };
+    // Không tìm thấy trong lớp -> mặc định là học sinh mới (giáo viên vẫn đổi được trong bảng ghép)
+    if (tuThemMoi) return { moi: true, tuDong: true };
+    return { canChon: 'khongCo', ungVien: [] };
   };
   var daGap = {};
   var dong = dsKq.map(function (h, i) {
@@ -209,6 +213,26 @@ export function ghepTheoLop_(dsKq, dsHs, nhom, quyetDinh, tuThemMoi) {
     return r;
   });
   return { dong: dong, vang: lop.filter(function (x) { return !daGap[x.maHs]; }), siSo: lop.length };
+}
+
+/** Hai họ tên gần giống (bỏ dấu, khác 1–2 ký tự) -> có thể là gõ sai. */
+export function ganGiongTen_(a, b) {
+  a = khongDau_(a); b = khongDau_(b);
+  if (!a || !b || a === b) return false;
+  var nguong = Math.min(a.length, b.length) >= 8 ? 2 : 1;
+  if (Math.abs(a.length - b.length) > nguong) return false;
+  var truoc = [];
+  for (var j = 0; j <= b.length; j++) truoc.push(j);
+  for (var i = 1; i <= a.length; i++) {
+    var hang = [i], nhoNhat = i;
+    for (var k = 1; k <= b.length; k++) {
+      hang.push(Math.min(truoc[k] + 1, hang[k - 1] + 1, truoc[k - 1] + (a[i - 1] === b[k - 1] ? 0 : 1)));
+      nhoNhat = Math.min(nhoNhat, hang[k]);
+    }
+    if (nhoNhat > nguong) return false;
+    truoc = hang;
+  }
+  return truoc[b.length] <= nguong;
 }
 
 export function chuoi_(x) { return x == null ? '' : String(x).trim(); }
@@ -304,6 +328,7 @@ export const LY_DO_CAN_CHON = {
   lechTen: 'Họ tên trong file khác với họ tên của Mã HS',
   trungTen: 'Lớp có nhiều học sinh trùng họ tên — chọn đúng em',
   khongCo: 'Không tìm thấy trong lớp',
+  ganGiong: 'Tên gần giống 1 em trong lớp — có phải gõ sai?',
   canLop: 'Chưa rõ lớp — cột Lớp trống, chọn lớp cho dòng này'
 };
 

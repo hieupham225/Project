@@ -142,6 +142,15 @@ test('chỉ có bảng kết quả (đáp án chép trong từng dòng, kiểu t
   assert.equal(xt.phieuXemTruoc.nhanXet.uu, 'Giỏi'); assert.equal(xt.phieuXemTruoc.nhanXet.nhuoc, 'Chưa có'); assert.equal(xt.phieuXemTruoc.thuHang, '1');
 });
 
+test('lớp đã có danh sách: em không có trong lớp -> mặc định mới; tên gần giống -> hỏi lại', async () => {
+  const td = st.mau.ketQua.KetQua[0];
+  const dong = (ten) => { const r = td.map(() => ''); r[2] = ten; r[3] = 'Toán 1'; r[5] = '105'; return r; };
+  const xt = await A.rpc('gvXemTruoc', { kq: { KetQua: [td, dong('Nguyễn Hoàn Toàn Mới'), dong('Vũ Đức Minhh'), dong('vu duc minh')] }, da: st.mau.dapAn }, {});
+  assert.deepEqual(xt.hocSinh.map((h) => [h.trangThai, h.canChon]), [['moi', ''], ['canChon', 'ganGiong'], ['co', '']]);
+  assert.equal(xt.hocSinh[0].tuDong, true);
+  assert.deepEqual(xt.hocSinh[1].ungVien.map((u) => u.hoTen), ['Vũ Đức Minh']);
+});
+
 test('1 file nhiều lớp: tự ghép theo cột Lớp, tạo lớp mới, cột Lớp trống thì đoán theo học sinh', async () => {
   const dl = await A.rpc('gvTaiDuLieu');
   const hue = dl.hocSinh.find((h) => h.hoTen === 'Lê Kim Huệ');
