@@ -208,6 +208,9 @@
   ul.ds-xong { list-style: none; padding: 0; margin: 0; }
   ul.ds-xong li { padding: 10px 0; border-bottom: 1px solid var(--vien); margin: 0; }
   ul.ds-xong li:last-child { border-bottom: 0; }
+  /* Thẻ Bài thi: tên bài + nút Xem phiếu cùng hàng, nút ở bên phải */
+  .o-bai-thi { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: 1 1 0; min-width: 0; }
+  .o-bai-thi b.lap-lai { color: var(--phu); font-weight: 500; }
   /* Tab Lớp học */
   .luoi-lop { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
   .the-lop { background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); padding: 18px; box-shadow: var(--bong-thap); display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: box-shadow .125s var(--em), transform .125s var(--em); }
@@ -585,7 +588,7 @@
         </div>
       </div>
       <table class="ds">
-        <thead><tr><th>Bài thi</th><th>Lần</th><th>Ngày thi</th><th>Số phiếu</th><th>Công bố</th><th>Phiếu</th><th></th></tr></thead>
+        <thead><tr><th>Bài thi</th><th>Lần</th><th>Ngày thi</th><th>Số phiếu</th><th>Công bố</th><th></th></tr></thead>
         <tbody id="bangDot"></tbody>
       </table>
     </section>
@@ -1709,11 +1712,11 @@
       return a.nhom.localeCompare(b.nhom) || a.baiThi.localeCompare(b.baiThi) || a.lan - b.lan;
     });
     var tb = $('bangDot'); tb.textContent = '';
-    if (!ds.length) tb.appendChild(the('tr', {}, [the('td', { colspan: 7, class: 'goi-y', text: 'Chưa có bài thi nào.' })]));
+    if (!ds.length) tb.appendChild(the('tr', {}, [the('td', { colspan: 6, class: 'goi-y', text: 'Chưa có bài thi nào.' })]));
     var nhomTruoc = null, baiTruoc = null;
     ds.forEach(function (d) {
       if (d.nhom !== nhomTruoc) {
-        tb.appendChild(the('tr', { class: 'nhom-dau' }, [the('td', { colspan: 7, text: '👥 Lớp: ' + (d.nhom || '(chưa đặt)') })]));
+        tb.appendChild(the('tr', { class: 'nhom-dau' }, [the('td', { colspan: 6, text: '👥 Lớp: ' + (d.nhom || '(chưa đặt)') })]));
         nhomTruoc = d.nhom; baiTruoc = null;
       }
       var nutCongBo = d.congBo
@@ -1724,10 +1727,11 @@
         : the('button', { class: 'nho', text: 'Công bố', disabled: d.soPhieu ? null : '', title: d.soPhieu ? '' : 'Lần này chưa có phiếu', onclick: function () { doiCongBo(d, true, nutCongBo); } });
       if (d.soPhieu) nutCongBo.removeAttribute('disabled');
       tb.appendChild(the('tr', {}, [
-        the('td', {}, [d.baiThi !== baiTruoc ? the('b', { text: d.baiThi }) : the('span', { class: 'goi-y', text: '〃' })]),
+        the('td', {}, [the('div', { class: 'o-bai-thi' }, [
+          the('b', { text: d.baiThi, class: d.baiThi !== baiTruoc ? '' : 'lap-lai' }),
+          d.soPhieu ? the('button', { class: 'phu nho', text: 'Xem phiếu', onclick: function () { hopDsPhieu(d); } }) : null])]),
         the('td', { text: 'Lần ' + d.lan }), the('td', { text: d.ngayThi }), the('td', { text: d.soPhieu }),
         the('td', {}, [the('span', { class: 'nhan ' + (d.congBo ? 'co' : 'moi'), text: d.congBo ? 'Đã công bố' : 'Chưa công bố' })]),
-        the('td', {}, [d.soPhieu ? the('button', { class: 'phu nho', text: 'Xem phiếu', onclick: function () { hopDsPhieu(d); } }) : '']),
         the('td', {}, [the('div', { class: 'cum-thao-tac' }, [nutCongBo, the('span', { class: 'gian' }),
           the('button', { class: 'nguy nho', text: 'Xóa lần này', onclick: function () {
             hoi('Xóa ' + tenLanThi(d) + ' (lớp ' + d.nhom + ') và ' + d.soPhieu + ' phiếu?', { nut: 'Xóa', nguyHiem: true }).then(function (ok) { if (!ok) return;
