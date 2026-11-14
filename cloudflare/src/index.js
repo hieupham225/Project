@@ -438,7 +438,8 @@ class NguCanh {
 
   async lanThi() {
     if (this.bo.lt) return this.bo.lt;
-    this.bo.lt = (await this.db.prepare('SELECT * FROM lan_thi WHERE kg = ?').bind(this.kg).all()).results.map((r) => ({
+    this.bo.lt = (await this.db.prepare('SELECT rowid AS stt_tao, * FROM lan_thi WHERE kg = ?').bind(this.kg).all()).results.map((r) => ({
+      sttTao: r.stt_tao, // thứ tự ghi (tăng dần theo thời gian tạo) — để sắp xếp mới nhất trước
       maDot: r.id, lopId: r.lop, nhom: (this.lopTheoId(r.lop) || {}).ten || '', baiThi: r.bai_thi, lan: r.lan, ngayThi: r.ngay_thi,
       thuTu: r.thu_tu, congBo: !!r.cong_bo, ngayTao: r.ngay_tao
     }));

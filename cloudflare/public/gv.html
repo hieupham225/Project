@@ -212,6 +212,7 @@
   .o-bai-thi { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: 1 1 0; min-width: 0; }
   .o-bai-thi b.lap-lai { color: var(--phu); font-weight: 500; }
   .o-bai-thi .ten-bai { display: flex; flex-direction: column; min-width: 0; }
+  .o-bai-thi button { white-space: nowrap; flex: none; }
   .o-bai-thi .nhan-phu { display: none; font-size: 12px; color: var(--phu); font-weight: 500; }
   /* Tab Lớp học */
   .luoi-lop { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
@@ -1727,8 +1728,11 @@
   function veDot() {
     dienSelect($('locNhomDot'), DL.nhom || [], 'Tất cả lớp');
     var loc = $('locNhomDot').value;
+    // Mới tạo gần nhất lên đầu; vẫn gom theo lớp (lớp có lần thi mới nhất đứng trước)
+    var moiNhat = {};
+    DL.dot.forEach(function (d) { moiNhat[d.nhom] = Math.max(moiNhat[d.nhom] || 0, d.sttTao || 0); });
     var ds = DL.dot.filter(function (d) { return !loc || d.nhom === loc; }).sort(function (a, b) {
-      return a.nhom.localeCompare(b.nhom) || a.baiThi.localeCompare(b.baiThi) || a.lan - b.lan;
+      return (moiNhat[b.nhom] - moiNhat[a.nhom]) || a.nhom.localeCompare(b.nhom) || (b.sttTao || 0) - (a.sttTao || 0) || b.lan - a.lan;
     });
     var tb = $('bangDot'); tb.textContent = '';
     if (!ds.length) tb.appendChild(the('tr', {}, [the('td', { colspan: 6, class: 'goi-y', text: 'Chưa có bài thi nào. Bấm "📤 Gửi kết quả thi" để tải lên bảng kết quả và tạo phiếu.' })]));
