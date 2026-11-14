@@ -661,6 +661,36 @@ const HAM = {
     return kq;
   },
 
+  /** Xóa lớp: học sinh vẫn giữ (chỉ bỏ khỏi lớp); các lần thi và phiếu của lớp bị xóa. Lớp đã có kết quả thi: chỉ chủ / quản trị. */
+  async gvXoaLop(c, ten) {
+    ten = L.chuoi_(ten);
+    c.kiemTraLop(ten);
+    const l = c.lopTheoTen(ten);
+    if (!l) throw new Loi('Không tìm thấy lớp.');
+    const soLan = (await c.lanThi()).filter((d) => d.lopId === l.id).length;
+    if (soLan && !c.nd.quanTri) throw new Loi('Lớp "' + ten + '" đã có kết quả thi — chỉ chủ / quản trị mới xóa được.', 403);
+    await c.db.batch([
+      c.db.prepare('DELETE FROM phieu WHERE lan_thi IN (SELECT id FROM lan_thi WHERE lop = ? AND kg = ?)').bind(l.id, c.kg),
+      c.db.prepare('DELETE FROM lan_thi WHERE lop = ? AND kg = ?').bind(l.id, c.kg),
+      c.db.prepare('DELETE FROM hoc_sinh_lop WHERE lop = ?').bind(l.id),
+      c.db.prepare('DELETE FROM lop WHERE id = ? AND kg = ?').bind(l.id, c.kg)
+    ]);
+    // Bỏ lớp khỏi danh sách lớp phụ trách của các giáo viên
+    const tv = (await c.db.prepare("SELECT tai_khoan, lop FROM thanh_vien WHERE kg = ? AND lop LIKE ?").bind(c.kg, '%' + l.id + '%').all()).results;
+    const sua = [];
+    tv.forEach((r) => {
+      let ds; try { ds = JSON.parse(r.lop); } catch (e) { return; }
+      if (!Array.isArray(ds) || ds.indexOf(l.id) < 0) return;
+      sua.push(c.db.prepare('UPDATE thanh_vien SET lop = ? WHERE kg = ? AND tai_khoan = ?').bind(JSON.stringify(ds.filter((x) => x !== l.id)), c.kg, r.tai_khoan));
+      if (r.tai_khoan === c.nd.tkId) c.nd.lop = ds.filter((x) => x !== l.id);
+    });
+    if (sua.length) await c.db.batch(sua);
+    await c.napLop(); c.xoaBoNho();
+    const kq = await HAM.gvTaiDuLieu(c);
+    kq.thongBao = 'Đã xóa lớp "' + ten + '"' + (soLan ? ' và ' + soLan + ' lần thi của lớp' : '') + '. Học sinh vẫn được giữ trong danh sách học sinh.';
+    return kq;
+  },
+
   /* ---------- gửi kết quả (2 file) ---------- */
 
   /** Đọc link Google Sheet đã chia sẻ "Bất kỳ ai có đường liên kết" -> trả file .xlsx (base64) để trình duyệt đọc. */

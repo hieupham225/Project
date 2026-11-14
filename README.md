@@ -13,7 +13,7 @@ Phụ huynh nhập **1 mã tra cứu riêng** để xem tất cả phiếu của
 | Trang | Ai dùng | Làm gì |
 |---|---|---|
 | `/` | Phụ huynh | Nhập mã tra cứu, xem phiếu, tải PDF |
-| `/gv` | Giáo viên | Đăng ký / đăng nhập, quản lý lớp và học sinh, gửi kết quả, công bố, xem tổng hợp, mời giáo viên khác |
+| `/gv` | Giáo viên | Đăng ký / đăng nhập, quản lý lớp học và học sinh, gửi kết quả, công bố, xem tổng hợp, mời giáo viên khác |
 
 ```
 Giáo viên                                                              Phụ huynh
@@ -60,7 +60,9 @@ Thử với bảng điểm thật của 117 học sinh: điểm tự tính khớ
 
 ### Giáo viên
 1. Mở `/gv` → **Đăng ký miễn phí**: nhập họ tên, tên hiển thị trên phiếu (trung tâm / lớp học), email và mật khẩu.
-2. **Học sinh** → **+ Lớp mới** → **Thêm nhiều / nhập Excel**: dán danh sách họ tên. Mỗi em được cấp **Mã HS** và **mã tra cứu**.
+2. **Lớp học** → **+ Lớp mới** → mở lớp → **+ Học sinh mới / nhập Excel**: dán danh sách họ tên. Mỗi em được cấp **Mã HS** và **mã tra cứu**.
+   Trong trang lớp: xem sĩ số và các bài thi của lớp, **+ Thêm học sinh đã có** (em học thêm lớp/môn khác, vẫn 1 mã tra cứu), bỏ em khỏi lớp, đổi tên hoặc xóa lớp.
+   Tab **Học sinh** quản lý thông tin từng em (sửa, cấp lại mã, xóa) trên toàn bộ các lớp.
 3. **Tin nhắn gửi mã (cả lớp)**: sao chép và nhắn **riêng** cho từng phụ huynh. Mỗi phụ huynh chỉ cần nhận mã một lần.
 4. **Gửi kết quả thi**:
    1. Chọn lớp, rồi tải các file mẫu.

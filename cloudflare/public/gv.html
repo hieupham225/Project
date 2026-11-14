@@ -28,6 +28,7 @@
   :focus-visible { outline: 2px solid var(--thuong-hieu); outline-offset: 2px; }
   .tabs { display: flex; align-items: center; gap: 2px; padding: 8px 16px; background: color-mix(in srgb, var(--be-mat) 85%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--vien); position: sticky; top: 0; z-index: 5; }
   .tab { padding: 6px 14px; border: 0; border-radius: var(--r-tron); background: none; font: 500 14px/20px var(--font); color: var(--phu); cursor: pointer; white-space: nowrap; transition: background-color .125s var(--em), color .125s var(--em); }
+  .dai-tab { display: flex; gap: 2px; min-width: 0; }
   button.tab:hover:not(:disabled) { background: var(--phu-hover); color: var(--chu); }
   button.tab.chon, button.tab.chon:hover:not(:disabled) { background: var(--mau-nhat); color: var(--chu); font-weight: 600; }
   .noi-dung { padding: 20px 16px; max-width: 1280px; margin: 0 auto; }
@@ -117,6 +118,27 @@
   a:hover { text-decoration: underline; }
   .kg-chon { max-width: 200px; }
   .logo-xem { max-height: 60px; max-width: 180px; display: block; margin: 6px 0; }
+  /* Tab Lớp học */
+  .luoi-lop { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+  .the-lop { background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); padding: 18px; box-shadow: var(--bong-thap); display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: box-shadow .125s var(--em), transform .125s var(--em); }
+  .the-lop:hover { box-shadow: var(--bong-cao); transform: translateY(-1px); }
+  .the-lop h3 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+  .the-lop .so-lieu { display: flex; gap: 16px; }
+  .the-lop .so-lieu div { display: flex; flex-direction: column; }
+  .the-lop .so-lieu b { font-size: 20px; line-height: 1.2; }
+  .the-lop .so-lieu span, .thong-ke span { color: var(--phu); font-size: 12px; }
+  .the-lop .gan-nhat { color: var(--phu); font-size: 13px; min-height: 1.4em; }
+  .the-lop .nut-lop { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+  .the-lop.trong { cursor: default; align-items: flex-start; border-style: dashed; box-shadow: none; background: #FCFAF6; }
+  .the-lop.trong:hover { transform: none; }
+  .dau-lop h1 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.01em; }
+  .thong-ke { display: flex; flex-wrap: wrap; gap: 10px 28px; }
+  .thong-ke div { display: flex; flex-direction: column; }
+  .thong-ke b { font-size: 22px; line-height: 1.2; }
+  .ds-co-san { max-height: 50vh; overflow: auto; border: 1px solid var(--vien); border-radius: var(--r-phan-tu); margin: 10px 0; }
+  .ds-co-san label { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--vien); cursor: pointer; }
+  .ds-co-san label:last-child { border-bottom: 0; }
+  .ds-co-san label:hover { background: var(--phu-hover); }
   input, select, textarea, iframe { max-width: 100%; }
   .bang-cuon { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   /* ===== Điện thoại / máy tính bảng dọc ===== */
@@ -126,8 +148,11 @@
     .the { padding: 16px 14px; border-radius: 14px; }
     h2 { font-size: 16px; }
     /* Thanh trên: dòng 1 tài khoản, dòng 2 các tab (xuống dòng, không bị che) */
-    .tabs { flex-wrap: wrap; gap: 4px; padding: 8px 10px; }
-    .nguoi-dung { order: -1; width: 100%; justify-content: flex-end; flex-wrap: wrap; gap: 6px; padding-bottom: 4px; border-bottom: 1px solid var(--vien); margin-bottom: 2px; }
+    .tabs { flex-wrap: wrap; gap: 0; padding: 8px 0 6px; }
+    .nguoi-dung { padding: 0 10px 6px; }
+    .dai-tab { width: 100%; overflow-x: auto; scrollbar-width: none; padding: 2px 10px; scroll-padding: 0 10px; }
+    .dai-tab::-webkit-scrollbar { display: none; }
+    .nguoi-dung { order: -1; width: 100%; justify-content: flex-end; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid var(--vien); margin-bottom: 6px; }
     .nguoi-dung #tenNguoiDung { margin-right: auto; }
     .kg-chon { max-width: 100%; flex: 1 1 100%; }
     button.tab { padding: 6px 10px; font-size: 13px; }
@@ -203,12 +228,15 @@
   </div>
 
   <div class="tabs an" id="thanhTabs">
-    <button class="tab chon" data-tab="tabHs">👩‍🎓 Học sinh</button>
-    <button class="tab" data-tab="tabGui">📤 Gửi kết quả thi</button>
-    <button class="tab" data-tab="tabDot">🗂️ Bài thi</button>
-    <button class="tab" data-tab="tabTongHop">📊 Tổng hợp</button>
-    <button class="tab chi-quan-tri" data-tab="tabTaiKhoan">👥 Giáo viên</button>
-    <button class="tab chi-quan-tri" data-tab="tabCaiDat">⚙️ Cài đặt</button>
+    <div class="dai-tab" role="tablist">
+      <button class="tab chon" data-tab="tabLop">🏫 Lớp học</button>
+      <button class="tab" data-tab="tabHs">👩‍🎓 Học sinh</button>
+      <button class="tab" data-tab="tabGui">📤 Gửi kết quả thi</button>
+      <button class="tab" data-tab="tabDot">🗂️ Bài thi</button>
+      <button class="tab" data-tab="tabTongHop">📊 Tổng hợp</button>
+      <button class="tab chi-quan-tri" data-tab="tabTaiKhoan">👥 Giáo viên</button>
+      <button class="tab chi-quan-tri" data-tab="tabCaiDat">⚙️ Cài đặt</button>
+    </div>
     <div class="nguoi-dung">
       <select id="chonKg" class="kg-chon an" title="Đổi trung tâm / lớp học"></select>
       <span id="tenNguoiDung"></span>
@@ -220,13 +248,65 @@
   <div class="noi-dung">
     <div id="dangTai" class="dang-tai an">Đang tải dữ liệu…</div>
 
+    <!-- ============ LỚP HỌC ============ -->
+    <section id="tabLop" class="an">
+      <div id="lopDs">
+        <div class="thanh">
+          <input id="timLop" type="search" placeholder="Tìm lớp…" style="width:260px">
+          <span id="demLop" class="goi-y"></span>
+          <span class="gian"></span>
+          <button id="nutTaoLopMoi">+ Lớp mới</button>
+        </div>
+        <div id="luoiLop" class="luoi-lop"></div>
+      </div>
+
+      <div id="lopCt" class="an">
+        <div class="thanh">
+          <button id="nutVeDsLop" class="phu">← Tất cả lớp</button>
+          <span class="gian"></span>
+          <button id="nutGuiKqLop">📤 Gửi kết quả thi</button>
+        </div>
+        <div class="the dau-lop">
+          <div class="thanh" style="margin-bottom:10px">
+            <h1 id="ctTenLop"></h1>
+            <span class="gian"></span>
+            <button id="nutDoiTenLop" class="phu nho">Đổi tên</button>
+            <button id="nutXoaLop" class="nguy nho">Xóa lớp</button>
+          </div>
+          <div id="ctThongKe" class="thong-ke"></div>
+        </div>
+        <div class="the">
+          <div class="thanh">
+            <h2 id="ctTieuDeHs" style="margin:0"></h2>
+            <span class="gian"></span>
+            <button id="nutThemCoSan" class="phu nho">+ Thêm học sinh đã có</button>
+            <button id="nutThemMoiVaoLop" class="phu nho">+ Học sinh mới / nhập Excel</button>
+            <button id="nutTinNhanLop" class="phu nho">Tin nhắn gửi mã</button>
+          </div>
+          <table class="ds">
+            <thead><tr><th>STT</th><th>Mã HS</th><th>Họ tên</th><th>Học cả lớp khác</th><th>SĐT phụ huynh</th><th>Mã tra cứu</th><th></th></tr></thead>
+            <tbody id="bangHsLop"></tbody>
+          </table>
+        </div>
+        <div class="the">
+          <div class="thanh">
+            <h2 style="margin:0">Bài thi của lớp</h2>
+            <span class="gian"></span>
+            <button id="nutTongHopLop" class="phu nho">📊 Xem tổng hợp</button>
+          </div>
+          <table class="ds">
+            <thead><tr><th>Bài thi</th><th>Lần</th><th>Ngày thi</th><th>Số phiếu</th><th>Trạng thái</th></tr></thead>
+            <tbody id="bangDotLop"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <!-- ============ HỌC SINH ============ -->
     <section id="tabHs" class="an">
       <div class="thanh">
         <input id="timHs" type="search" placeholder="Tìm theo tên, mã HS, SĐT…" style="width:260px">
         <select id="locLop"></select>
-        <button id="nutTaoLop" class="phu nho">+ Lớp mới</button>
-        <button id="nutDoiTenNhom" class="phu nho an">Đổi tên lớp</button>
         <span id="demHs" class="goi-y"></span>
         <span class="gian"></span>
         <button id="nutThemHs">+ Thêm học sinh</button>
@@ -527,7 +607,7 @@
       $('hoiNhap').onkeydown = function (e) { if (e.key === 'Enter') xong(true); if (e.key === 'Escape') xong(false); };
     });
   }
-  function capNhat(dl) { if (dl) { DL = dl; apDungQuyen(); veHocSinh(); veChonLop(); veDot(); veTongHop(); veCaiDat(); veTaiKhoan(); capNhatLanInfo(); }
+  function capNhat(dl) { if (dl) { DL = dl; apDungQuyen(); veLop(); veHocSinh(); veChonLop(); veDot(); veTongHop(); veCaiDat(); veTaiKhoan(); capNhatLanInfo(); }
     if (dl && dl.matKhauTam) hopMatKhau(dl.matKhauTam); if (dl && dl.thongBao) bao(dl.thongBao); }
   function dienSelect(sel, ds, nhanTatCa) {
     var cu = sel.value; sel.textContent = '';
@@ -541,7 +621,8 @@
   document.querySelectorAll('.tab').forEach(function (t) {
     t.onclick = function () {
       document.querySelectorAll('.tab').forEach(function (x) { x.classList.toggle('chon', x === t); });
-      ['tabHs', 'tabGui', 'tabDot', 'tabTongHop', 'tabTaiKhoan', 'tabCaiDat'].forEach(function (id) { $(id).classList.toggle('an', id !== t.dataset.tab); });
+      if (t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      ['tabLop', 'tabHs', 'tabGui', 'tabDot', 'tabTongHop', 'tabTaiKhoan', 'tabCaiDat'].forEach(function (id) { $(id).classList.toggle('an', id !== t.dataset.tab); });
     };
   });
 
@@ -566,6 +647,141 @@
     });
   }
 
+  /* =================== LỚP HỌC =================== */
+  var lopMo = '';            // lớp đang xem chi tiết ('' = danh sách lớp)
+  function soNgay(s) { var m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s || ''); return m ? +m[3] * 1e4 + +m[2] * 100 + +m[1] : 0; }
+  function dotCuaLop(n) {
+    return (DL.dot || []).filter(function (d) { return d.nhom === n; })
+      .sort(function (a, b) { return soNgay(b.ngayThi) - soNgay(a.ngayThi) || (b.thuTu || 0) - (a.thuTu || 0) || b.lan - a.lan; });
+  }
+  function soBai(ds) { var s = {}; ds.forEach(function (d) { s[d.baiThi] = 1; }); return Object.keys(s).length; }
+  function oSo(so, nhan) { return the('div', {}, [the('b', { text: so }), the('span', { text: nhan })]); }
+
+  function veLop() {
+    var ds = DL.nhom || [];
+    if (lopMo && ds.indexOf(lopMo) < 0) lopMo = '';
+    $('lopDs').classList.toggle('an', !!lopMo); $('lopCt').classList.toggle('an', !lopMo);
+    if (lopMo) return veChiTietLop();
+    var tu = $('timLop').value.trim().toLowerCase();
+    var loc = ds.filter(function (n) { return !tu || n.toLowerCase().indexOf(tu) >= 0; });
+    $('demLop').textContent = ds.length + ' lớp';
+    var k = $('luoiLop'); k.textContent = '';
+    loc.forEach(function (n) {
+      var hs = hsCuaLop(n), dot = dotCuaLop(n), moi = dot[0];
+      var the1 = the('div', { class: 'the-lop', tabindex: 0, role: 'button' }, [
+        the('h3', { text: n }),
+        the('div', { class: 'so-lieu' }, [oSo(hs.length, 'học sinh'), oSo(soBai(dot), 'bài thi'), oSo(dot.length, 'lần thi')]),
+        the('div', { class: 'gan-nhat', text: moi ? 'Gần nhất: ' + tenLanThi(moi) + (moi.ngayThi ? ' · ' + moi.ngayThi : '') + (moi.congBo ? '' : ' (chưa công bố)') : 'Chưa có bài thi' }),
+        the('div', { class: 'nut-lop' }, [
+          the('button', { class: 'nho', text: 'Mở lớp' }),
+          the('button', { class: 'phu nho', text: '📤 Gửi kết quả', onclick: function (e) { e.stopPropagation(); guiKqChoLop(n); } })
+        ])
+      ]);
+      the1.onclick = function () { moLop(n); };
+      the1.onkeydown = function (e) { if (e.key === 'Enter') moLop(n); };
+      k.appendChild(the1);
+    });
+    if (!ds.length) {
+      k.appendChild(the('div', { class: 'the-lop trong' }, [
+        the('h3', { text: 'Chưa có lớp nào' }),
+        the('div', { class: 'goi-y', text: 'Tạo lớp đầu tiên, rồi thêm học sinh vào lớp. Mỗi học sinh có thể học nhiều lớp mà vẫn chỉ có 1 mã tra cứu.' }),
+        the('button', { text: '+ Tạo lớp', onclick: function () { $('nutTaoLopMoi').click(); } })
+      ]));
+    } else if (!loc.length) k.appendChild(the('p', { class: 'goi-y', text: 'Không có lớp nào khớp "' + tu + '".' }));
+  }
+  function moLop(n) { lopMo = n; veLop(); window.scrollTo(0, 0); }
+  function chuyenTab(id) { document.querySelector('[data-tab=' + id + ']').click(); }
+  function guiKqChoLop(n) { chuyenTab('tabGui'); $('gLop').value = n; $('gLop').onchange(); }
+
+  function veChiTietLop() {
+    var n = lopMo, hs = hsCuaLop(n), dot = dotCuaLop(n);
+    $('ctTenLop').textContent = n;
+    var daCB = dot.filter(function (d) { return d.congBo; }).length;
+    var tk = $('ctThongKe'); tk.textContent = '';
+    [oSo(hs.length, 'học sinh'), oSo(soBai(dot), 'bài thi'), oSo(dot.length, 'lần thi'), oSo(daCB + '/' + dot.length, 'đã công bố')].forEach(function (x) { tk.appendChild(x); });
+    $('nutXoaLop').classList.toggle('an', !!dot.length && !(DL.toi && DL.toi.quanTri));
+    $('ctTieuDeHs').textContent = 'Học sinh trong lớp (' + hs.length + ')';
+    var tb = $('bangHsLop'); tb.textContent = '';
+    if (!hs.length) tb.appendChild(the('tr', {}, [the('td', { colspan: 7, class: 'goi-y', text: 'Lớp chưa có học sinh. Bấm "+ Thêm học sinh đã có" hoặc "+ Học sinh mới / nhập Excel". Cũng có thể gửi kết quả thi lần đầu: hệ thống tự thêm các em trong file.' })]));
+    hs.slice().sort(function (a, b) { return a.maHs < b.maHs ? -1 : 1; }).forEach(function (h, i) {
+      var khac = h.nhom.filter(function (x) { return x !== n; });
+      tb.appendChild(the('tr', {}, [
+        the('td', { text: i + 1 }), the('td', { text: h.maHs }), the('td', {}, [the('b', { text: h.hoTen })]),
+        the('td', {}, khac.map(function (x) { return the('span', { class: 'chip', text: x }); })),
+        the('td', { text: h.sdt || '' }), the('td', { class: 'ma', text: h.maTraCuu }),
+        the('td', {}, [
+          the('button', { class: 'phu nho', text: 'Tin nhắn', onclick: function () { hopTinNhan('Tin nhắn gửi phụ huynh em ' + h.hoTen, tinNhan(h)); } }), ' ',
+          the('button', { class: 'nguy nho', text: 'Bỏ khỏi lớp', onclick: function () {
+            hoi('Bỏ ' + h.hoTen + ' (' + h.maHs + ') khỏi lớp "' + n + '"?\nHọc sinh vẫn còn trong danh sách học sinh' + (khac.length ? ' và các lớp khác.' : '.') + ' Phiếu điểm đã có của lớp này vẫn giữ.', { nut: 'Bỏ khỏi lớp', nguyHiem: true }).then(function (ok) {
+              if (ok) goi('gvCapNhatNhom', [h.maHs], n, 'bo').then(capNhat).catch(baoLoi);
+            });
+          } })
+        ])
+      ]));
+    });
+    var tbd = $('bangDotLop'); tbd.textContent = '';
+    if (!dot.length) tbd.appendChild(the('tr', {}, [the('td', { colspan: 5, class: 'goi-y', text: 'Chưa có bài thi. Bấm "📤 Gửi kết quả thi" để tạo phiếu cho lớp.' })]));
+    dot.forEach(function (d) {
+      tbd.appendChild(the('tr', {}, [the('td', {}, [the('b', { text: d.baiThi })]), the('td', { text: 'Lần ' + d.lan }), the('td', { text: d.ngayThi || '' }),
+        the('td', { text: d.soPhieu }), the('td', {}, [the('span', { class: 'nhan ' + (d.congBo ? 'co' : 'moi'), text: d.congBo ? 'Đã công bố' : 'Chưa công bố' })])]));
+    });
+  }
+  $('timLop').oninput = veLop;
+  $('nutTaoLopMoi').onclick = function () { taoLopMoi(function (ten) { if (ten) moLop(ten); }); };
+  $('nutVeDsLop').onclick = function () { lopMo = ''; veLop(); };
+  $('nutGuiKqLop').onclick = function () { guiKqChoLop(lopMo); };
+  $('nutTongHopLop').onclick = function () { chuyenTab('tabTongHop'); $('locNhomTH').value = lopMo; veTongHop(); };
+  $('nutTinNhanLop').onclick = function () {
+    var ds = hsCuaLop(lopMo);
+    if (!ds.length) return bao('Lớp chưa có học sinh.', true);
+    hopTinNhan('Tin nhắn gửi mã — lớp ' + lopMo + ' (' + ds.length + ' học sinh)', ds.map(tinNhan).join('\n\n--------------------\n\n'));
+  };
+  $('nutThemMoiVaoLop').onclick = function () {
+    chuyenTab('tabHs'); $('locLop').value = lopMo; veHocSinh(); $('nutThemNhieu').click();
+    $('formNhieu').scrollIntoView({ block: 'start' });
+  };
+  $('nutDoiTenLop').onclick = function () {
+    var cu = lopMo;
+    hoi('Đổi tên lớp "' + cu + '" thành:', { nhap: cu, nut: 'Đổi tên' }).then(function (moi) {
+      if (!moi || moi.trim() === cu) return;
+      goi('gvDoiTenNhom', cu, moi.trim()).then(function (dl) { lopMo = moi.trim(); capNhat(dl); }).catch(baoLoi);
+    });
+  };
+  $('nutXoaLop').onclick = function () {
+    var n = lopMo, soHs = hsCuaLop(n).length, soDot = dotCuaLop(n).length;
+    hoi('Xóa lớp "' + n + '"?\n\n• ' + soHs + ' học sinh sẽ được bỏ khỏi lớp (vẫn giữ trong danh sách học sinh và mã tra cứu).' +
+      (soDot ? '\n• ' + soDot + ' lần thi cùng toàn bộ phiếu điểm của lớp sẽ bị XÓA, phụ huynh không xem được nữa.' : '') + '\n\nKhông hoàn tác được.', { nut: 'Xóa lớp', nguyHiem: true }).then(function (ok) {
+      if (ok) goi('gvXoaLop', n).then(function (dl) { lopMo = ''; capNhat(dl); }).catch(baoLoi);
+    });
+  };
+  $('nutThemCoSan').onclick = function () {
+    var n = lopMo;
+    var ds = DL.hocSinh.filter(function (h) { return h.nhom.indexOf(n) < 0; });
+    if (!ds.length) return bao('Tất cả học sinh đã ở trong lớp này. Dùng "+ Học sinh mới / nhập Excel" để thêm em mới.', true);
+    var tim = the('input', { type: 'search', placeholder: 'Tìm theo tên, mã HS…', style: 'width:100%' });
+    var khung = the('div', { class: 'ds-co-san' });
+    var chon = {};
+    var dem = the('span', { class: 'goi-y', text: 'Chưa chọn em nào' });
+    function ve() {
+      var tu = tim.value.trim().toLowerCase(); khung.textContent = '';
+      ds.forEach(function (h) {
+        if (tu && [h.hoTen, h.maHs, h.sdt].join(' ').toLowerCase().indexOf(tu) < 0) return;
+        var cb = the('input', { type: 'checkbox' }); cb.checked = !!chon[h.maHs];
+        cb.onchange = function () { if (cb.checked) chon[h.maHs] = 1; else delete chon[h.maHs]; dem.textContent = Object.keys(chon).length ? 'Đã chọn ' + Object.keys(chon).length + ' em' : 'Chưa chọn em nào'; };
+        khung.appendChild(the('label', {}, [cb, the('div', {}, [the('b', { text: h.hoTen }), the('div', { class: 'goi-y', text: h.maHs + ' · ' + (h.nhom.join(', ') || 'chưa có lớp') })])]));
+      });
+    }
+    tim.oninput = ve; ve();
+    var nut = the('button', { text: 'Thêm vào lớp', onclick: function () {
+      var dsMa = Object.keys(chon);
+      if (!dsMa.length) return bao('Hãy chọn ít nhất 1 học sinh.', true);
+      goi('gvCapNhatNhom', dsMa, n, 'them').then(function (dl) { $('hop').classList.add('an'); capNhat(dl); }).catch(baoLoi);
+    } });
+    moHop('Thêm học sinh đã có vào lớp ' + n, the('div', {}, [
+      the('p', { class: 'goi-y', style: 'margin-top:0', text: 'Học sinh giữ nguyên mã tra cứu và các lớp đang học; phụ huynh xem điểm mọi lớp bằng 1 mã.' }),
+      tim, khung, the('div', { class: 'thanh', style: 'margin:0' }, [nut, dem])]));
+  };
+
   /* =================== HỌC SINH =================== */
   function tinNhan(h) {
     return 'Kính gửi phụ huynh em ' + h.hoTen + ',\n' +
@@ -589,7 +805,6 @@
     var tu = $('timHs').value.trim().toLowerCase();
     var dsLop = DL.nhom || [];
     dienSelect($('locLop'), dsLop, 'Tất cả nhóm');
-    $('nutDoiTenNhom').classList.toggle('an', !$('locLop').value);
     $('dsLop').textContent = '';
     dsLop.forEach(function (l) { $('dsLop').appendChild(the('option', { value: l })); });
 
@@ -652,14 +867,6 @@
       goi('gvCapNhatNhom', Object.keys(daChon), nhom, nut.dataset.hd).then(function (dl) { daChon = {}; $('chonTatCa').checked = false; capNhat(dl); capNhatChon(); }).catch(baoLoi);
     };
   });
-  $('nutDoiTenNhom').onclick = function () {
-    var cu = $('locLop').value; if (!cu) return;
-    hoi('Đổi tên lớp/nhóm "' + cu + '" thành:', { nhap: cu, nut: 'Đổi tên' }).then(function (moi) {
-      if (!moi || moi.trim() === cu) return;
-      goi('gvDoiTenNhom', cu, moi.trim()).then(function (dl) { capNhat(dl); $('locLop').value = moi.trim(); veHocSinh(); }).catch(baoLoi);
-    });
-  };
-
   var dangSua = null;
   function moFormHs(h) {
     dangSua = h ? h.maHs : null;
@@ -689,7 +896,6 @@
     $('formHs').classList.add('an'); $('formNhieu').classList.remove('an');
     $('tieuDeNhieu').textContent = $('locLop').value ? 'Thêm nhiều học sinh vào lớp ' + $('locLop').value + ' (dòng không ghi lớp sẽ vào lớp này)' : 'Thêm nhiều học sinh';
   };
-  $('nutTaoLop').onclick = function () { taoLopMoi(function (ten) { $('locLop').value = ten; veHocSinh(); }); };
   $('nutHuyNhieu').onclick = function () { $('formNhieu').classList.add('an'); };
   $('nutLuuNhieu').onclick = function () {
     var bang = $('danNhieu').value.split(/\r?\n/).filter(function (d) { return d.trim(); }).map(function (d) { return d.split('\t'); });
@@ -1213,7 +1419,7 @@
     $('nutDoiMk').classList.remove('an'); $('nutDangXuat').classList.remove('an');
     document.title = 'Giáo viên — ' + ((DL.toi && DL.toi.khongGian && DL.toi.khongGian.ten) || 'Phiếu kết quả học tập');
     var dangChon = document.querySelector('.tab.chon');
-    if (!qt && dangChon && dangChon.classList.contains('chi-quan-tri')) document.querySelector('[data-tab=tabHs]').click();
+    if (!qt && dangChon && dangChon.classList.contains('chi-quan-tri')) document.querySelector('[data-tab=tabLop]').click();
   }
   $('chonKg').onchange = function () {
     guiApi('/api/chon-khong-gian', { kg: this.value }).then(function () { location.reload(); }).catch(baoLoi);
@@ -1231,7 +1437,7 @@
   }
 
   function hetPhien() {
-    ['tabHs', 'tabGui', 'tabDot', 'tabTongHop', 'tabTaiKhoan', 'tabCaiDat'].forEach(function (id) { $(id).classList.add('an'); });
+    ['tabLop', 'tabHs', 'tabGui', 'tabDot', 'tabTongHop', 'tabTaiKhoan', 'tabCaiDat'].forEach(function (id) { $(id).classList.add('an'); });
     $('thanhTabs').classList.add('an'); $('dangTai').classList.add('an'); $('hop').classList.add('an');
     $('manDangNhap').classList.remove('an');
     hienForm(location.hash === '#dang-ky' ? 'dk' : 'dn');

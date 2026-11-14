@@ -174,6 +174,10 @@ test('mời giáo viên + phân quyền theo lớp', async () => {
   await assert.rejects(C.rpc('gvTaoNhom', 'Toán 1'), /giáo viên khác phụ trách/);
   const tao = await C.rpc('gvTaoNhom', 'Toán 2 nâng cao');
   assert.deepEqual(tao.nhom.sort(), ['Toán 2', 'Toán 2 nâng cao']);
+  // xóa lớp: chỉ lớp mình phụ trách
+  await assert.rejects(C.rpc('gvXoaLop', 'Toán 1'), /không phụ trách/);
+  const xoa = await C.rpc('gvXoaLop', 'Toán 2 nâng cao');
+  assert.deepEqual(xoa.nhom, ['Toán 2']); assert.match(xoa.thongBao, /Đã xóa lớp/);
   // đổi mật khẩu
   await assert.rejects(C.rpc('gvDoiMatKhau', 'sai', 'matkhau789'), /không đúng/);
   await C.rpc('gvDoiMatKhau', mk, 'matkhau789');
@@ -197,4 +201,16 @@ test('chống dò mật khẩu và mã tra cứu', async () => {
   const ipGia2 = { 'CF-Connecting-IP': '10.8.' + (Date.now() % 250) + '.2' };
   for (let i = 0; i < 20; i++) assert.equal((await D.goi('/api/tra-cuu', { ma: 'ZZZZ-ZZZ' + 'ABCDEFGHJKMNPQRSTUVWX'[i] }, ipGia2)).ok, false);
   assert.equal((await D.goi('/api/tra-cuu', { ma: st.em.maTraCuu }, ipGia2)).ma, 429);
+});
+
+test('xóa lớp có kết quả thi: học sinh còn, phiếu mất', async () => {
+  const truoc = await A.rpc('gvTaiDuLieu');
+  const soHs = truoc.hocSinh.length;
+  assert.ok(truoc.dot.some((d) => d.nhom === 'Toán 1'));
+  const dl = await A.rpc('gvXoaLop', 'Toán 1');
+  assert.ok(!dl.nhom.includes('Toán 1'));
+  assert.equal(dl.hocSinh.length, soHs, 'học sinh vẫn còn');
+  assert.ok(!dl.dot.some((d) => d.nhom === 'Toán 1'), 'lần thi của lớp bị xóa');
+  assert.ok(dl.hocSinh.every((h) => !h.nhom.includes('Toán 1')));
+  await assert.rejects(A.rpc('gvXoaLop', 'Toán 1'), /phụ trách|Không tìm thấy/);
 });
