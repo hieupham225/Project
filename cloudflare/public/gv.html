@@ -566,6 +566,7 @@
           <div id="khuTienDo" class="an">
             <div class="tien-do"><div id="thanhTienDo"></div></div>
             <div id="chuTienDo" class="goi-y"></div>
+            <button id="nutTiepTuc" class="an" style="margin-top:10px">↻ Tiếp tục tạo phiếu</button>
           </div>
           <div id="khuXong" class="an"></div>
         </div>
@@ -1260,7 +1261,7 @@
     if (!soHienTai.kq) { trangFile(id, '✔ ' + tenNguon + ' — giờ chọn bảng kết quả học sinh.', 'ok'); return Promise.resolve(); }
     trangFile(id, 'Đang đọc ' + tenNguon + '…');
     var lanDau = loai === 'kq';
-    if (lanDau) { xemTruoc = null; quyetDinhKq = {}; quyetDinhLop = {}; chonGhep = {}; $('khuXong').classList.add('an'); $('khuTienDo').classList.add('an'); }
+    if (lanDau) { xemTruoc = null; quyetDinhKq = {}; quyetDinhLop = {}; chonGhep = {}; dangTao = null; $('nutTiepTuc').classList.add('an'); $('khuXong').classList.add('an'); $('khuTienDo').classList.add('an'); }
     return taiXemTruoc(lanDau).then(function (ok) {
       trangFile(id, ok ? '✔ ' + tenNguon : '✖ ' + tenNguon + ' — xem thông báo lỗi', ok ? 'ok' : 'loi');
       if (ok && loai === 'kq' && !soHienTai.da) trangFile('tenFileDa', xemTruoc && xemTruoc.maDe.length ? 'Chưa chọn — đang dùng đáp án chép trong bảng kết quả (' + xemTruoc.maDe.length + ' mã đề).' : 'Chưa chọn file đáp án.', '');
@@ -1487,6 +1488,7 @@
   };
 
   $('nutTaoPhieu').onclick = function () { taoPhieu(); };
+  $('nutTiepTuc').onclick = function () { chayLo(); };
 
   /* Bài thi đã có trong lớp? -> lần làm tiếp theo (tính riêng cho từng lớp trong file) */
   function cacLanCuaBai(nhom, bai) {
@@ -1523,44 +1525,74 @@
 
   function taoPhieu() {
     if (!soHienTai || !xemTruoc) return;
+    if (dangTao) return chayLo(); // đang tạo dở (mạng lỗi giữa chừng) -> tạo tiếp, không tạo lần thi mới
     var conChon = xemTruoc.hocSinh.filter(function (h) { return h.trangThai === 'canChon'; }).length;
     if (conChon) return bao('Còn ' + conChon + ' dòng chưa chọn lớp / học sinh (xem bảng ghép).', true);
     var ghiDe = $('gGhiDe').checked;
     (ghiDe ? hoi('Ghi đè lần gần nhất? Các phiếu cũ của lần đó sẽ bị xóa.', { nut: 'Ghi đè', nguyHiem: true }) : Promise.resolve(true))
       .then(function (ok) { if (ok) chayTaoPhieu(ghiDe); });
   }
+
+  /* Tạo phiếu theo lô. Mỗi lô gửi kèm 2 file nên để lô lớn (10 em) cho ít lần gửi; lỗi mạng -> tự thử lại;
+     vẫn lỗi -> giữ chỗ đang dở (dangTao) để bấm "Tiếp tục" chạy tiếp, không tạo lần thi mới. */
+  var LO_PHIEU = 10, dangTao = null;
+  function nghi(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
+  function goiThuLai(ham, thamSo, soLan) {
+    var thu = function (lan) {
+      return goi.apply(null, [ham].concat(thamSo)).catch(function (e) {
+        if (lan >= soLan || /hết hạn|phụ trách|Không tìm thấy/.test(e.message || '')) throw e;
+        $('chuTienDo').textContent = 'Mạng chập chờn — đang thử lại (' + (lan + 1) + '/' + soLan + ')…';
+        return nghi(1000 * Math.pow(2, lan - 1)).then(function () { return thu(lan + 1); });
+      });
+    };
+    return thu(1);
+  }
+  function batTatNut(dangChay) { $('nutTaoPhieu').disabled = dangChay; $('nutXemThu').disabled = dangChay; }
+  function veTienDo() {
+    var s = dangTao, d = s.kq.dsDot[s.k];
+    $('thanhTienDo').style.width = Math.round(s.daXong / Math.max(s.tong, 1) * 100) + '%';
+    $('chuTienDo').textContent = (d ? 'Lớp ' + d.nhom + ' — ' : '') + 'đã tạo ' + s.daXong + ' / ' + s.tong + ' phiếu…';
+  }
   function chayTaoPhieu(ghiDe) {
     var nt = $('gNgayThi').value.split('-');
     var tuyChon = { baiThi: $('gBaiThi').value, ngayThi: nt.length === 3 ? nt[2] + '/' + nt[1] + '/' + nt[0] : '',
       themHsMoi: $('themHsMoi').checked, ghiDe: ghiDe, quyetDinh: quyetDinhKq, quyetDinhLop: quyetDinhLop };
-    var nut = $('nutTaoPhieu'); nut.disabled = true; $('nutXemThu').disabled = true;
-    $('khuXong').classList.add('an'); $('khuTienDo').classList.remove('an');
+    batTatNut(true);
+    $('khuXong').classList.add('an'); $('khuTienDo').classList.remove('an'); $('nutTiepTuc').classList.add('an');
     $('thanhTienDo').style.width = '0'; $('chuTienDo').textContent = 'Đang chuẩn bị…';
-    var xong = function () { nut.disabled = false; $('nutXemThu').disabled = false; };
+    // Bước tạo lần thi KHÔNG tự thử lại (gửi lại có thể tạo thêm 1 lần thi)
     goi('gvBatDauDot', soHienTai, tuyChon).then(function (kq) {
-      if (!kq.ok) { xong(); $('khuTienDo').classList.add('an'); return bao(kq.loi, true); }
-      var tong = kq.dsDot.reduce(function (s, d) { return s + d.canTao.length; }, 0), LO = 4, daXong = 0, loi = kq.boQua.slice();
-      var ketQua = [];
-      var chayDot = function (k) {
-        if (k >= kq.dsDot.length) return Promise.resolve();
-        var d = kq.dsDot[k], soDot = 0;
-        var chay = function (i) {
-          if (i >= d.canTao.length) return Promise.resolve();
-          return goi('gvTaoPhieuLo', d.maDot, soHienTai, d.canTao.slice(i, i + LO)).then(function (r) {
-            daXong += r.xong; soDot += r.xong; loi = loi.concat(r.loi);
-            $('thanhTienDo').style.width = Math.round(daXong / Math.max(tong, 1) * 100) + '%';
-            $('chuTienDo').textContent = 'Lớp ' + d.nhom + ' — đã tạo ' + daXong + ' / ' + tong + ' phiếu…';
-            return chay(i + LO);
-          });
-        };
-        return chay(0).then(function () { ketQua.push({ dot: d, soPhieu: soDot }); return chayDot(k + 1); });
-      };
-      return chayDot(0).then(function () {
-        xong(); $('khuTienDo').classList.add('an');
-        hienKetQuaTao(ketQua, loi);
-        return goi('gvTaiDuLieu').then(capNhat);
+      if (!kq.ok) { batTatNut(false); $('khuTienDo').classList.add('an'); return bao(kq.loi, true); }
+      dangTao = { kq: kq, k: 0, i: 0, soDot: 0, daXong: 0, ketQua: [], loi: kq.boQua.slice(),
+        tong: kq.dsDot.reduce(function (s, d) { return s + d.canTao.length; }, 0) };
+      return chayLo();
+    }).catch(function (e) {
+      batTatNut(false); $('khuTienDo').classList.add('an');
+      baoLoi(new Error(e.message + ' Nếu lỗi do mạng, xem thẻ "Bài thi": lần thi có thể đã được tạo — khi gửi lại hãy tích "ghi đè lần gần nhất".'));
+    });
+  }
+  function chayLo() {
+    var s = dangTao; if (!s) return Promise.resolve();
+    batTatNut(true); $('nutTiepTuc').classList.add('an'); $('khuTienDo').classList.remove('an'); veTienDo();
+    var buoc = function () {
+      if (s.k >= s.kq.dsDot.length) return Promise.resolve();
+      var d = s.kq.dsDot[s.k];
+      if (s.i >= d.canTao.length) { s.ketQua.push({ dot: d, soPhieu: s.soDot }); s.k++; s.i = 0; s.soDot = 0; return buoc(); }
+      return goiThuLai('gvTaoPhieuLo', [d.maDot, soHienTai, d.canTao.slice(s.i, s.i + LO_PHIEU)], 4).then(function (r) {
+        s.daXong += r.xong; s.soDot += r.xong; s.loi = s.loi.concat(r.loi); s.i += LO_PHIEU; veTienDo();
+        return buoc();
       });
-    }).catch(function (e) { xong(); baoLoi(e); });
+    };
+    return buoc().then(function () {
+      dangTao = null; batTatNut(false); $('khuTienDo').classList.add('an');
+      hienKetQuaTao(s.ketQua, s.loi);
+      return goi('gvTaiDuLieu').then(capNhat);
+    }, function (e) {
+      // giữ dangTao để chạy tiếp
+      batTatNut(false); $('nutTiepTuc').classList.remove('an');
+      $('chuTienDo').textContent = '⚠ Dừng ở ' + s.daXong + ' / ' + s.tong + ' phiếu: ' + (e.message || e) + ' Bấm "Tiếp tục" để tạo nốt (không tạo lần thi mới).';
+      baoLoi(e);
+    });
   }
 
   function hienKetQuaTao(ketQua, loi) {
