@@ -313,7 +313,9 @@ async function traCuu(req, db, b) {
   if (!hs) return json({ ok: false, loi: LOI_SAI_MA });
   const [nhom, phieu] = await db.batch([
     db.prepare('SELECT l.ten FROM hoc_sinh_lop hl JOIN lop l ON l.id = hl.lop WHERE hl.hoc_sinh = ? ORDER BY hl.thu_tu, l.ten').bind(hs.id),
-    db.prepare(`SELECT p.id, p.tong_diem, p.diem_toi_da, lt.bai_thi, lt.lan, lt.ngay_thi, l.ten AS nhom
+    db.prepare(`SELECT p.id, p.tong_diem, p.diem_toi_da, lt.bai_thi, lt.lan, lt.ngay_thi, l.ten AS nhom,
+        (SELECT AVG(CAST(q.tong_diem AS REAL) * 10.0 / CAST(q.diem_toi_da AS REAL)) FROM phieu q
+          WHERE q.lan_thi = p.lan_thi AND q.tong_diem <> '' AND CAST(q.diem_toi_da AS REAL) > 0) AS tb_lop
         FROM phieu p JOIN lan_thi lt ON lt.id = p.lan_thi JOIN lop l ON l.id = lt.lop
         WHERE p.hoc_sinh = ? AND lt.cong_bo = 1 ORDER BY lt.thu_tu, lt.lan`).bind(hs.id)
   ]);
@@ -321,7 +323,8 @@ async function traCuu(req, db, b) {
     ok: true,
     trungTam: hs.ten_kg,
     hocSinh: { hoTen: hs.ho_ten, nhom: nhom.results.map((x) => x.ten) },
-    phieu: phieu.results.map((x) => ({ maPhieu: x.id, baiThi: x.bai_thi, lan: x.lan, nhom: x.nhom, ngayThi: x.ngay_thi, tongDiem: x.tong_diem, diemToiDa: x.diem_toi_da }))
+    phieu: phieu.results.map((x) => ({ maPhieu: x.id, baiThi: x.bai_thi, lan: x.lan, nhom: x.nhom, ngayThi: x.ngay_thi, tongDiem: x.tong_diem, diemToiDa: x.diem_toi_da,
+      tbLop: x.tb_lop == null ? null : Math.round(x.tb_lop * 100) / 100 }))
   });
 }
 

@@ -109,6 +109,7 @@ test('gửi kết quả bằng 2 file -> phiếu -> phụ huynh tra cứu', asyn
   await A.rpc('gvCongBo', bd.maDot, true);
   tc = await PH.goi('/api/tra-cuu', { ma: em.maTraCuu });
   assert.equal(tc.phieu.length, 1); assert.equal(tc.phieu[0].nhom, 'Toán 1');
+  assert.equal(typeof tc.phieu[0].tbLop, 'number'); assert.ok(tc.phieu[0].tbLop >= 0 && tc.phieu[0].tbLop <= 10, 'điểm TB lớp (thang 10) để so sánh trên biểu đồ');
   const p = await PH.goi('/api/phieu', { ma: em.maTraCuu, maPhieu: tc.phieu[0].maPhieu });
   assert.equal(p.ok, true); assert.equal(p.d.hoTen, 'Lê Kim Huệ'); assert.equal(p.d.maDe, '105');
   // mã của em khác không mở được phiếu này
