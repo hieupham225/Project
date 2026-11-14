@@ -1,0 +1,15 @@
+# Cloudflare Worker: phục vụ cả giao diện (thư mục public/) và API (/api/*).
+name = "phieu-ket-qua"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "404-page"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "phieu-ket-qua"
+# Điền database_id sau khi chạy: npx wrangler d1 create phieu-ket-qua
+database_id = "00000000-0000-0000-0000-000000000000"
