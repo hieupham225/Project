@@ -286,6 +286,13 @@
       google.script.run
         .withSuccessHandler(function (kq) {
           if (!kq || !kq.ok) { khung.textContent = ''; khung.appendChild(taoThe('div', 'the loi', (kq && kq.loi) || 'Không tải được phiếu.')); return; }
+          if (kq.html) { // chế độ demo: phiếu dạng HTML thay cho PDF
+            khung.textContent = '';
+            var f = document.createElement('iframe');
+            f.setAttribute('sandbox', ''); f.srcdoc = kq.html;
+            f.style.cssText = 'width:100%;height:80vh;border:0;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.15)';
+            khung.appendChild(f); return;
+          }
           var bin = atob(kq.pdf), bytes = new Uint8Array(bin.length);
           for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
           pdfHienTai = { ten: kq.tenFile, bytes: bytes };

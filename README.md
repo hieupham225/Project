@@ -44,6 +44,16 @@ Nhóm (vd "Toán 2")
 
 ---
 
+## Dùng thử trước khi cài
+- **Bản dùng thử chạy trên trình duyệt**: file [`demo/index.html`](demo/index.html), chạy đúng mã của hệ thống với Google Sheet/Drive giả lập và dữ liệu mẫu có sẵn.
+  Có thể bấm thử cả hai vai: **Giáo viên** (bảng điều khiển) và **Phụ huynh** (trang tra cứu).
+  Trong bản dùng thử, phiếu hiển thị dạng HTML thay cho PDF, và không tải file xuống được.
+  Sinh lại bản dùng thử sau khi sửa mã: `node tools/tao-demo.js`.
+- **Chạy thật**: làm theo mục A bên dưới, mất khoảng 15 phút với một tài khoản Google.
+  Sau bước A2 sẽ có link trang tra cứu thật `https://script.google.com/macros/s/…/exec`, mở được trên điện thoại.
+
+---
+
 ## A. Cài đặt (làm một lần, khoảng 15 phút)
 
 ### A1. Tạo file và dán mã
@@ -82,10 +92,14 @@ Nhóm (vd "Toán 2")
 
 ---
 
-## B. Quản lý học sinh (thẻ 👩‍🎓 Học sinh)
+## B. Quản lý lớp và học sinh (thẻ 👩‍🎓 Học sinh)
+
+Mỗi học sinh có một **Mã HS** (vd `HS0007`) do hệ thống tự cấp. Mã HS dùng để nhận đúng học sinh khi gửi điểm, nên **file kết quả nên luôn có cột Mã HS**.
+File mẫu tải từ bảng điều khiển đã điền sẵn cột này.
 
 | Việc cần làm | Cách làm |
 |---|---|
+| Tạo lớp/nhóm | **+ Lớp mới**. Lớp có thể chưa có học sinh. |
 | Thêm 1 học sinh | **+ Thêm học sinh**, nhập họ tên, lớp, SĐT phụ huynh… Mã HS và mã tra cứu được tự cấp. |
 | Thêm cả nhóm | **Thêm nhiều / nhập Excel**: dán các cột *Họ tên – Nhóm/lớp – SĐT phụ huynh* từ Excel, hoặc chọn file Excel danh sách lớp. |
 | Học sinh học nhiều nhóm/môn | Ô "Nhóm / lớp" ghi nhiều nhóm, cách nhau bằng dấu `;` (vd `Toán 2; Tiếng Anh A1`). Mỗi em vẫn chỉ có **một** mã tra cứu. |
@@ -134,19 +148,28 @@ Dùng file mẫu [`mau/Mau_ket_qua_thi.xlsx`](mau/Mau_ket_qua_thi.xlsx), hoặc 
 Nếu giáo viên đã nhập điểm (ví dụ chấm tay phần tự luận) thì hệ thống dùng điểm giáo viên nhập.
 Muốn thêm hoặc bớt câu: thêm/xóa cột trong KetQua (vd `I.13`) và dòng tương ứng trong DeThi.
 
-### C2. Các bước
-1. **Chọn file Excel** (hoặc dán link Google Sheet). Hệ thống đọc và hiện bảng kiểm tra cho từng học sinh: tổng điểm và trạng thái
-   *✔ đã có* / *Mới — sẽ thêm vào nhóm* / *⚠ Trùng tên — chọn…* (xem mục "Học sinh trùng tên" ở trên) / *Lỗi*.
-   Học sinh đã có nhưng chưa thuộc nhóm này sẽ được tự thêm vào nhóm.
-2. Bấm **👁 Xem thử phiếu** để xem phiếu của học sinh đầu tiên.
-3. Chọn **Nhóm**, **Tên bài thi** và **Ngày thi**. Hệ thống báo ngay kết quả này sẽ là lần làm thứ mấy:
+### C2. Các bước — luôn chọn lớp trước
+1. **Chọn lớp/nhóm**. Màn hình hiện danh sách học sinh của lớp (họ tên và Mã HS).
+   Bấm **⬇ Tải file mẫu Excel của lớp**: file đã điền sẵn STT, **Mã HS** và họ tên của cả lớp. Giáo viên chỉ điền đáp án, điểm và nhận xét.
+2. **Chọn file kết quả** (Excel hoặc link Google Sheet). Hệ thống ghép từng dòng với **học sinh trong lớp**:
+
+   | Dòng trong file | Kết quả ghép |
+   |---|---|
+   | Có Mã HS của học sinh trong lớp, họ tên khớp | ✔ Tự ghép |
+   | Không có Mã HS, họ tên khớp đúng 1 em trong lớp | ✔ Tự ghép |
+   | Mã HS không có trong hệ thống / họ tên khác với Mã HS / em thuộc lớp khác / tên không có trong lớp (thường do gõ sai) | ⚠ **Cần chọn**: chọn đúng em trong danh sách lớp, em ở lớp khác (sẽ được thêm vào lớp), **Học sinh mới**, hoặc **Bỏ qua** |
+   | Lớp chưa có học sinh nào (lần gửi đầu tiên) | Tự thêm các em trong file vào lớp |
+
+   Bên dưới bảng hiện danh sách **học sinh trong lớp không có kết quả** trong file (vắng thi). Các em này không có phiếu.
+3. Bấm **👁 Xem thử phiếu** để xem phiếu của học sinh đầu tiên.
+4. Nhập **Tên bài thi** và **Ngày thi**. Hệ thống báo ngay kết quả này sẽ là lần làm thứ mấy:
    - 🆕 **Bài thi mới** của nhóm: ghi thành **Lần 1**.
    - 🔁 **Bài thi đã có** (chọn đúng tên cũ trong danh sách gợi ý): ghi thành **Lần 2, Lần 3…**. Các lần trước được **giữ nguyên**.
      File lần làm lại chỉ cần có những em làm lại.
    - Gửi nhầm hoặc cần sửa điểm: tích **"ghi đè lần gần nhất"**. Phiếu cũ của lần đó bị thay thế.
-4. Bấm **Tạo phiếu PDF**. Thanh tiến độ chạy; một nhóm 40 em mất khoảng vài phút.
+5. Bấm **Tạo phiếu PDF**. Thanh tiến độ chạy; một lớp 40 em mất khoảng vài phút.
    Từ lần 2 trở đi, phiếu có thêm bảng **"Kết quả các lần làm"** và mục **so với lần trước** (▲/▼).
-5. Mở **thư mục PDF** để kiểm tra vài phiếu, rồi bấm **📢 Công bố cho phụ huynh xem**.
+6. Mở **thư mục PDF** để kiểm tra vài phiếu, rồi bấm **📢 Công bố cho phụ huynh xem**.
 
 ### C3. Bài thi (thẻ 🗂️)
 Danh sách bài thi theo nhóm, mỗi bài liệt kê các lần làm. Có thể **công bố / ẩn** từng lần, mở thư mục PDF, hoặc **xóa một lần** (file PDF chuyển vào Thùng rác).
@@ -189,9 +212,13 @@ apps-script/
   appsscript.json  Cấu hình (chỉ cần khi dùng công cụ clasp)
 mau/
   Mau_ket_qua_thi.xlsx   File Excel mẫu kết quả thi
+demo/
+  index.html             Bản dùng thử chạy trên trình duyệt (sinh tự động, không sửa tay)
 tools/
   tao-file-mau.js        Sinh lại file Excel mẫu từ Code.gs (npm install xlsx@0.18.5 && node tools/tao-file-mau.js)
+  tao-demo.js            Sinh lại demo/index.html từ mã hệ thống (node tools/tao-demo.js)
+  demo-khung.html        Khung bản dùng thử: giả lập Google Sheet/Drive trong trình duyệt
 docs/                    Ảnh minh họa
 ```
 
-Dữ liệu được lưu trong các tab của Google Sheet: `HocSinh` (cột "Nhóm / lớp" ghi các nhóm, cách nhau bằng `;`), `DotThi` (mỗi dòng là một lần làm của một bài thi), `PhieuKetQua`. Nên thao tác qua bảng điều khiển; sửa trực tiếp trên tab sẽ có cảnh báo.
+Dữ liệu được lưu trong các tab của Google Sheet: `HocSinh` (cột "Nhóm / lớp" ghi các nhóm, cách nhau bằng `;`), `Nhom` (danh sách lớp), `DotThi` (mỗi dòng là một lần làm của một bài thi), `PhieuKetQua`. Nên thao tác qua bảng điều khiển; sửa trực tiếp trên tab sẽ có cảnh báo.

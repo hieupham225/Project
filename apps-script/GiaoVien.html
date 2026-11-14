@@ -75,7 +75,8 @@
       <div class="thanh">
         <input id="timHs" type="search" placeholder="Tìm theo tên, mã HS, SĐT…" style="width:260px">
         <select id="locLop"></select>
-        <button id="nutDoiTenNhom" class="phu nho an">Đổi tên nhóm</button>
+        <button id="nutTaoLop" class="phu nho">+ Lớp mới</button>
+        <button id="nutDoiTenNhom" class="phu nho an">Đổi tên lớp</button>
         <span id="demHs" class="goi-y"></span>
         <span class="gian"></span>
         <button id="nutThemHs">+ Thêm học sinh</button>
@@ -97,7 +98,7 @@
       </div>
 
       <div id="formNhieu" class="the an">
-        <h2>Thêm nhiều học sinh</h2>
+        <h2 id="tieuDeNhieu">Thêm nhiều học sinh</h2>
         <p class="goi-y">Cách 1: Sao chép các cột <b>Họ tên – Nhóm/lớp – SĐT phụ huynh</b> từ Excel và dán vào ô dưới (mỗi dòng 1 học sinh).<br>
           Cách 2: Chọn file Excel có dòng tiêu đề "Họ và tên", "Lớp", "SĐT phụ huynh"… (có thể dùng luôn file kết quả thi).<br>
           Mỗi em được tự cấp Mã HS và mã tra cứu. Em đã có trong nhóm sẽ được bỏ qua; em <b>trùng tên với học sinh ở nhóm khác</b>
@@ -124,12 +125,27 @@
       </table>
     </section>
 
-    <!-- ============ GỬI KẾT QUẢ ============ -->
+    <!-- ============ GỬI KẾT QUẢ (theo lớp) ============ -->
     <section id="tabGui" class="an">
       <div class="the">
-        <h2><span class="buoc">1</span>Chọn file kết quả thi</h2>
-        <p class="goi-y">File Excel phải theo <b>mẫu</b> (gồm các tab KetQua, DeThi, ThongTin).
-          <a href="#" id="linkTaoMau" target="_self">Tạo file mẫu trên Drive</a> <span id="ketQuaMau"></span></p>
+        <h2><span class="buoc">1</span>Chọn lớp / nhóm nhận kết quả</h2>
+        <div class="thanh">
+          <select id="gLop" style="min-width:260px"></select>
+          <button id="nutTaoLopGui" class="phu nho">+ Lớp mới</button>
+          <span id="gSiSo" class="goi-y"></span>
+        </div>
+        <div id="gDsLop"></div>
+        <div id="khuMauLop" class="an">
+          <div class="thanh" style="margin:12px 0 4px">
+            <button id="nutTaiMauLop">⬇ Tải file mẫu Excel của lớp</button>
+            <a href="#" id="linkTaoMau" target="_self">hoặc tạo file mẫu trên Google Drive</a><span id="ketQuaMau" class="goi-y"></span>
+          </div>
+          <p class="goi-y">File mẫu đã điền sẵn <b>Mã HS</b> và <b>họ tên</b> của học sinh trong lớp. Giáo viên chỉ điền đáp án / điểm / nhận xét, <b>không sửa cột Mã HS</b>.</p>
+        </div>
+      </div>
+
+      <div id="khuChonFile" class="the an">
+        <h2><span class="buoc">2</span>Chọn file kết quả thi</h2>
         <div class="thanh">
           <label class="nut">📄 Chọn file Excel…<input id="fileKq" type="file" accept=".xlsx,.xls" class="an"></label>
           <span class="goi-y">hoặc</span>
@@ -141,18 +157,20 @@
 
       <div id="khuXemTruoc" class="an">
         <div class="the">
-          <h2><span class="buoc">2</span>Kiểm tra dữ liệu</h2>
+          <h2><span class="buoc">3</span>Ghép kết quả với học sinh trong lớp</h2>
           <div id="tomTat"></div>
           <ul id="canhBao" class="canh-bao"></ul>
           <table class="ds">
-            <thead><tr><th>STT</th><th>Họ tên</th><th>Lớp</th><th>Mã đề</th><th>Tổng điểm</th><th>Trạng thái</th></tr></thead>
+            <thead><tr><th>STT</th><th>Họ tên trong file</th><th>Mã HS trong file</th><th>Tổng điểm</th><th>Là học sinh nào trong lớp?</th></tr></thead>
             <tbody id="bangXemTruoc"></tbody>
           </table>
+          <div id="khuVang" style="margin-top:10px"></div>
+          <p class="goi-y" style="margin-top:10px">Lớp chưa có học sinh nào: các em trong file được tự thêm vào lớp. Lớp đã có danh sách: dòng không khớp phải chọn đúng em (thường do gõ sai tên) hoặc chọn "Học sinh mới".</p>
+          <input id="themHsMoi" type="checkbox" checked hidden>
         </div>
         <div class="the">
-          <h2><span class="buoc">3</span>Bài thi &amp; lần làm</h2>
-          <div class="luoi" style="grid-template-columns: 1fr 2fr 1fr;">
-            <label class="o">Nhóm học sinh<input id="gNhom" type="text" list="dsLop" placeholder="VD: Toán 2"></label>
+          <h2><span class="buoc">4</span>Bài thi &amp; lần làm</h2>
+          <div class="luoi" style="grid-template-columns: 2fr 1fr;">
             <label class="o">Tên bài thi (chọn bài cũ nếu là lần làm lại)<input id="gBaiThi" type="text" list="dsBaiThi"></label>
             <label class="o">Ngày thi<input id="gNgayThi" type="date"></label>
           </div>
@@ -160,8 +178,6 @@
           <div id="lanInfo" class="lan-info"></div>
           <label id="khuGhiDe" class="an" style="display:flex;gap:8px;align-items:center;margin-top:8px">
             <input id="gGhiDe" type="checkbox"> <span id="chuGhiDe"></span></label>
-          <label style="display:flex;gap:8px;align-items:center;margin-top:8px">
-            <input id="themHsMoi" type="checkbox" checked> Tự thêm học sinh mới (chưa có trong danh sách) vào nhóm này</label>
           <div class="thanh" style="margin-top:12px">
             <button id="nutXemThu" class="phu">👁 Xem thử phiếu</button>
             <button id="nutTaoPhieu">Tạo phiếu PDF</button>
@@ -226,6 +242,17 @@
       <div id="hopNoiDung"></div>
     </div>
   </div>
+  <!-- Hộp hỏi xác nhận / nhập chữ (thay confirm/prompt của trình duyệt) -->
+  <div id="hopHoi" class="phu-trang an" style="z-index:30">
+    <div class="hop" style="width:min(520px,94vw)" role="dialog" aria-modal="true">
+      <p id="hoiNoiDung" style="white-space:pre-line;margin-top:0"></p>
+      <input id="hoiNhap" type="text" class="an" style="width:100%">
+      <div class="thanh" style="justify-content:flex-end;margin:14px 0 0">
+        <button id="hoiHuy" class="phu">Hủy</button>
+        <button id="hoiDongY">Đồng ý</button>
+      </div>
+    </div>
+  </div>
   <div id="thongBao" class="thong-bao an"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -266,7 +293,31 @@
     $('hop').classList.remove('an');
   }
   $('nutDongHop').onclick = function () { $('hop').classList.add('an'); };
-  function capNhat(dl) { if (dl) { DL = dl; veHocSinh(); veDot(); veTongHop(); veCaiDat(); capNhatLanInfo(); } if (dl && dl.thongBao) bao(dl.thongBao); }
+
+  /* hoi('Câu hỏi') -> Promise<true|false>;  hoi('Câu hỏi', { nhap: 'giá trị' }) -> Promise<chuỗi|null> */
+  function hoi(noiDung, tuyChon) {
+    tuyChon = tuyChon || {};
+    var coNhap = tuyChon.nhap !== undefined;
+    return new Promise(function (traVe) {
+      $('hoiNoiDung').textContent = noiDung;
+      $('hoiNhap').classList.toggle('an', !coNhap);
+      $('hoiNhap').value = coNhap ? tuyChon.nhap : '';
+      $('hoiNhap').placeholder = tuyChon.goiY || '';
+      $('hoiDongY').textContent = tuyChon.nut || 'Đồng ý';
+      $('hoiDongY').className = tuyChon.nguyHiem ? 'nguy' : '';
+      $('hopHoi').classList.remove('an');
+      (coNhap ? $('hoiNhap') : $('hoiDongY')).focus();
+      var xong = function (dongY) {
+        $('hopHoi').classList.add('an');
+        $('hoiDongY').onclick = $('hoiHuy').onclick = $('hoiNhap').onkeydown = null;
+        traVe(coNhap ? (dongY ? $('hoiNhap').value : null) : dongY);
+      };
+      $('hoiDongY').onclick = function () { xong(true); };
+      $('hoiHuy').onclick = function () { xong(false); };
+      $('hoiNhap').onkeydown = function (e) { if (e.key === 'Enter') xong(true); if (e.key === 'Escape') xong(false); };
+    });
+  }
+  function capNhat(dl) { if (dl) { DL = dl; veHocSinh(); veChonLop(); veDot(); veTongHop(); veCaiDat(); capNhatLanInfo(); } if (dl && dl.thongBao) bao(dl.thongBao); }
   function dienSelect(sel, ds, nhanTatCa) {
     var cu = sel.value; sel.textContent = '';
     if (nhanTatCa) sel.appendChild(the('option', { value: '', text: nhanTatCa }));
@@ -351,12 +402,12 @@
           the('button', { class: 'phu nho', text: 'Sửa', onclick: function () { moFormHs(h); } }), ' ',
           the('button', { class: 'phu nho', text: 'Tin nhắn', onclick: function () { hopTinNhan('Tin nhắn gửi phụ huynh em ' + h.hoTen, tinNhan(h)); } }), ' ',
           the('button', { class: 'phu nho', text: 'Cấp lại mã', onclick: function () {
-            if (!confirm('Cấp mã tra cứu mới cho ' + h.hoTen + '?\nMã cũ sẽ không dùng được nữa.')) return;
-            goi('gvCapLaiMa', h.maHs).then(function (dl) { capNhat(dl); bao('Đã cấp mã mới cho ' + h.hoTen + '. Nhớ gửi lại cho phụ huynh.'); }).catch(baoLoi);
+            hoi('Cấp mã tra cứu mới cho ' + h.hoTen + '?\nMã cũ sẽ không dùng được nữa.', { nut: 'Cấp mã mới' }).then(function (ok) { if (!ok) return;
+            goi('gvCapLaiMa', h.maHs).then(function (dl) { capNhat(dl); bao('Đã cấp mã mới cho ' + h.hoTen + '. Nhớ gửi lại cho phụ huynh.'); }).catch(baoLoi); });
           } }), ' ',
           the('button', { class: 'nguy nho', text: 'Xóa', onclick: function () {
-            if (!confirm('Xóa học sinh ' + h.hoTen + ' (' + h.maHs + ')?\nPhụ huynh sẽ không tra cứu được nữa.')) return;
-            goi('gvXoaHocSinh', h.maHs).then(function (dl) { capNhat(dl); bao('Đã xóa ' + h.hoTen + '.'); }).catch(baoLoi);
+            hoi('Xóa học sinh ' + h.hoTen + ' (' + h.maHs + ')?\nPhụ huynh sẽ không tra cứu được nữa.', { nut: 'Xóa', nguyHiem: true }).then(function (ok) { if (!ok) return;
+            goi('gvXoaHocSinh', h.maHs).then(function (dl) { capNhat(dl); bao('Đã xóa ' + h.hoTen + '.'); }).catch(baoLoi); });
           } })
         ])
       ]));
@@ -392,9 +443,10 @@
   });
   $('nutDoiTenNhom').onclick = function () {
     var cu = $('locLop').value; if (!cu) return;
-    var moi = prompt('Đổi tên nhóm "' + cu + '" thành:', cu);
-    if (!moi || moi.trim() === cu) return;
-    goi('gvDoiTenNhom', cu, moi.trim()).then(function (dl) { capNhat(dl); $('locLop').value = moi.trim(); veHocSinh(); }).catch(baoLoi);
+    hoi('Đổi tên lớp/nhóm "' + cu + '" thành:', { nhap: cu, nut: 'Đổi tên' }).then(function (moi) {
+      if (!moi || moi.trim() === cu) return;
+      goi('gvDoiTenNhom', cu, moi.trim()).then(function (dl) { capNhat(dl); $('locLop').value = moi.trim(); veHocSinh(); }).catch(baoLoi);
+    });
   };
 
   var dangSua = null;
@@ -409,19 +461,24 @@
   $('nutHuyHs').onclick = function () { $('formHs').classList.add('an'); };
   $('nutLuuHs').onclick = function () {
     var b = this;
-    if (!dangSua) {
-      var k = function (x) { return String(x || '').toLowerCase().normalize('NFC').replace(/\s+/g, ' ').trim(); };
-      var trung = DL.hocSinh.filter(function (h) { return k(h.hoTen) === k($('fTen').value); });
-      if (trung.length && !confirm('Đã có ' + trung.map(function (h) { return h.hoTen + ' (' + h.maHs + ' · ' + (h.nhom.join(', ') || 'chưa có nhóm') + ')'; }).join(', ') +
-        '.\n\nNếu là CÙNG MỘT EM học thêm nhóm/môn mới: bấm Hủy, rồi bấm "Sửa" ở em đó và thêm tên nhóm (để phụ huynh dùng chung 1 mã tra cứu).\n\nBấm OK nếu đây là học sinh KHÁC.')) return;
-    }
+    var k = function (x) { return String(x || '').toLowerCase().normalize('NFC').replace(/\s+/g, ' ').trim(); };
+    var trung = dangSua ? [] : DL.hocSinh.filter(function (h) { return k(h.hoTen) === k($('fTen').value); });
+    var hoiTruoc = !trung.length ? Promise.resolve(true) : hoi('Đã có ' + trung.map(function (h) { return h.hoTen + ' (' + h.maHs + ' · ' + (h.nhom.join(', ') || 'chưa có lớp') + ')'; }).join(', ') +
+      '.\n\nNếu là CÙNG MỘT EM học thêm lớp/môn mới: bấm Hủy, rồi bấm "Sửa" ở em đó và thêm tên lớp (để phụ huynh dùng chung 1 mã tra cứu).', { nut: 'Đây là học sinh khác — tạo mới' });
+    hoiTruoc.then(function (ok) { if (ok) luuHs(b); });
+  };
+  function luuHs(b) {
     b.disabled = true;
     goi('gvLuuHocSinh', { maHs: dangSua, hoTen: $('fTen').value, lop: $('fLop').value, ngaySinh: $('fNgaySinh').value, sdt: $('fSdt').value, ghiChu: $('fGhiChu').value })
       .then(function (dl) { capNhat(dl); bao(dangSua ? 'Đã lưu thay đổi.' : 'Đã thêm học sinh và tạo mã tra cứu.'); if (dangSua) $('formHs').classList.add('an'); else moFormHs(null); })
       .catch(baoLoi).then(function () { b.disabled = false; });
-  };
+  }
 
-  $('nutThemNhieu').onclick = function () { $('formHs').classList.add('an'); $('formNhieu').classList.remove('an'); };
+  $('nutThemNhieu').onclick = function () {
+    $('formHs').classList.add('an'); $('formNhieu').classList.remove('an');
+    $('tieuDeNhieu').textContent = $('locLop').value ? 'Thêm nhiều học sinh vào lớp ' + $('locLop').value + ' (dòng không ghi lớp sẽ vào lớp này)' : 'Thêm nhiều học sinh';
+  };
+  $('nutTaoLop').onclick = function () { taoLopMoi(function (ten) { $('locLop').value = ten; veHocSinh(); }); };
   $('nutHuyNhieu').onclick = function () { $('formNhieu').classList.add('an'); };
   $('nutLuuNhieu').onclick = function () {
     var bang = $('danNhieu').value.split(/\r?\n/).filter(function (d) { return d.trim(); }).map(function (d) { return d.split('\t'); });
@@ -431,7 +488,7 @@
 
   /* Thêm nhiều; nếu có em trùng tên với học sinh ở nhóm khác -> hỏi giáo viên rồi gửi lại */
   function themNhieu(bang, quyetDinh) {
-    return goi('gvThemNhieuHocSinh', bang, quyetDinh).then(function (kq) {
+    return goi('gvThemNhieuHocSinh', bang, quyetDinh, $('locLop').value).then(function (kq) {
       if (!kq.canXacNhan) { capNhat(kq); $('hop').classList.add('an'); return true; }
       var bangXn = the('table', { class: 'ds xn' }, [the('thead', {}, [the('tr', {}, [the('th', { text: 'Dòng trong danh sách' }), the('th', { text: 'Đây là…' })])])]);
       var tb = the('tbody'); bangXn.appendChild(tb);
@@ -470,91 +527,157 @@
     hopTinNhan('Tin nhắn gửi mã (' + ds.length + ' học sinh)', ds.map(tinNhan).join('\n\n--------------------\n\n'));
   };
 
-  /* =================== GỬI KẾT QUẢ =================== */
+  /* =================== GỬI KẾT QUẢ (chọn lớp trước) =================== */
+  var quyetDinhKq = {};
+  function lopDangChon() { return $('gLop').value; }
+  function hsCuaLop(n) { return DL.hocSinh.filter(function (h) { return h.nhom.indexOf(n) >= 0; }); }
+
+  function veChonLop() {
+    var cu = $('gLop').value, sel = $('gLop');
+    sel.textContent = '';
+    sel.appendChild(the('option', { value: '', text: '— Chọn lớp / nhóm —' }));
+    (DL.nhom || []).forEach(function (n) { sel.appendChild(the('option', { value: n, text: n + ' (' + hsCuaLop(n).length + ' học sinh)' })); });
+    sel.value = (DL.nhom || []).indexOf(cu) >= 0 ? cu : '';
+    veThongTinLop();
+  }
+  function veThongTinLop() {
+    var n = lopDangChon(), ds = n ? hsCuaLop(n) : [];
+    $('gSiSo').textContent = n ? '' : (DL.nhom || []).length ? 'Chọn lớp trước khi gửi kết quả.' : 'Chưa có lớp nào — bấm "+ Lớp mới".';
+    var k = $('gDsLop'); k.textContent = '';
+    if (n) {
+      k.appendChild(the('p', { class: 'goi-y', text: 'Danh sách lớp ' + n + ' (' + ds.length + ' học sinh):' + (ds.length ? '' : ' chưa có học sinh — thêm ở thẻ "Học sinh", hoặc gửi kết quả lần đầu để tự thêm.') }));
+      var c = the('div');
+      ds.forEach(function (h) { c.appendChild(the('span', { class: 'chip', text: h.hoTen + ' · ' + h.maHs })); });
+      k.appendChild(c);
+    }
+    $('khuMauLop').classList.toggle('an', !n);
+    $('khuChonFile').classList.toggle('an', !n);
+    if (!n) $('khuXemTruoc').classList.add('an');
+  }
+  $('gLop').onchange = function () {
+    quyetDinhKq = {}; veThongTinLop();
+    if (soHienTai && lopDangChon()) taiXemTruoc(false);
+  };
+  function taoLopMoi(sauKhiTao) {
+    hoi('Tên lớp / nhóm mới:', { nhap: '', goiY: 'VD: Toán 2, Tiếng Anh A1', nut: 'Tạo lớp' }).then(function (ten) {
+      if (!ten || !ten.trim()) return;
+      goi('gvTaoNhom', ten.trim()).then(function (dl) { capNhat(dl); if (sauKhiTao) sauKhiTao(dl.nhomMoi); }).catch(baoLoi);
+    });
+  }
+  $('nutTaoLopGui').onclick = function () { taoLopMoi(function (ten) { $('gLop').value = ten; $('gLop').onchange(); }); };
+
+  $('nutTaiMauLop').onclick = function () {
+    var n = lopDangChon();
+    if (!window.XLSX) return bao('Không tải được thư viện Excel — dùng "tạo file mẫu trên Google Drive".', true);
+    goi('gvLayMauLop', n).then(function (mau) {
+      var wb = XLSX.utils.book_new();
+      Object.keys(mau).forEach(function (t) {
+        var ws = XLSX.utils.aoa_to_sheet(mau[t]);
+        Object.keys(ws).forEach(function (o) { if (o[0] !== '!') { ws[o].t = 's'; ws[o].z = '@'; } });
+        ws['!cols'] = mau[t][0].map(function (h) { return { wch: /^(I|II|III)\./.test(h) ? 7 : /Họ và tên|Nội dung|Giá trị/.test(h) ? 30 : 12 }; });
+        XLSX.utils.book_append_sheet(wb, ws, t);
+      });
+      XLSX.writeFile(wb, 'Ket_qua_' + n.replace(/[^\wÀ-ỹ]+/g, '_') + '.xlsx');
+      bao('Đã tải file mẫu của lớp ' + n + '. Nếu trình duyệt chặn tải, dùng "tạo file mẫu trên Google Drive".');
+    }).catch(baoLoi);
+  };
   $('linkTaoMau').onclick = function (e) {
     e.preventDefault();
     $('ketQuaMau').textContent = ' — đang tạo…';
-    goi('gvTaoFileMau').then(function (url) {
+    goi('gvTaoFileMau', lopDangChon()).then(function (url) {
       $('ketQuaMau').textContent = ' — ';
       $('ketQuaMau').appendChild(the('a', { href: url, text: 'Mở file mẫu' }));
-      $('ketQuaMau').appendChild(document.createTextNode(' (Tệp → Tải xuống → Microsoft Excel để có file .xlsx)'));
+      $('ketQuaMau').appendChild(document.createTextNode(' (Tệp → Tải xuống → Microsoft Excel)'));
     }).catch(function (e) { $('ketQuaMau').textContent = ''; baoLoi(e); });
   };
 
-  var quyetDinhKq = {};
   function batDauXemTruoc(so, tenNguon) {
     soHienTai = so; xemTruoc = null; quyetDinhKq = {};
     $('tenFileKq').textContent = 'Đang đọc ' + tenNguon + '…';
     $('khuXemTruoc').classList.add('an'); $('khuXong').classList.add('an'); $('khuTienDo').classList.add('an');
-    return goi('gvXemTruoc', so, '', {}).then(function (kq) {
-      if (!kq.ok) { $('tenFileKq').textContent = ''; return bao(kq.loi, true); }
-      $('tenFileKq').textContent = '✔ ' + tenNguon;
-      $('gNhom').value = kq.nhom || $('locLop').value || '';
-      $('gBaiThi').value = kq.tieuDe;
-      var n = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(kq.ngayThi || '');
-      $('gNgayThi').value = n ? n[3] + '-' + n[2] + '-' + n[1] : new Date().toISOString().slice(0, 10);
-      $('gGhiDe').checked = false;
-      if ($('gNhom').value !== kq.nhom) return taiXemTruoc();
-      veXemTruoc(kq);
-    }).catch(function (e) { $('tenFileKq').textContent = ''; baoLoi(e); });
+    return taiXemTruoc(true).then(function (ok) { $('tenFileKq').textContent = ok ? '✔ ' + tenNguon : ''; });
   }
 
-  /* Gọi lại khi đổi nhóm (ghép học sinh phụ thuộc vào nhóm) */
-  function taiXemTruoc() {
-    if (!soHienTai) return Promise.resolve();
-    return goi('gvXemTruoc', soHienTai, $('gNhom').value.trim(), quyetDinhKq).then(function (kq) {
-      if (!kq.ok) return bao(kq.loi, true);
+  function taiXemTruoc(lanDau) {
+    if (!soHienTai || !lopDangChon()) return Promise.resolve(false);
+    return goi('gvXemTruoc', soHienTai, lopDangChon(), quyetDinhKq, $('themHsMoi').checked).then(function (kq) {
+      if (!kq.ok) { bao(kq.loi, true); return false; }
+      if (lanDau) {
+        $('gBaiThi').value = kq.tieuDe;
+        var n = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(kq.ngayThi || '');
+        $('gNgayThi').value = n ? n[3] + '-' + n[2] + '-' + n[1] : new Date().toISOString().slice(0, 10);
+        $('gGhiDe').checked = false;
+      }
       veXemTruoc(kq);
-    }).catch(baoLoi);
+      return true;
+    }).catch(function (e) { baoLoi(e); return false; });
   }
 
   function veXemTruoc(kq) {
     xemTruoc = kq;
-    var dem = { co: 0, moi: 0, loi: 0, xacNhan: 0 };
+    var dem = { co: 0, moi: 0, canChon: 0, boqua: 0, loi: 0 };
     kq.hocSinh.forEach(function (h) { dem[h.trangThai]++; });
-    $('tomTat').textContent = '';
-    $('tomTat').appendChild(the('p', {}, [the('b', { text: kq.tieuDe }), ' — Phần I: ' + kq.soCau.I + ' câu, Phần II: ' + kq.soCau.II + ' câu, Phần III: ' + kq.soCau.III + ' câu.']));
-    var dongDem = the('p', {}, [kq.hocSinh.length + ' học sinh: ',
-      the('span', { class: 'nhan co', text: dem.co + ' đã có trong danh sách' }), ' ',
-      the('span', { class: 'nhan moi', text: dem.moi + ' học sinh mới' }), ' ',
-      dem.xacNhan ? the('span', { class: 'nhan xacnhan', text: dem.xacNhan + ' cần xác nhận' }) : null, ' ',
-      the('span', { class: 'nhan loi', text: dem.loi + ' lỗi' })]);
-    $('tomTat').appendChild(dongDem);
-    if (dem.xacNhan) {
-      $('tomTat').appendChild(the('p', { class: 'goi-y' }, ['Học sinh "cần xác nhận" trùng họ tên với học sinh đang học nhóm khác. Chọn ',
-        the('b', { text: 'Cùng một em' }), ' để gộp chung 1 mã tra cứu (phụ huynh xem được điểm mọi môn), hoặc ', the('b', { text: 'Học sinh khác' }), '. ',
-        the('button', { class: 'phu nho', text: 'Tất cả là cùng một em (khi chỉ có 1 em trùng tên)', onclick: function () {
-          kq.hocSinh.forEach(function (h) { if (h.trangThai === 'xacNhan' && h.ungVien.length === 1) quyetDinhKq[h.chiSo] = h.ungVien[0].maHs; });
-          taiXemTruoc();
-        } }), ' ',
-        the('button', { class: 'phu nho', text: 'Tất cả là học sinh khác', onclick: function () {
-          kq.hocSinh.forEach(function (h) { if (h.trangThai === 'xacNhan') quyetDinhKq[h.chiSo] = 'moi'; });
-          taiXemTruoc();
-        } })]));
+    var tt = $('tomTat'); tt.textContent = '';
+    tt.appendChild(the('p', {}, [the('b', { text: kq.tieuDe }), ' — Phần I: ' + kq.soCau.I + ' câu, Phần II: ' + kq.soCau.II + ' câu, Phần III: ' + kq.soCau.III + ' câu.']));
+    tt.appendChild(the('p', {}, ['File có ' + kq.hocSinh.length + ' dòng · Lớp ', the('b', { text: kq.nhom }), ' có ' + kq.siSo + ' học sinh. ',
+      the('span', { class: 'nhan co', text: dem.co + ' đã ghép' }), ' ',
+      dem.moi ? the('span', { class: 'nhan moi', text: dem.moi + ' học sinh mới' }) : null, ' ',
+      dem.canChon ? the('span', { class: 'nhan xacnhan', text: dem.canChon + ' cần chọn' }) : null, ' ',
+      dem.boqua ? the('span', { class: 'nhan', text: dem.boqua + ' bỏ qua' }) : null, ' ',
+      dem.loi ? the('span', { class: 'nhan loi', text: dem.loi + ' lỗi' }) : null]));
+    if (dem.canChon) {
+      var mot = kq.hocSinh.filter(function (h) { return h.trangThai === 'canChon' && h.ungVien.length === 1; });
+      var khong = kq.hocSinh.filter(function (h) { return h.canChon === 'khongCo' || h.canChon === 'maLa'; });
+      tt.appendChild(the('p', { class: 'goi-y' }, ['Dòng "cần chọn": hãy chọn đúng học sinh ở cột cuối. ',
+        mot.length ? the('button', { class: 'phu nho', text: 'Đồng ý gợi ý cho ' + mot.length + ' dòng chỉ có 1 gợi ý', onclick: function () {
+          mot.forEach(function (h) { quyetDinhKq[h.chiSo] = h.ungVien[0].maHs; }); taiXemTruoc(false);
+        } }) : null, ' ',
+        khong.length ? the('button', { class: 'phu nho', text: 'Tạo mới ' + khong.length + ' em không có trong lớp', onclick: function () {
+          khong.forEach(function (h) { quyetDinhKq[h.chiSo] = 'moi'; }); taiXemTruoc(false);
+        } }) : null]));
     }
     $('canhBao').textContent = '';
     kq.canhBao.forEach(function (c) { $('canhBao').appendChild(the('li', { text: c })); });
+
     var tb = $('bangXemTruoc'); tb.textContent = '';
-    var nhomChon = $('gNhom').value.trim();
     kq.hocSinh.forEach(function (h) {
       var o;
-      if (h.trangThai === 'xacNhan') {
-        o = the('select', { class: 'qd' }, [the('option', { value: '', text: '⚠ Trùng tên — chọn…' })]);
-        h.ungVien.forEach(function (u) { o.appendChild(the('option', { value: u.maHs, text: 'Cùng một em: ' + u.maHs + ' (' + (u.nhom || 'chưa có nhóm') + ')' + (u.sdt ? ' · ' + u.sdt : '') })); });
-        o.appendChild(the('option', { value: 'moi', text: 'Học sinh khác → tạo mới' }));
-        o.onchange = function () { if (o.value) { quyetDinhKq[h.chiSo] = o.value; taiXemTruoc(); } };
-      } else if (h.trangThai === 'co') {
-        var them = h.nhomHienTai.split('; ').indexOf(nhomChon) < 0;
-        o = the('span', {}, [the('span', { class: 'nhan co', text: '✔ ' + h.maHs }), ' ',
-          the('span', { class: 'goi-y', text: (h.nhomHienTai || '') + (them && nhomChon ? ' → thêm nhóm ' + nhomChon : '') })]);
-        if (quyetDinhKq[h.chiSo]) o.appendChild(the('button', { class: 'phu nho', text: 'Đổi', onclick: function () { delete quyetDinhKq[h.chiSo]; taiXemTruoc(); } }));
-      } else if (h.trangThai === 'moi') {
-        o = the('span', {}, [the('span', { class: 'nhan moi', text: 'Mới — sẽ thêm vào nhóm' })]);
-        if (quyetDinhKq[h.chiSo]) o.appendChild(the('button', { class: 'phu nho', text: 'Đổi', onclick: function () { delete quyetDinhKq[h.chiSo]; taiXemTruoc(); } }));
-      } else o = the('span', { class: 'nhan loi', text: h.loi });
-      tb.appendChild(the('tr', {}, [the('td', { text: h.stt }), the('td', { text: h.hoTen }), the('td', { text: h.lop }),
-        the('td', { text: h.maDe }), the('td', { text: h.tongDiem + ' / ' + h.maxTong }), the('td', {}, [o])]));
+      if (h.trangThai === 'loi') o = the('span', { class: 'nhan loi', text: h.loi });
+      else {
+        // Danh sách chọn: học sinh trong lớp chưa ghép + em đang ghép + gợi ý ngoài lớp + mới + bỏ qua
+        var sel = the('select', { class: 'qd' });
+        if (h.trangThai === 'canChon') sel.appendChild(the('option', { value: '', text: '⚠ Chọn học sinh…' }));
+        var daCo = {};
+        var gTrong = the('optgroup', { label: 'Học sinh trong lớp ' + kq.nhom });
+        if (h.hs && !h.themVaoLop) { gTrong.appendChild(the('option', { value: h.hs.maHs, text: h.hs.hoTen + ' · ' + h.hs.maHs })); daCo[h.hs.maHs] = 1; }
+        kq.vang.forEach(function (v) { if (!daCo[v.maHs]) { gTrong.appendChild(the('option', { value: v.maHs, text: v.hoTen + ' · ' + v.maHs })); daCo[v.maHs] = 1; } });
+        if (gTrong.children.length) sel.appendChild(gTrong);
+        var ngoai = h.ungVien.filter(function (u) { return !daCo[u.maHs]; });
+        if (h.hs && h.themVaoLop && !daCo[h.hs.maHs]) ngoai.unshift(h.hs);
+        if (ngoai.length) {
+          var gN = the('optgroup', { label: 'Học sinh đã có ở lớp khác (sẽ thêm vào lớp này)' });
+          ngoai.forEach(function (u) { if (!daCo[u.maHs]) { gN.appendChild(the('option', { value: u.maHs, text: u.hoTen + ' · ' + u.maHs + ' (' + (u.nhom || 'chưa có lớp') + ')' })); daCo[u.maHs] = 1; } });
+          sel.appendChild(gN);
+        }
+        sel.appendChild(the('option', { value: 'moi', text: '🆕 Học sinh mới — thêm vào lớp' }));
+        sel.appendChild(the('option', { value: 'boqua', text: 'Bỏ qua dòng này (không tạo phiếu)' }));
+        sel.value = h.trangThai === 'co' ? h.hs.maHs : h.trangThai === 'moi' ? 'moi' : h.trangThai === 'boqua' ? 'boqua' : '';
+        sel.onchange = function () { if (sel.value) { quyetDinhKq[h.chiSo] = sel.value; taiXemTruoc(false); } };
+        var nhan = h.trangThai === 'co' ? the('span', { class: 'nhan co', text: h.themVaoLop ? '✔ thêm vào lớp' : '✔' })
+          : h.trangThai === 'moi' ? the('span', { class: 'nhan moi', text: h.tuDong ? 'Mới (tự động)' : 'Mới' })
+          : h.trangThai === 'boqua' ? the('span', { class: 'nhan', text: 'Bỏ qua' })
+          : the('span', { class: 'nhan xacnhan', text: h.lyDo });
+        o = the('div', { style: 'display:flex;gap:6px;align-items:center;flex-wrap:wrap' }, [sel, nhan]);
+      }
+      tb.appendChild(the('tr', {}, [the('td', { text: h.stt }), the('td', {}, [the('b', { text: h.hoTen })]), the('td', { text: h.maHsFile || '—' }),
+        the('td', { text: h.tongDiem + ' / ' + h.maxTong }), the('td', {}, [o])]));
     });
+
+    var kv = $('khuVang'); kv.textContent = '';
+    if (kq.vang.length) {
+      kv.appendChild(the('p', { class: 'goi-y', text: '⚠ ' + kq.vang.length + ' học sinh trong lớp KHÔNG có kết quả trong file (vắng thi?) — sẽ không có phiếu:' }));
+      var c = the('div'); kq.vang.forEach(function (v) { c.appendChild(the('span', { class: 'chip', text: v.hoTen + ' · ' + v.maHs })); }); kv.appendChild(c);
+    }
     capNhatLanInfo();
     $('khuXemTruoc').classList.remove('an');
   }
@@ -581,45 +704,46 @@
 
   $('nutTaoPhieu').onclick = function () { taoPhieu(); };
 
-  /* Bài thi đã có trong nhóm? -> lần làm tiếp theo */
+  /* Bài thi đã có trong lớp? -> lần làm tiếp theo */
   function cacLanCuaBai(nhom, bai) {
     var k = function (x) { return String(x || '').toLowerCase().normalize('NFC').replace(/\s+/g, ' ').trim(); };
     return DL.dot.filter(function (d) { return k(d.nhom) === k(nhom) && k(d.baiThi) === k(bai); }).sort(function (a, b) { return a.lan - b.lan; });
   }
   function capNhatLanInfo() {
-    if (!$('gNhom')) return;
-    var nhom = $('gNhom').value.trim(), bai = $('gBaiThi').value.trim();
-    var dsBai = Array.from(new Set(DL.dot.filter(function (d) { return !nhom || d.nhom === nhom; }).map(function (d) { return d.baiThi; })));
+    var nhom = lopDangChon(), bai = $('gBaiThi').value.trim();
+    var dsBai = Array.from(new Set(DL.dot.filter(function (d) { return d.nhom === nhom; }).map(function (d) { return d.baiThi; })));
     $('dsBaiThi').textContent = '';
     dsBai.forEach(function (b) { $('dsBaiThi').appendChild(the('option', { value: b })); });
     var cac = cacLanCuaBai(nhom, bai), info = $('lanInfo');
     info.textContent = '';
-    if (!nhom || !bai) { info.textContent = 'Chọn nhóm và tên bài thi.'; $('khuGhiDe').classList.add('an'); return; }
+    if (!nhom || !bai) { info.textContent = 'Nhập tên bài thi.'; $('khuGhiDe').classList.add('an'); return; }
     if (!cac.length) {
-      info.appendChild(the('span', {}, ['🆕 Bài thi mới của nhóm ', the('b', { text: nhom }), ' → sẽ là ', the('b', { text: 'Lần 1' })]));
+      info.appendChild(the('span', {}, ['🆕 Bài thi mới của lớp ', the('b', { text: nhom }), ' → sẽ là ', the('b', { text: 'Lần 1' })]));
       $('khuGhiDe').classList.add('an'); $('gGhiDe').checked = false;
     } else {
       var cuoi = cac[cac.length - 1];
-      info.appendChild(the('span', {}, ['🔁 Nhóm ', the('b', { text: nhom }), ' đã làm bài này ' + cac.length + ' lần (' +
+      info.appendChild(the('span', {}, ['🔁 Lớp ', the('b', { text: nhom }), ' đã làm bài này ' + cac.length + ' lần (' +
         cac.map(function (d) { return 'Lần ' + d.lan + (d.ngayThi ? ' – ' + d.ngayThi : ''); }).join('; ') + '). ',
         $('gGhiDe').checked ? the('b', { text: 'Sẽ GHI ĐÈ Lần ' + cuoi.lan + '.' }) : the('span', {}, ['Kết quả này sẽ là ', the('b', { text: 'Lần ' + (cuoi.lan + 1) }), ', các lần trước được giữ nguyên.'])]));
       $('chuGhiDe').textContent = 'Gửi nhầm/sửa điểm: ghi đè Lần ' + cuoi.lan + ' (xóa phiếu cũ của lần đó) thay vì thêm lần mới';
       $('khuGhiDe').classList.remove('an');
     }
   }
-  ['gNhom', 'gBaiThi'].forEach(function (id) { $(id).addEventListener('input', capNhatLanInfo); });
-  $('gNhom').addEventListener('change', function () { quyetDinhKq = {}; taiXemTruoc(); });
+  $('gBaiThi').addEventListener('input', capNhatLanInfo);
   $('gGhiDe').onchange = capNhatLanInfo;
 
   function taoPhieu() {
-    if (!soHienTai) return;
+    if (!soHienTai || !lopDangChon()) return;
+    var conChon = xemTruoc ? xemTruoc.hocSinh.filter(function (h) { return h.trangThai === 'canChon'; }).length : 0;
+    if (conChon) return bao('Còn ' + conChon + ' dòng chưa chọn học sinh (cột cuối của bảng ghép).', true);
     var ghiDe = $('gGhiDe').checked;
-    if (ghiDe && !confirm('Ghi đè lần gần nhất? Các phiếu cũ của lần đó sẽ bị xóa.')) return;
+    (ghiDe ? hoi('Ghi đè lần gần nhất? Các phiếu cũ của lần đó sẽ bị xóa.', { nut: 'Ghi đè', nguyHiem: true }) : Promise.resolve(true))
+      .then(function (ok) { if (ok) chayTaoPhieu(ghiDe); });
+  }
+  function chayTaoPhieu(ghiDe) {
     var nt = $('gNgayThi').value.split('-');
-    var tuyChon = { nhom: $('gNhom').value, baiThi: $('gBaiThi').value, ngayThi: nt.length === 3 ? nt[2] + '/' + nt[1] + '/' + nt[0] : '',
+    var tuyChon = { nhom: lopDangChon(), baiThi: $('gBaiThi').value, ngayThi: nt.length === 3 ? nt[2] + '/' + nt[1] + '/' + nt[0] : '',
       themHsMoi: $('themHsMoi').checked, ghiDe: ghiDe, quyetDinh: quyetDinhKq };
-    var conXn = xemTruoc ? xemTruoc.hocSinh.filter(function (h) { return h.trangThai === 'xacNhan'; }).length : 0;
-    if (conXn) return bao('Còn ' + conXn + ' học sinh trùng tên chưa xác nhận (xem cột Trạng thái).', true);
     var nut = $('nutTaoPhieu'); nut.disabled = true; $('nutXemThu').disabled = true;
     $('khuXong').classList.add('an'); $('khuTienDo').classList.remove('an');
     $('thanhTienDo').style.width = '0'; $('chuTienDo').textContent = 'Đang chuẩn bị…';
@@ -649,6 +773,7 @@
     var k = $('khuXong'); k.textContent = ''; k.classList.remove('an');
     k.appendChild(the('p', {}, [the('b', { text: '✔ ' + kq.nhom + ' · ' + kq.baiThi + ' – Lần ' + kq.lan + ': đã tạo ' + soPhieu + ' phiếu PDF. ' }),
       the('a', { href: kq.thuMuc, text: 'Mở thư mục PDF để kiểm tra' })]));
+    if (kq.vang && kq.vang.length) k.appendChild(the('p', { class: 'goi-y', text: 'Không có kết quả (không có phiếu): ' + kq.vang.join(', ') }));
     if (loi.length) {
       var ul = the('ul', { class: 'canh-bao' });
       loi.forEach(function (x) { ul.appendChild(the('li', { text: x })); });
@@ -688,8 +813,8 @@
         the('td', {}, [the('label', {}, [cb, d.congBo ? ' Đang công bố' : ' Chưa công bố'])]),
         the('td', {}, [d.thuMuc ? the('a', { href: d.thuMuc, text: 'Mở thư mục' }) : '']),
         the('td', {}, [the('button', { class: 'nguy nho', text: 'Xóa lần này', onclick: function () {
-          if (!confirm('Xóa ' + tenLanThi(d) + ' (nhóm ' + d.nhom + ') và ' + d.soPhieu + ' phiếu PDF?')) return;
-          goi('gvXoaDot', d.maDot).then(function (dl) { capNhat(dl); bao('Đã xóa.'); }).catch(baoLoi);
+          hoi('Xóa ' + tenLanThi(d) + ' (lớp ' + d.nhom + ') và ' + d.soPhieu + ' phiếu PDF?', { nut: 'Xóa', nguyHiem: true }).then(function (ok) { if (!ok) return;
+          goi('gvXoaDot', d.maDot).then(function (dl) { capNhat(dl); bao('Đã xóa.'); }).catch(baoLoi); });
         } })])
       ]));
       baiTruoc = d.baiThi;

@@ -26,6 +26,7 @@ var CAU_HINH = {
   SHEET_HOC_SINH: 'HocSinh',
   SHEET_DOT: 'DotThi',
   SHEET_PHIEU: 'PhieuKetQua',
+  SHEET_NHOM: 'Nhom',
   THU_MUC_GOC: 'Phiếu kết quả học tập (tra cứu)',
   DO_DAI_MA: 8,
   KY_TU_MA: 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', // bỏ 0/O, 1/I/L
@@ -40,6 +41,7 @@ var CAU_HINH = {
 var COT_HS = ['Mã HS', 'Họ tên', 'Nhóm / lớp', 'Ngày sinh', 'SĐT phụ huynh', 'Ghi chú', 'Mã tra cứu', 'Ngày tạo'];
 // Mỗi dòng DotThi = 1 LẦN LÀM của 1 bài thi trong 1 nhóm (cùng bài thi có thể làm nhiều lần)
 var COT_DOT = ['Mã đợt', 'Bài thi', 'Lần', 'Nhóm', 'Ngày thi', 'Ngày tạo', 'Số phiếu', 'Công bố', 'Thư mục'];
+var COT_NHOM = ['Tên nhóm / lớp', 'Ghi chú', 'Ngày tạo'];
 var COT_PHIEU = ['Mã phiếu', 'Mã đợt', 'Mã HS', 'Họ tên', 'Tổng điểm', 'Điểm tối đa', 'File ID', 'Thời gian'];
 var CD = { MA: 1, BAI: 2, LAN: 3, NHOM: 4, NGAY_THI: 5, NGAY_TAO: 6, SO_PHIEU: 7, CONG_BO: 8, THU_MUC: 9 }; // số thứ tự cột DotThi
 
@@ -149,6 +151,7 @@ function gvTaiDuLieu() {
       soPhieu: demPhieu[d.maDot] || 0, congBo: d.congBo, thuMuc: d.thuMuc };
   });
   var nhom = {};
+  dsNhom_(ss).forEach(function (n) { nhom[n] = true; });
   hocSinh.forEach(function (h) { h.nhom.forEach(function (n) { nhom[n] = true; }); });
   dot.forEach(function (d) { if (d.nhom) nhom[d.nhom] = true; });
   return {
@@ -210,7 +213,7 @@ function gvLuuHocSinh(hs) {
  *   - còn lại                       -> KHÔNG tự đoán: trả về danh sách cần giáo viên xác nhận
  * quyetDinh = { số dòng: 'moi' | 'boqua' | Mã HS } là câu trả lời của giáo viên cho các dòng cần xác nhận.
  */
-function gvThemNhieuHocSinh(bang, quyetDinh) {
+function gvThemNhieuHocSinh(bang, quyetDinh, nhomMacDinh) {
   yeuCauGiaoVien_();
   quyetDinh = quyetDinh || {};
   bang = (bang || []).map(function (r) { return (r || []).map(chuoi_); });
@@ -238,6 +241,7 @@ function gvThemNhieuHocSinh(bang, quyetDinh) {
       var ten = o(r, c.ten).replace(/\s+/g, ' ');
       if (!ten) return;
       var nhom = tachNhom_(o(r, c.lop)), sdt = o(r, c.sdt);
+      if (!nhom.length && nhomMacDinh) nhom = [chuoi_(nhomMacDinh)];
       var moi = [ten, noiNhom_(nhom), o(r, c.ngaySinh), sdt, o(r, c.ghiChu)];
       var cung = ds.filter(function (h) { return khongDau_(h.hoTen) === khongDau_(ten); })
         .concat(them.filter(function (d) { return khongDau_(d[0]) === khongDau_(ten); }).map(function (d) { return { moiThem: d, hoTen: d[0], nhom: tachNhom_(d[1]), sdt: d[3] }; }));
@@ -335,8 +339,29 @@ function gvDoiTenNhom(cu, moi) {
       if (thuocNhom_(h, cu)) shHs.getRange(h.dong, 3).setValue(noiNhom_(h.nhom.map(function (n) { return khongDau_(n) === khongDau_(cu) ? moi : n; })));
     });
     dsDot_(ss).forEach(function (d) { if (d.nhom === cu) shDot.getRange(d.dong, CD.NHOM).setValue(moi); });
+    var shN = ss.getSheetByName(CAU_HINH.SHEET_NHOM);
+    dsNhom_(ss).forEach(function (n, i) { if (khongDau_(n) === khongDau_(cu)) shN.getRange(i + 2, 1).setValue(moi); });
     var kq = gvTaiDuLieu();
     kq.thongBao = 'Đã đổi tên nhóm "' + cu + '" thành "' + moi + '".';
+    return kq;
+  });
+}
+
+/** Tạo lớp/nhóm mới (chưa cần có học sinh). */
+function gvTaoNhom(ten) {
+  yeuCauGiaoVien_();
+  ten = chuoi_(ten).replace(/[;,]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!ten) throw new Error('Vui lòng nhập tên lớp/nhóm.');
+  return voiKhoa_(function () {
+    var ss = laySpreadsheet_();
+    khoiTao_(ss);
+    var co = gvTaiDuLieu().nhom.some(function (n) { return khongDau_(n) === khongDau_(ten); });
+    if (co) throw new Error('Đã có lớp/nhóm "' + ten + '".');
+    var sh = ss.getSheetByName(CAU_HINH.SHEET_NHOM);
+    sh.getRange(sh.getLastRow() + 1, 1, 1, COT_NHOM.length).setValues([[ten, '', Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'dd/MM/yyyy')]]);
+    var kq = gvTaiDuLieu();
+    kq.thongBao = 'Đã tạo lớp/nhóm "' + ten + '".';
+    kq.nhomMoi = ten;
     return kq;
   });
 }
@@ -385,40 +410,40 @@ function gvDocLinkSheet(url) {
 }
 
 /**
- * Bước 1: đọc + chấm thử, ghép với danh sách học sinh (theo nhóm đang chọn), kèm HTML xem trước phiếu đầu tiên.
- * Trạng thái mỗi dòng: co (đã có) | moi (học sinh mới) | xacNhan (trùng tên với em ở nhóm khác, cần giáo viên chọn) | loi
+ * Bước 1 (đã chọn lớp): đọc + chấm thử, ghép với danh sách học sinh của lớp, kèm HTML xem trước phiếu đầu tiên.
+ * Trạng thái mỗi dòng: co | moi | boqua | canChon (giáo viên phải chọn) | loi
  */
-function gvXemTruoc(so, nhom, quyetDinh) {
+function gvXemTruoc(so, nhom, quyetDinh, tuThemMoi) {
   yeuCauGiaoVien_();
+  nhom = chuoi_(nhom);
+  if (!nhom) throw new Error('Vui lòng chọn lớp/nhóm trước.');
   var ss = laySpreadsheet_();
   khoiTao_(ss);
   var kq = phanTichFile_(so);
   if (!kq.ok) return kq;
-  var dsHs = dsHocSinh_(ss);
-  var demLop = {};
-  kq.hocSinh.forEach(function (h) { if (h.lop) demLop[h.lop] = (demLop[h.lop] || 0) + 1; });
-  var nhomGoiY = Object.keys(demLop).sort(function (a, b) { return demLop[b] - demLop[a]; })[0] || '';
-  nhom = chuoi_(nhom) || nhomGoiY;
-  var ghep = ghepDanhSach_(kq.hocSinh, dsHs, nhom, quyetDinh);
+  var g = ghepTheoLop_(kq.hocSinh, dsHocSinh_(ss), nhom, quyetDinh, tuThemMoi !== false);
+  var gon = function (x) { return { maHs: x.maHs, hoTen: x.hoTen, nhom: noiNhom_(x.nhom), sdt: x.sdt }; };
   var dauTien = null;
   var dsXem = kq.hocSinh.map(function (h, i) {
-    var g = ghep[i];
+    var r = g.dong[i];
     var cham = chamBai_(kq, h);
-    if (!dauTien && !g.loi) dauTien = { h: h, cham: cham, hs: g.hs || { hoTen: h.hoTen } };
-    return { chiSo: i, stt: h.stt, hoTen: h.hoTen, lop: h.lop, maDe: h.maDe, tongDiem: cham.diem.tong, maxTong: cham.diem.maxTong,
-      trangThai: g.loi ? 'loi' : g.ungVien ? 'xacNhan' : (g.hs ? 'co' : 'moi'), loi: g.loi || '',
-      maHs: g.hs ? g.hs.maHs : '', nhomHienTai: g.hs ? noiNhom_(g.hs.nhom) : '',
-      ungVien: (g.ungVien || []).map(function (x) { return { maHs: x.maHs, hoTen: x.hoTen, nhom: noiNhom_(x.nhom), sdt: x.sdt }; }) };
+    if (!dauTien && (r.hs || r.moi)) dauTien = { h: h, cham: cham, hs: r.hs || { hoTen: h.hoTen } };
+    return { chiSo: i, stt: h.stt, hoTen: h.hoTen, maHsFile: h.maHs, maDe: h.maDe, tongDiem: cham.diem.tong, maxTong: cham.diem.maxTong,
+      trangThai: r.loi ? 'loi' : r.canChon ? 'canChon' : r.boQua ? 'boqua' : r.moi ? 'moi' : 'co',
+      loi: r.loi || '', lyDo: r.canChon ? LY_DO_CAN_CHON[r.canChon] : '', canChon: r.canChon || '', tuDong: !!r.tuDong,
+      hs: r.hs ? gon(r.hs) : null, themVaoLop: !!r.themVaoLop, daChon: !!(quyetDinh || {})[i],
+      ungVien: (r.ungVien || []).map(gon) };
   });
   return {
     ok: true,
+    nhom: nhom,
     tieuDe: kq.thongTin.tieuDe,
     ngayThi: kq.thongTin.ngayThi,
-    nhom: nhom,
-    nhomGoiY: nhomGoiY,
     soCau: { I: kq.cauHoi.I.length, II: kq.cauHoi.II.length, III: kq.cauHoi.III.length },
     canhBao: kq.canhBao,
     hocSinh: dsXem,
+    siSo: g.siSo,
+    vang: g.vang.map(gon),
     htmlXemTruoc: dauTien ? taoHtmlPhieu_(kq, dauTien.h, dauTien.cham, dauTien.hs, '(xem trước)', layLogo_(),
       { lan: 1, ngayThi: kq.thongTin.ngayThi, lichSu: [], nhom: nhom }) : ''
   };
@@ -426,7 +451,7 @@ function gvXemTruoc(so, nhom, quyetDinh) {
 
 /**
  * Bước 2: tạo 1 lần thi.
- * tuyChon = { baiThi, nhom, ngayThi (dd/MM/yyyy), themHsMoi, ghiDe, quyetDinh: { chỉ số dòng: 'moi' | Mã HS } }
+ * tuyChon = { baiThi, nhom, ngayThi (dd/MM/yyyy), themHsMoi, ghiDe, quyetDinh: { chỉ số dòng: Mã HS | 'moi' | 'boqua' } }
  *   - Bài thi chưa có trong nhóm -> Lần 1.
  *   - Đã có -> Lần tiếp theo (giữ nguyên các lần trước), hoặc ghi đè lần gần nhất nếu ghiDe = true.
  *   - Học sinh có phiếu được tự thêm vào nhóm (1 em có thể thuộc nhiều nhóm).
@@ -446,9 +471,10 @@ function gvBatDauDot(so, tuyChon) {
     var ss = laySpreadsheet_();
     khoiTao_(ss);
     var shHs = ss.getSheetByName(CAU_HINH.SHEET_HOC_SINH);
-    var ghep = ghepDanhSach_(kq.hocSinh, dsHocSinh_(ss), nhom, tuyChon.quyetDinh);
-    var conXacNhan = ghep.filter(function (g) { return g.ungVien; }).length;
-    if (conXacNhan) return { ok: false, loi: 'Còn ' + conXacNhan + ' học sinh trùng tên cần xác nhận (cùng một em hay học sinh khác).' };
+    var g = ghepTheoLop_(kq.hocSinh, dsHocSinh_(ss), nhom, tuyChon.quyetDinh, tuyChon.themHsMoi !== false);
+    var ghep = g.dong;
+    var conChon = ghep.filter(function (x) { return x.canChon; }).length;
+    if (conChon) return { ok: false, loi: 'Còn ' + conChon + ' dòng chưa xác định học sinh (xem cột Trạng thái).' };
 
     var cacLan = dsDot_(ss).filter(function (d) { return khongDau_(d.nhom) === khongDau_(nhom) && khongDau_(d.baiThi) === khongDau_(baiThi); });
     var lan = 1;
@@ -463,9 +489,9 @@ function gvBatDauDot(so, tuyChon) {
     var maTheoDong = {};
     var dongMoi = [], chiSoMoi = [];
     kq.hocSinh.forEach(function (h, i) {
-      var g = ghep[i];
-      if (g.hs) { themNhomChoHs_(shHs, g.hs, nhom); maTheoDong[i] = g.hs.maHs; }
-      else if (!g.loi && tuyChon.themHsMoi) {
+      var x = ghep[i];
+      if (x.hs) { themNhomChoHs_(shHs, x.hs, nhom); maTheoDong[i] = x.hs.maHs; }
+      else if (x.moi) {
         var d = [h.hoTen, nhom, '', h.sdt || '', ''];
         if (h.maHs) d.maHs = h.maHs;
         dongMoi.push(d); chiSoMoi.push(i);
@@ -482,9 +508,10 @@ function gvBatDauDot(so, tuyChon) {
     var canTao = [], boQua = [];
     kq.hocSinh.forEach(function (h, i) {
       if (maTheoDong[i]) canTao.push({ i: i, maHs: maTheoDong[i] });
-      else boQua.push((h.hoTen || h.maHs) + ': ' + (ghep[i].loi || 'chưa có trong danh sách học sinh'));
+      else boQua.push((h.hoTen || h.maHs) + ': ' + (ghep[i].loi || 'bỏ qua'));
     });
-    return { ok: true, maDot: maDot, baiThi: baiThi, lan: lan, nhom: nhom, canTao: canTao, boQua: boQua, thuMuc: thuMuc.getUrl() };
+    return { ok: true, maDot: maDot, baiThi: baiThi, lan: lan, nhom: nhom, canTao: canTao, boQua: boQua, thuMuc: thuMuc.getUrl(),
+      vang: g.vang.map(function (x) { return x.hoTen + ' (' + x.maHs + ')'; }) };
   });
 }
 
@@ -573,11 +600,31 @@ function xoaDot_(ss, maDot) {
   }
 }
 
-/** Tạo file mẫu kết quả thi (Google Sheet) trong Drive — giáo viên có thể tải về dạng Excel. */
-function gvTaoFileMau() {
+/** Dữ liệu file mẫu kết quả thi; nếu có lớp thì tab KetQua điền sẵn STT, Mã HS, Họ tên của học sinh trong lớp. */
+function gvLayMauLop(nhom) {
   yeuCauGiaoVien_();
-  var f = SpreadsheetApp.create('Mẫu kết quả thi');
-  var mau = MAU_FILE_KET_QUA;
+  var mau = JSON.parse(JSON.stringify(MAU_FILE_KET_QUA));
+  nhom = chuoi_(nhom);
+  if (nhom) {
+    var tieuDe = mau.KetQua[0];
+    var lop = dsHocSinh_(laySpreadsheet_()).filter(function (h) { return thuocNhom_(h, nhom); })
+      .sort(function (a, b) { return a.hoTen.split(' ').pop().localeCompare(b.hoTen.split(' ').pop(), 'vi') || a.hoTen.localeCompare(b.hoTen, 'vi'); });
+    if (lop.length) {
+      mau.KetQua = [tieuDe].concat(lop.map(function (h, i) {
+        var r = tieuDe.map(function () { return ''; });
+        r[0] = String(i + 1); r[1] = h.maHs; r[2] = h.hoTen; r[3] = nhom;
+        return r;
+      }));
+    }
+  }
+  return mau;
+}
+
+/** Tạo file mẫu kết quả thi (Google Sheet) trong Drive — giáo viên có thể tải về dạng Excel. */
+function gvTaoFileMau(nhom) {
+  yeuCauGiaoVien_();
+  var mau = gvLayMauLop(nhom);
+  var f = SpreadsheetApp.create('Mẫu kết quả thi' + (nhom ? ' - ' + nhom : ''));
   var dau = f.getSheets()[0];
   Object.keys(mau).forEach(function (ten, i) {
     var sh = i === 0 ? dau.setName(ten) : f.insertSheet(ten);
@@ -768,44 +815,59 @@ function taoHtmlPhieu_(kq, h, cham, hs, maPhieu, logo, lanThi) {
 }
 
 /**
- * Ghép từng dòng kết quả với danh sách học sinh. Trả về mỗi dòng 1 trong:
- *   {hs}        đã xác định học sinh
- *   {}          học sinh mới
- *   {ungVien}   trùng họ tên với học sinh NGOÀI nhóm -> cần giáo viên xác nhận (tránh ghép nhầm 2 em khác nhau)
- *   {loi}
- * Thứ tự: quyết định của giáo viên > Mã HS > trùng tên trong nhóm > trùng tên + SĐT phụ huynh.
+ * Ghép từng dòng file kết quả với DANH SÁCH HỌC SINH CỦA LỚP đã chọn.
+ *   1. Có Mã HS  -> đúng em đó (phải thuộc lớp và họ tên khớp, nếu không -> hỏi giáo viên)
+ *   2. Không có  -> theo họ tên trong lớp (duy nhất)
+ *   3. Còn lại   -> hỏi giáo viên: chọn em trong lớp / em ở lớp khác / học sinh mới / bỏ qua
+ * quyetDinh = { chỉ số dòng: Mã HS | 'moi' | 'boqua' }.
+ * tuThemMoi: khi LỚP CHƯA CÓ HỌC SINH NÀO, dòng không trùng tên ai trong hệ thống -> tự coi là học sinh mới của lớp.
+ * Trả về { dong: [ {hs, themVaoLop} | {moi} | {boQua} | {canChon, ungVien} | {loi} ], vang: [học sinh lớp không có kết quả], siSo }
  */
-function ghepDanhSach_(dsKq, dsHs, nhom, quyetDinh) {
+function ghepTheoLop_(dsKq, dsHs, nhom, quyetDinh, tuThemMoi) {
   quyetDinh = quyetDinh || {};
-  var daGap = {};
+  var theoMa = {};
+  dsHs.forEach(function (x) { theoMa[x.maHs] = x; });
+  var lop = dsHs.filter(function (x) { return thuocNhom_(x, nhom); });
+  var cungTen = function (h) { return dsHs.filter(function (x) { return khongDau_(x.hoTen) === khongDau_(h.hoTen); }); };
   var ghepMot = function (h, i) {
     var qd = quyetDinh[i];
-    if (qd === 'moi') return {};
-    if (qd) { var x = dsHs.filter(function (hs) { return hs.maHs === qd; })[0]; if (x) return { hs: x }; }
+    if (qd === 'boqua') return { boQua: true };
+    if (qd === 'moi') return { moi: true };
+    if (qd && theoMa[qd]) return { hs: theoMa[qd], themVaoLop: !thuocNhom_(theoMa[qd], nhom) };
     if (h.maHs) {
-      var theoMa = dsHs.filter(function (hs) { return hs.maHs === h.maHs; });
-      return theoMa.length ? { hs: theoMa[0] } : {};
+      var x = theoMa[h.maHs];
+      if (!x) return { canChon: 'maLa', ungVien: cungTen(h) };
+      if (!thuocNhom_(x, nhom)) return { canChon: 'ngoaiLop', ungVien: [x] };
+      if (h.hoTen && khongDau_(h.hoTen) !== khongDau_(x.hoTen)) return { canChon: 'lechTen', ungVien: [x] };
+      return { hs: x };
     }
-    var ten = khongDau_(h.hoTen);
-    var cung = dsHs.filter(function (hs) { return khongDau_(hs.hoTen) === ten; });
-    if (!cung.length) return {};
-    var trongNhom = nhom ? cung.filter(function (hs) { return thuocNhom_(hs, nhom); }) : [];
-    if (trongNhom.length === 1) return { hs: trongNhom[0] };
-    if (trongNhom.length > 1) return { loi: 'Nhóm có ' + trongNhom.length + ' học sinh trùng họ tên, hãy điền cột "Mã HS"' };
-    if (h.sdt) {
-      var theoSdt = cung.filter(function (hs) { return chuanHoaSdt_(hs.sdt) && chuanHoaSdt_(hs.sdt) === chuanHoaSdt_(h.sdt); });
-      if (theoSdt.length === 1) return { hs: theoSdt[0] };
-    }
-    return { ungVien: cung };
+    var trongLop = lop.filter(function (x) { return khongDau_(x.hoTen) === khongDau_(h.hoTen); });
+    if (trongLop.length === 1) return { hs: trongLop[0] };
+    if (trongLop.length > 1) return { canChon: 'trungTen', ungVien: trongLop };
+    var khac = cungTen(h);
+    // Lớp chưa có danh sách (lần gửi đầu) -> tự thêm. Lớp đã có danh sách -> tên lạ thường là gõ sai, phải hỏi giáo viên.
+    if (!khac.length && tuThemMoi && !lop.length) return { moi: true, tuDong: true };
+    return { canChon: 'khongCo', ungVien: khac };
   };
-  return dsKq.map(function (h, i) {
+  var daGap = {};
+  var dong = dsKq.map(function (h, i) {
     var r = ghepMot(h, i);
-    var khoa = r.hs ? 'ma:' + r.hs.maHs : null;
-    if (khoa && daGap[khoa]) r = { loi: 'Học sinh xuất hiện 2 lần trong file' };
-    if (khoa) daGap[khoa] = true;
+    if (r.hs) {
+      if (daGap[r.hs.maHs]) r = { loi: 'Trùng học sinh với một dòng khác trong file (' + r.hs.maHs + ')' };
+      else daGap[r.hs.maHs] = true;
+    }
     return r;
   });
+  return { dong: dong, vang: lop.filter(function (x) { return !daGap[x.maHs]; }), siSo: lop.length };
 }
+
+var LY_DO_CAN_CHON = {
+  maLa: 'Mã HS trong file không có trong hệ thống',
+  ngoaiLop: 'Học sinh này chưa thuộc lớp — thêm vào lớp?',
+  lechTen: 'Họ tên trong file khác với họ tên của Mã HS',
+  trungTen: 'Lớp có nhiều học sinh trùng họ tên — chọn đúng em',
+  khongCo: 'Không tìm thấy trong lớp'
+};
 
 /* =====================================================================
  * 7. LƯU TRỮ (các tab trong Google Sheet)
@@ -825,10 +887,10 @@ function laySpreadsheet_() {
 }
 
 function khoiTao_(ss) {
-  [[CAU_HINH.SHEET_HOC_SINH, COT_HS], [CAU_HINH.SHEET_DOT, COT_DOT], [CAU_HINH.SHEET_PHIEU, COT_PHIEU]].forEach(function (x) {
+  [[CAU_HINH.SHEET_HOC_SINH, COT_HS], [CAU_HINH.SHEET_NHOM, COT_NHOM], [CAU_HINH.SHEET_DOT, COT_DOT], [CAU_HINH.SHEET_PHIEU, COT_PHIEU]].forEach(function (x) {
     if (ss.getSheetByName(x[0])) return;
     var sh = ss.insertSheet(x[0]);
-    if (x[0] === CAU_HINH.SHEET_HOC_SINH) sh.getRange('A:H').setNumberFormat('@');
+    if (x[0] === CAU_HINH.SHEET_HOC_SINH || x[0] === CAU_HINH.SHEET_NHOM) sh.getRange('A:H').setNumberFormat('@');
     sh.getRange(1, 1, 1, x[1].length).setValues([x[1]]).setFontWeight('bold').setBackground('#e8f0fe');
     sh.setFrozenRows(1);
     sh.protect().setDescription('Dữ liệu hệ thống — nên sửa qua bảng điều khiển').setWarningOnly(true);
@@ -853,6 +915,12 @@ function dsDot_(ss) {
       nhom: r[CD.NHOM - 1].trim(), ngayThi: ngayThi, thuTu: soThuTuNgay_(ngayThi), ngayTao: r[CD.NGAY_TAO - 1].trim(),
       soPhieu: Number(r[CD.SO_PHIEU - 1]) || 0, congBo: /^(true|có|x)$/i.test(r[CD.CONG_BO - 1].trim()), thuMuc: r[CD.THU_MUC - 1].trim() };
   }).filter(function (d) { return d.maDot; });
+}
+
+function dsNhom_(ss) {
+  var sh = ss.getSheetByName(CAU_HINH.SHEET_NHOM);
+  if (!sh || sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 1).getDisplayValues().map(function (r) { return r[0].trim(); }).filter(Boolean);
 }
 
 function dsPhieu_(ss) {
@@ -1084,7 +1152,7 @@ var MAU_FILE_KET_QUA = {
   ],
   HuongDan: [
     ['HƯỚNG DẪN ĐIỀN FILE KẾT QUẢ'],
-    ['• Tab KetQua: mỗi học sinh 1 dòng. Bắt buộc có "Họ và tên" (nên có "Mã HS" lấy từ danh sách học sinh để tránh trùng tên).'],
+    ['• Tab KetQua: mỗi học sinh 1 dòng. Tải mẫu từ bảng điều khiển sau khi chọn lớp thì cột "Mã HS" và "Họ và tên" đã được điền sẵn — KHÔNG sửa cột Mã HS.'],
     ['• Cột I.1 … I.12: đáp án học sinh chọn ở phần I (A/B/C/D).'],
     ['• Cột II.1 … II.4: đáp án đúng/sai của 4 ý, viết "Đ,S,Đ,S" hoặc "ĐSĐS".'],
     ['• Cột III.1 … III.6: đáp số học sinh điền (có thể để trống nếu chấm tay và nhập thẳng "Điểm phần III").'],

@@ -1,0 +1,363 @@
+<title>Phiếu kết quả học tập — Dùng thử</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Bố cục: thanh điều khiển demo ở trên, bên dưới là trang thật (giáo viên / phụ huynh) chạy trong khung */
+  :root {
+    --nen: #eef1f6; --be-mat: #ffffff; --chu: #1c2433; --phu: #5b6475; --vien: #d9dee7;
+    --nhan: #1a5fd0; --nhan-nhat: #e3ecfb; --vang: #8a5a00; --vang-nhat: #fff4dc;
+    --font: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --nen: #12161d; --be-mat: #1b212b; --chu: #e6ebf2; --phu: #9aa4b5; --vien: #2c3442;
+    --nhan: #7aa7ff; --nhan-nhat: #1f2c45; --vang: #f0c36b; --vang-nhat: #33290f; color-scheme: dark; } }
+  :root[data-theme="dark"] {
+    --nen: #12161d; --be-mat: #1b212b; --chu: #e6ebf2; --phu: #9aa4b5; --vien: #2c3442;
+    --nhan: #7aa7ff; --nhan-nhat: #1f2c45; --vang: #f0c36b; --vang-nhat: #33290f; color-scheme: dark; }
+  html, body { height: 100%; }
+  body { background: var(--nen); color: var(--chu); font: 14px/1.45 var(--font); display: flex; flex-direction: column; }
+  .thanh-demo { background: var(--be-mat); border-bottom: 1px solid var(--vien);
+    padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+  .ten { font-weight: 700; font-size: 15px; text-wrap: balance; }
+  .ten small { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 10px; background: var(--vang-nhat); color: var(--vang); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; vertical-align: 2px; }
+  .vai { display: inline-flex; border: 1px solid var(--vien); border-radius: 8px; overflow: hidden; }
+  .vai button { border: 0; background: transparent; color: var(--phu); padding: 7px 14px; font: 600 14px var(--font); cursor: pointer; }
+  .vai button[aria-pressed="true"] { background: var(--nhan); color: #fff; }
+  .gian { flex: 1; }
+  .nut { border: 1px solid var(--vien); background: var(--be-mat); color: var(--chu); border-radius: 8px; padding: 6px 12px; font: 600 13px var(--font); cursor: pointer; }
+  .nut:hover, .vai button:hover { filter: brightness(.97); }
+  .nut:focus-visible, .vai button:focus-visible, .ma:focus-visible { outline: 2px solid var(--nhan); outline-offset: 2px; }
+  .nut.chinh { background: var(--nhan); border-color: var(--nhan); color: #fff; }
+  .ghi-chu { width: 100%; color: var(--phu); font-size: 12.5px; margin: 0; }
+  .ma-thu { width: 100%; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .ma-thu b { font-size: 12.5px; color: var(--phu); font-weight: 600; }
+  .ma { border: 1px solid var(--vien); background: var(--nhan-nhat); color: var(--chu); border-radius: 14px; padding: 2px 10px; font: 12.5px var(--font); cursor: pointer; }
+  .ma code { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; letter-spacing: .5px; margin-left: 4px; }
+  .khung { flex: 1; min-height: 0; position: relative; }
+  .khung iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; }
+  .huong-dan { width: 100%; font-size: 12.5px; color: var(--phu); margin: 0; }
+  .huong-dan b { color: var(--chu); }
+  @media (max-width: 640px) {
+    .ghi-chu { display: none; }
+    .ma-thu { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+    .ma { white-space: nowrap; }
+    .thanh-demo { gap: 6px 10px; }
+  }
+</style>
+
+<div class="thanh-demo">
+  <div class="ten">Phiếu kết quả học tập <small>Bản dùng thử</small></div>
+  <div class="vai" role="group" aria-label="Xem với vai trò">
+    <button id="vaiGv" aria-pressed="true">👩‍🏫 Giáo viên</button>
+    <button id="vaiPh" aria-pressed="false">👪 Phụ huynh</button>
+  </div>
+  <span class="gian"></span>
+  <button id="nutFileMau" class="nut chinh" title="Đưa 1 file kết quả mẫu (giống file Excel giáo viên điền) vào lớp đang chọn">📄 Dùng file kết quả mẫu</button>
+  <button id="nutNap" class="nut">Nạp dữ liệu mẫu</button>
+  <button id="nutXoa" class="nut">Xóa hết dữ liệu</button>
+  <p id="huongDan" class="huong-dan"></p>
+  <div id="maThu" class="ma-thu" hidden></div>
+  <p class="ghi-chu">Chạy đúng mã của hệ thống (Code.gs, bảng điều khiển, trang tra cứu, mẫu phiếu). Google Sheet/Drive được giả lập và dữ liệu chỉ lưu trong trình duyệt này: phiếu hiển thị dạng HTML thay cho PDF, các link Google Drive không mở được.</p>
+</div>
+<div class="khung">
+  <iframe id="khungGv" title="Bảng điều khiển giáo viên"></iframe>
+  <iframe id="khungPh" title="Trang tra cứu của phụ huynh" hidden></iframe>
+</div>
+
+<script type="application/json" id="tepCodeGs">__CODE_GS__</script>
+<script type="application/json" id="tepGiaoVien">__GIAO_VIEN__</script>
+<script type="application/json" id="tepIndex">__INDEX__</script>
+<script type="application/json" id="tepPhieu">__PHIEU__</script>
+<script>
+(function () {
+  var docTep = function (id) { return JSON.parse(document.getElementById(id).textContent); };
+  var TEP = { GiaoVien: docTep('tepGiaoVien'), Index: docTep('tepIndex'), Phieu: docTep('tepPhieu') };
+  var KHOA = 'demo-phieu-ket-qua-v2';
+
+  /* ---------------- Giả lập dịch vụ Google Apps Script ---------------- */
+  var trangThai; // { sheets: {ten: [[...]]}, thuTuSheet: [], files: {}, props: {}, soFile }
+  function moi() { return { sheets: {}, thuTuSheet: [], files: {}, props: {}, soFile: 0 }; }
+  function luu() {
+    try { localStorage.setItem(KHOA, JSON.stringify(trangThai, function (k, v) { return this[k] instanceof Date ? { $d: this[k].getTime() } : v; })); } catch (e) { /* bỏ qua */ }
+  }
+  function nap() {
+    try {
+      var s = localStorage.getItem(KHOA);
+      if (s) return JSON.parse(s, function (k, v) { return v && typeof v === 'object' && '$d' in v ? new Date(v.$d) : v; });
+    } catch (e) { /* bỏ qua */ }
+    return null;
+  }
+  trangThai = nap() || moi();
+
+  var pad = function (n) { return String(n).padStart(2, '0'); };
+  function fmtDate(d, tz, f) {
+    return f.replace('yyyy', d.getFullYear()).replace('yy', String(d.getFullYear()).slice(2)).replace('MM', pad(d.getMonth() + 1))
+      .replace('dd', pad(d.getDate())).replace('HH', pad(d.getHours())).replace('mm', pad(d.getMinutes())).replace('ss', pad(d.getSeconds()));
+  }
+  function hienThi(v) { return v === true ? 'TRUE' : v === false ? 'FALSE' : v instanceof Date ? fmtDate(v, '', 'dd/MM/yyyy') : v == null ? '' : String(v); }
+  function Range(data, r, c, nr, nc) { this.d = data; this.r = r; this.c = c; this.nr = nr; this.nc = nc; }
+  Range.prototype._lay = function (f) {
+    var o = [];
+    for (var i = 0; i < this.nr; i++) { var row = this.d[this.r - 1 + i] || [], x = []; for (var j = 0; j < this.nc; j++) x.push(f(row[this.c - 1 + j])); o.push(x); }
+    return o;
+  };
+  Range.prototype.getValues = function () { return this._lay(function (v) { return v == null ? '' : v; }); };
+  Range.prototype.getDisplayValues = function () { return this._lay(hienThi); };
+  Range.prototype.getDisplayValue = function () { return this.getDisplayValues()[0][0]; };
+  Range.prototype.setValues = function (v) {
+    var self = this;
+    v.forEach(function (row, i) { row.forEach(function (x, j) { var R = self.r - 1 + i; while (self.d.length <= R) self.d.push([]); self.d[R][self.c - 1 + j] = x; }); });
+    return this;
+  };
+  Range.prototype.setValue = function (x) { return this.setValues([[x]]); };
+  Range.prototype.getRow = function () { return this.r; };
+  ['setFontWeight', 'setBackground', 'setNumberFormat', 'setWrap', 'setVerticalAlignment', 'insertCheckboxes'].forEach(function (m) { Range.prototype[m] = function () { return this; }; });
+  function Sheet(ten) { this.ten = ten; }
+  Sheet.prototype._d = function () { return trangThai.sheets[this.ten]; };
+  Sheet.prototype.getName = function () { return this.ten; };
+  Sheet.prototype.setName = function (n) { trangThai.sheets[n] = this._d(); delete trangThai.sheets[this.ten]; trangThai.thuTuSheet = trangThai.thuTuSheet.map(function (x) { return x === this.ten ? n : x; }, this); this.ten = n; return this; };
+  Sheet.prototype.getLastRow = function () { var d = this._d(), n = d.length; while (n > 0 && !(d[n - 1] || []).some(function (x) { return x !== '' && x != null; })) n--; return n; };
+  Sheet.prototype.getLastColumn = function () { return Math.max.apply(null, [0].concat(this._d().map(function (r) { var n = r.length; while (n > 0 && (r[n - 1] === '' || r[n - 1] == null)) n--; return n; }))); };
+  Sheet.prototype.getRange = function (r, c, nr, nc) { if (typeof r === 'string') return new Range(this._d(), 1, 1, 1, 1); return new Range(this._d(), r, c, nr || 1, nc || 1); };
+  Sheet.prototype.getDataRange = function () { return new Range(this._d(), 1, 1, this.getLastRow(), this.getLastColumn()); };
+  Sheet.prototype.appendRow = function (v) { this._d().splice(this.getLastRow(), 0, v.slice()); };
+  Sheet.prototype.deleteRow = function (i) { this._d().splice(i - 1, 1); };
+  Sheet.prototype.setFrozenRows = function () {};
+  Sheet.prototype.isSheetHidden = function () { return false; };
+  Sheet.prototype.protect = function () { var p = { setDescription: function () { return p; }, setWarningOnly: function () { return p; } }; return p; };
+  var ss = {
+    getSheetByName: function (n) { return trangThai.sheets[n] ? new Sheet(n) : null; },
+    insertSheet: function (n) { trangThai.sheets[n] = []; trangThai.thuTuSheet.push(n); return new Sheet(n); },
+    getSheets: function () { return trangThai.thuTuSheet.map(function (n) { return new Sheet(n); }); },
+    getId: function () { return 'DEMO'; }
+  };
+  function boc(f) {
+    if (!f) throw new Error('Không tìm thấy file');
+    return {
+      getId: function () { return f.id; }, getName: function () { return f.name; }, getMimeType: function () { return f.mime; },
+      getUrl: function () { return 'https://drive.google.com/drive/folders/' + f.id; },
+      getBlob: function () { return { getBytes: function () { return Array.from(new TextEncoder().encode(f.content)); }, getContentType: function () { return f.mime; } }; },
+      setTrashed: function (t) { f.trashed = t; }, isTrashed: function () { return !!f.trashed; },
+      createFolder: function (n) { return taoTep(n, '', 'folder'); },
+      createFile: function (b) { return taoTep(b.name, b.content, b.mime); }
+    };
+  }
+  function taoTep(ten, noiDung, mime) {
+    var id = 'F' + (++trangThai.soFile) + '_demoxxxxxxxxxxxxxxxxxxxx';
+    trangThai.files[id] = { id: id, name: ten, content: noiDung, mime: mime, trashed: false };
+    return boc(trangThai.files[id]);
+  }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+  /* Dịch template <? ?> <?= ?> <?!= ?> giống HtmlService */
+  function template(src) {
+    var t = {
+      evaluate: function () {
+        var code = 'var __o="";with(__t){', i = 0, re = /<\?(!=|=)?([\s\S]*?)\?>/g, m;
+        while ((m = re.exec(src))) {
+          code += '__o+=' + JSON.stringify(src.slice(i, m.index)) + ';';
+          if (m[1] === '=') code += '__o+=__esc(' + m[2] + ');'; else if (m[1] === '!=') code += '__o+=(' + m[2] + ');'; else code += m[2] + '\n';
+          i = re.lastIndex;
+        }
+        code += '__o+=' + JSON.stringify(src.slice(i)) + ';}return __o;';
+        var html = new Function('__t', '__esc', code)(t, esc);
+        return { getContent: function () { return html; } };
+      }
+    };
+    return t;
+  }
+  var cache = {}, nguoiDung = 'giaovien@demo';
+  var dichVu = {
+    Session: { getActiveUser: function () { return { getEmail: function () { return nguoiDung; } }; }, getEffectiveUser: function () { return { getEmail: function () { return 'giaovien@demo'; } }; } },
+    SpreadsheetApp: { getActiveSpreadsheet: function () { return ss; }, openById: function () { return ss; },
+      openByUrl: function () { throw new Error('Bản demo không đọc được link Google Sheet — hãy chọn file Excel hoặc dùng file kết quả mẫu.'); },
+      create: function (n) { var s2 = { _s: {}, getSheets: function () { return [{ setName: function () { return this; }, getRange: function () { return new Range([], 1, 1, 1, 1); }, setFrozenRows: function () {} }]; },
+        insertSheet: function () { return { getRange: function () { return new Range([], 1, 1, 1, 1); }, setFrozenRows: function () {} }; }, getUrl: function () { return 'https://docs.google.com/spreadsheets/d/demo'; } }; return s2; } },
+    PropertiesService: { getScriptProperties: function () { return { getProperty: function (k) { return trangThai.props[k] == null ? null : trangThai.props[k]; }, setProperty: function (k, v) { trangThai.props[k] = v; } }; } },
+    DriveApp: { createFolder: function (n) { return taoTep(n, '', 'folder'); }, getFolderById: function (id) { return boc(trangThai.files[id]); }, getFileById: function (id) { return boc(trangThai.files[id]); } },
+    MimeType: { HTML: 'text/html', PDF: 'application/pdf', GOOGLE_DOCS: 'gdoc' },
+    ScriptApp: { getService: function () { return { getUrl: function () { return 'https://script.google.com/macros/s/DEMO/exec'; } }; } },
+    Utilities: {
+      sleep: function () {}, formatDate: fmtDate,
+      getUuid: function () { var a = new Uint8Array(16); crypto.getRandomValues(a); return Array.from(a, function (x) { return (x + 256).toString(16).slice(1); }).join(''); },
+      base64Encode: function (b) { var s = ''; b.forEach(function (x) { s += String.fromCharCode((x + 256) % 256); }); return btoa(s); },
+      DigestAlgorithm: { SHA_256: 1 },
+      computeDigest: function () { var a = new Uint8Array(32); crypto.getRandomValues(a); return Array.from(a, function (x) { return x > 127 ? x - 256 : x; }); },
+      newBlob: function (noiDung, mime, ten) { return { content: noiDung, mime: mime, name: ten, getAs: function (m) { return { content: noiDung, mime: m, name: ten, setName: function (n) { this.name = n; return this; } }; } }; }
+    },
+    CacheService: { getScriptCache: function () { return { get: function (k) { return cache[k] || null; }, put: function (k, v) { cache[k] = v; } }; } },
+    LockService: { getScriptLock: function () { return { tryLock: function () { return true; }, waitLock: function () {}, releaseLock: function () {} }; } },
+    HtmlService: { createTemplateFromFile: function (n) { return template(TEP[n]); } }
+  };
+  var code = docTep('tepCodeGs');
+  var tenHam = []; code.replace(/^function (\w+)\s*\(/gm, function (_, n) { tenHam.push(n); });
+  var ten = Object.keys(dichVu);
+  var MAY_CHU = new Function(ten.join(','), code + '\nreturn {' + tenHam.map(function (n) { return n + ':' + n; }).join(',') + ', MAU_FILE_KET_QUA: MAU_FILE_KET_QUA};')
+    .apply(null, ten.map(function (k) { return dichVu[k]; }));
+
+  /* Gọi hàm máy chủ như google.script.run: vai 'gv' = chủ file, 'ph' = người lạ (ẩn danh) */
+  function goiMayChu(vai, fn, args) {
+    nguoiDung = vai === 'gv' ? 'giaovien@demo' : '';
+    try {
+      if (typeof MAY_CHU[fn] !== 'function' || /_$/.test(fn)) throw new Error('Script function not found: ' + fn);
+      var kq = MAY_CHU[fn].apply(null, JSON.parse(JSON.stringify(args)));
+      if (fn === 'layPhieu' && kq && kq.ok) { // demo: trả HTML thay vì PDF
+        var bin = atob(kq.pdf), bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        kq = { ok: true, tenFile: kq.tenFile, html: new TextDecoder().decode(bytes) };
+      }
+      luu();
+      return { ok: kq === undefined ? null : JSON.parse(JSON.stringify(kq)) };
+    } catch (e) { if (vai === 'gv') console.warn('[demo] ' + fn + ': ' + e.message); return { err: e.message }; } finally { nguoiDung = 'giaovien@demo'; }
+  }
+  window.__goiMayChu = function (vai, fn, args) {
+    return new Promise(function (ok) { setTimeout(function () { ok(goiMayChu(vai, fn, args)); if (vai === 'gv') veMaThu(); }, 120); });
+  };
+
+  /* ---------------- Khung trang ---------------- */
+  function shim(vai) {
+    return '<script>window.google={script:{run:(function mk(s,f){var o={withSuccessHandler:function(h){return mk(h,f)},withFailureHandler:function(h){return mk(s,h)}};' +
+      'return new Proxy(o,{get:function(t,k){if(k in t)return t[k];return function(){var a=[].slice.call(arguments);' +
+      'parent.__goiMayChu("' + vai + '",k,a).then(function(r){if(r.err){f&&f(new Error(r.err))}else{s&&s(r.ok)}})}}})})()}};<\/script>';
+  }
+  function moKhung(id, tep, vai, thay) {
+    var html = TEP[tep];
+    (thay || []).forEach(function (x) { html = html.split(x[0]).join(x[1]); });
+    html = html.replace('<head>', '<head><meta name="viewport" content="width=device-width, initial-scale=1">' + shim(vai));
+    var f = document.getElementById(id);
+    f.srcdoc = html;
+    f.onload = function () {
+      try { // trong demo không tải file xuống được -> hướng dẫn dùng file mẫu
+        var w = f.contentWindow;
+        if (w.XLSX) w.XLSX.writeFile = function () { w.bao('Bản demo không tải file xuống được. Bấm "📄 Dùng file kết quả mẫu" ở thanh trên để thử gửi kết quả.', true); };
+      } catch (e) { /* bỏ qua */ }
+    };
+  }
+  moKhung('khungGv', 'GiaoVien', 'gv');
+  moKhung('khungPh', 'Index', 'ph', [['<?= tieuDe ?>', 'Tra cứu kết quả học tập']]);
+
+  var vaiHienTai = 'gv';
+  function chonVai(v) {
+    vaiHienTai = v;
+    document.getElementById('vaiGv').setAttribute('aria-pressed', v === 'gv');
+    document.getElementById('vaiPh').setAttribute('aria-pressed', v === 'ph');
+    document.getElementById('khungGv').hidden = v !== 'gv';
+    document.getElementById('khungPh').hidden = v !== 'ph';
+    document.getElementById('nutFileMau').hidden = v !== 'gv';
+    document.getElementById('maThu').hidden = v !== 'ph';
+    veMaThu();
+  }
+  document.getElementById('vaiGv').onclick = function () { chonVai('gv'); };
+  document.getElementById('vaiPh').onclick = function () { chonVai('ph'); };
+
+  function duLieu() { var r = goiMayChu('gv', 'gvTaiDuLieu', []); return r.ok || { hocSinh: [], dot: [], nhom: [] }; }
+  function veMaThu() {
+    var k = document.getElementById('maThu'), hd = document.getElementById('huongDan');
+    var dl = duLieu();
+    hd.textContent = '';
+    if (vaiHienTai === 'gv') {
+      hd.innerHTML = dl.hocSinh.length
+        ? 'Thử: thẻ <b>Gửi kết quả thi</b> → chọn lớp → <b>📄 Dùng file kết quả mẫu</b> → chọn đúng học sinh ở các dòng cần chọn → <b>Tạo phiếu PDF</b> → <b>Công bố</b>. Sau đó chuyển sang <b>👪 Phụ huynh</b>.'
+        : 'Chưa có dữ liệu. Bấm <b>Nạp dữ liệu mẫu</b> để có sẵn 2 lớp, học sinh và vài bài thi, hoặc tự tạo lớp ở thẻ <b>Học sinh</b>.';
+    } else {
+      hd.innerHTML = 'Phụ huynh chỉ cần <b>mã tra cứu</b>. Bấm một mã bên dưới để điền thử (mã thật sẽ do giáo viên nhắn riêng). Thử nhập sai mã để xem hệ thống từ chối.';
+    }
+    k.textContent = '';
+    if (vaiHienTai !== 'ph') return;
+    var nhan = document.createElement('b'); nhan.textContent = dl.hocSinh.length ? 'Mã để thử:' : 'Chưa có học sinh — bấm "Nạp dữ liệu mẫu".'; k.appendChild(nhan);
+    dl.hocSinh.forEach(function (h) {
+      var b = document.createElement('button'); b.className = 'ma'; b.type = 'button';
+      b.appendChild(document.createTextNode(h.hoTen + ' (' + h.nhom.join(', ') + ')'));
+      var c = document.createElement('code'); c.textContent = h.maTraCuu; b.appendChild(c);
+      b.onclick = function () {
+        var w = document.getElementById('khungPh').contentWindow, d = w.document;
+        if (!d.getElementById('manNhap').classList.contains('an')) { d.getElementById('ma').value = h.maTraCuu; d.getElementById('nut').click(); }
+        else { d.getElementById('nutLai').click(); setTimeout(function () { d.getElementById('ma').value = h.maTraCuu; d.getElementById('nut').click(); }, 50); }
+      };
+      k.appendChild(b);
+    });
+  }
+
+  /* ---------------- Dữ liệu mẫu ---------------- */
+  var hatGiong = 7;
+  function ngauNhien() { hatGiong = (hatGiong * 16807) % 2147483647; return (hatGiong - 1) / 2147483646; }
+  /* Tạo "file Excel đã điền" cho 1 lớp, giống giáo viên tải mẫu của lớp rồi điền đáp án */
+  function taoFileKetQua(lop, tieuDe, ngayThi, tronLoi) {
+    var mau = goiMayChu('gv', 'gvLayMauLop', [lop]).ok;
+    var de = mau.DeThi.slice(1), tieuDeCot = mau.KetQua[0];
+    var dongDe = function (phan, cau) { return de.filter(function (r) { return r[0] === phan && Number(r[1]) === cau; })[0]; };
+    mau.ThongTin.forEach(function (r) { if (r[0] === 'Tiêu đề phiếu') r[1] = tieuDe; if (r[0] === 'Ngày thi') r[1] = ngayThi; });
+    var dong = mau.KetQua.slice(1).filter(function (r) { return r[1]; });
+    if (!dong.length) dong = MAY_CHU.MAU_FILE_KET_QUA.KetQua.slice(1).map(function (r) { return r.slice(0, 4).concat(tieuDeCot.slice(4).map(function () { return ''; })); });
+    var ketQua = dong.map(function (r) {
+      var gioi = 0.55 + ngauNhien() * 0.4, x = r.slice();
+      x[4] = '105';
+      tieuDeCot.forEach(function (h, j) {
+        var m = /^(I{1,3})\.(\d+)$/.exec(h); if (!m) return;
+        var dung = (dongDe(m[1], Number(m[2])) || [])[5] || '';
+        if (m[1] === 'I') x[j] = ngauNhien() < gioi ? dung : 'ABCD'.replace(dung, '')[Math.floor(ngauNhien() * 3)];
+        else if (m[1] === 'II') x[j] = dung.replace(/D/g, 'Đ').split('').map(function (c) { return ngauNhien() < gioi ? c : (c === 'Đ' ? 'S' : 'Đ'); }).join(',');
+      });
+      var p3 = Math.round(gioi * 3 * 4 * (0.7 + ngauNhien() * 0.3)) / 4;
+      x[tieuDeCot.indexOf('Điểm phần III')] = String(Math.min(3, p3));
+      x[tieuDeCot.indexOf('Ưu điểm')] = gioi > 0.8 ? 'Nắm chắc kiến thức, làm bài cẩn thận.' : 'Chăm chỉ, nắm được kiến thức cơ bản.';
+      x[tieuDeCot.indexOf('Nhược điểm')] = gioi > 0.8 ? 'Chưa phát hiện nhược điểm lớn.' : 'Còn nhầm lẫn ở các câu vận dụng.';
+      x[tieuDeCot.indexOf('Hướng khắc phục')] = gioi > 0.8 ? 'Mở rộng thêm các dạng bài nâng cao.' : 'Ôn lại công thức, luyện thêm bài tập vận dụng.';
+      return x;
+    });
+    if (tronLoi && ketQua.length > 3) {
+      ketQua[1] = ketQua[1].slice(); ketQua[1][2] = ketQua[1][2].replace(/\S+$/, 'Sai Chính Tả'); ketQua[1][1] = ''; // gõ sai tên, quên Mã HS
+      ketQua.splice(ketQua.length - 1, 1);                                                         // 1 em vắng thi
+    }
+    mau.KetQua = [tieuDeCot].concat(ketQua);
+    delete mau.HuongDan;
+    return mau;
+  }
+  function guiDot(lop, tieuDe, ngayThi) {
+    var so = taoFileKetQua(lop, tieuDe, ngayThi, false);
+    var bd = goiMayChu('gv', 'gvBatDauDot', [so, { baiThi: tieuDe, nhom: lop, ngayThi: ngayThi, themHsMoi: true }]).ok;
+    if (!bd || !bd.ok) { console.warn('[demo] không tạo được dữ liệu mẫu', bd); return; }
+    goiMayChu('gv', 'gvTaoPhieuLo', [bd.maDot, so, bd.canTao]);
+    goiMayChu('gv', 'gvCongBo', [bd.maDot, true]);
+  }
+  function napMau() {
+    trangThai = moi(); hatGiong = 7;
+    goiMayChu('gv', 'gvTaiDuLieu', []);
+    goiMayChu('gv', 'gvLuuCaiDat', [{ tenTrungTam: 'TRUNG TÂM HỌC TẬP ÁNH DƯƠNG', khauHieu: 'Học vững · Hiểu sâu' }]);
+    goiMayChu('gv', 'gvTaoNhom', ['Toán 2']);
+    goiMayChu('gv', 'gvTaoNhom', ['Hóa 1']);
+    goiMayChu('gv', 'gvThemNhieuHocSinh', [[['Họ và tên', 'Nhóm', 'SĐT phụ huynh'],
+      ['Nguyễn Minh An', 'Toán 2', '0912 345 601'], ['Trần Thảo Vy', 'Toán 2', '0912 345 602'], ['Lê Quốc Bảo', 'Toán 2', '0912 345 603'],
+      ['Phạm Gia Hân', 'Toán 2', '0912 345 604'], ['Đỗ Đức Huy', 'Toán 2', '0912 345 605'], ['Vũ Ngọc Linh', 'Toán 2', '0912 345 606'],
+      ['Nguyễn Minh An', 'Hóa 1', '0912 345 601'], ['Phạm Gia Hân', 'Hóa 1', '0912 345 604'], ['Bùi Khánh Ngọc', 'Hóa 1', '0912 345 607']], {}, '']);
+    guiDot('Toán 2', 'Phân tích bài thi tháng 9', '28/09/2026');
+    guiDot('Toán 2', 'Phân tích bài thi tháng 9', '12/10/2026');
+    guiDot('Toán 2', 'Kiểm tra giữa kỳ I', '02/11/2026');
+    guiDot('Hóa 1', 'Kiểm tra Hóa tháng 10', '20/10/2026');
+    luu();
+    moKhung('khungGv', 'GiaoVien', 'gv');
+    moKhung('khungPh', 'Index', 'ph', [['<?= tieuDe ?>', 'Tra cứu kết quả học tập']]);
+    veMaThu();
+  }
+  document.getElementById('nutNap').onclick = napMau;
+  document.getElementById('nutXoa').onclick = function () {
+    trangThai = moi(); luu();
+    moKhung('khungGv', 'GiaoVien', 'gv');
+    moKhung('khungPh', 'Index', 'ph', [['<?= tieuDe ?>', 'Tra cứu kết quả học tập']]);
+    veMaThu();
+  };
+  document.getElementById('nutFileMau').onclick = function () {
+    var w = document.getElementById('khungGv').contentWindow;
+    try {
+      w.document.querySelector('[data-tab=tabGui]').click();
+      var lop = w.lopDangChon();
+      if (!lop) { w.bao('Chọn lớp ở bước 1 trước, rồi bấm lại "📄 Dùng file kết quả mẫu".', true); return; }
+      var thang = new Date().getMonth() + 1;
+      var so = taoFileKetQua(lop, 'Kiểm tra tháng ' + thang, fmtDate(new Date(), '', 'dd/MM/yyyy'), true);
+      w.batDauXemTruoc(so, 'Ket_qua_' + lop.replace(/\s+/g, '_') + '.xlsx (file mẫu của demo)');
+    } catch (e) { console.error(e); }
+  };
+
+  if (!trangThai.thuTuSheet.length) napMau(); else veMaThu();
+  chonVai('gv');
+})();
+</script>
