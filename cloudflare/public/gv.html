@@ -230,6 +230,11 @@
   .menu-ds button:hover:not(:disabled) { background: var(--phu-hover); }
   .menu-ds button.do { color: var(--do); }
   .menu-ds button.an { display: none; }
+  /* Huy hiệu hạng trong danh sách phiếu */
+  .huy-hieu { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; height: 24px; padding: 0 8px; border-radius: var(--r-tron); font-size: 12px; font-weight: 700; color: var(--phu); background: none; }
+  .huy-hieu.h1 { background: linear-gradient(135deg, #FFE27A, #F2B705); color: #5C3D00; box-shadow: inset 0 0 0 1px rgba(150,100,0,.25); }
+  .huy-hieu.h2 { background: linear-gradient(135deg, #F1F3F5, #C3CAD2); color: #39434D; box-shadow: inset 0 0 0 1px rgba(60,70,80,.2); }
+  .huy-hieu.h3 { background: linear-gradient(135deg, #F6C9A0, #CD8A4F); color: #5A2E0B; box-shadow: inset 0 0 0 1px rgba(110,60,20,.25); }
   /* Tab Lớp học */
   .luoi-lop { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
   .the-lop { background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); padding: 18px; box-shadow: var(--bong-thap); display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: box-shadow .125s var(--em), transform .125s var(--em); }
@@ -1816,6 +1821,10 @@
   /* Danh sách phiếu của 1 lần thi -> bấm để xem (thay cho thư mục PDF) */
   function hopDsPhieu(d) {
     goi('gvDsPhieuLan', d.maDot).then(function (ds) {
+      // Xếp theo tổng điểm (thang 10) giảm dần; bằng điểm thì chung hạng (1, 1, 3…)
+      var diem10 = function (p) { var a = parseFloat(p.tongDiem), b = parseFloat(p.diemToiDa); return b > 0 && !isNaN(a) ? a / b * 10 : -1; };
+      ds.sort(function (a, b) { return diem10(b) - diem10(a) || a.hoTen.localeCompare(b.hoTen, 'vi'); });
+      ds.forEach(function (p, i) { p.hang = i && Math.abs(diem10(p) - diem10(ds[i - 1])) < 1e-9 ? ds[i - 1].hang : i + 1; });
       var tb = the('tbody');
       var moPhieu = function (i) {
         var p = ds[i]; if (!p) return;
@@ -1824,11 +1833,12 @@
         }).catch(baoLoi);
       };
       ds.forEach(function (p, i) {
-        tb.appendChild(the('tr', {}, [the('td', {}, [the('b', { text: p.hoTen })]), the('td', { text: p.maHs }), the('td', { text: p.tongDiem + ' / ' + p.diemToiDa }),
+        tb.appendChild(the('tr', {}, [the('td', {}, [the('span', { class: 'huy-hieu' + (p.hang <= 3 ? ' h' + p.hang : ''), title: 'Hạng ' + p.hang, text: '#' + p.hang })]),
+          the('td', {}, [the('b', { text: p.hoTen })]), the('td', { text: p.maHs }), the('td', { text: p.tongDiem + ' / ' + p.diemToiDa }),
           the('td', {}, [the('button', { class: 'phu nho', text: 'Xem', onclick: function () { moPhieu(i); } })])]));
       });
       moHop(tenLanThi(d) + ' · lớp ' + d.nhom + ' (' + ds.length + ' phiếu)', the('table', { class: 'ds' }, [
-        the('thead', {}, [the('tr', {}, [the('th', { text: 'Học sinh' }), the('th', { text: 'Mã HS' }), the('th', { text: 'Tổng điểm' }), the('th', {})])]), tb]));
+        the('thead', {}, [the('tr', {}, [the('th', { text: 'Hạng' }), the('th', { text: 'Học sinh' }), the('th', { text: 'Mã HS' }), the('th', { text: 'Tổng điểm' }), the('th', {})])]), tb]));
     }).catch(baoLoi);
   }
 
