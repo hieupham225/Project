@@ -1141,14 +1141,16 @@
     $('manDangNhap').classList.remove('an');
     hienForm(location.hash === '#dang-ky' ? 'dk' : 'dn');
   }
+  // Đổi #dang-ky / #dang-nhap trên thanh địa chỉ (bỏ qua nếu trình duyệt không cho, vd trang nhúng)
+  function doiDiaChi(url) { try { history.replaceState(null, '', url); } catch (e) { /* bỏ qua */ } }
   function hienForm(loai) {
     $('formDangNhap').classList.toggle('an', loai !== 'dn');
     $('formDangKy').classList.toggle('an', loai !== 'dk');
     $('dnMatKhau').value = ''; $('dkMatKhau').value = '';
     (loai === 'dk' ? $('dkHoTen') : $('dnTen')).focus();
   }
-  $('denDangKy').onclick = function (e) { e.preventDefault(); history.replaceState(null, '', '#dang-ky'); hienForm('dk'); };
-  $('denDangNhap').onclick = function (e) { e.preventDefault(); history.replaceState(null, '', '#dang-nhap'); hienForm('dn'); };
+  $('denDangKy').onclick = function (e) { e.preventDefault(); doiDiaChi('#dang-ky'); hienForm('dk'); };
+  $('denDangNhap').onclick = function (e) { e.preventDefault(); doiDiaChi('#dang-nhap'); hienForm('dn'); };
 
   function khoiDong() {
     return fetch('/api/toi', { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (t) {
@@ -1161,7 +1163,7 @@
     e.preventDefault();
     $('dnNut').disabled = true; $('dnLoi').textContent = '';
     guiApi('/api/dang-nhap', { email: $('dnTen').value, matKhau: $('dnMatKhau').value })
-      .then(function () { $('dnMatKhau').value = ''; history.replaceState(null, '', location.pathname); return khoiDong(); })
+      .then(function () { $('dnMatKhau').value = ''; doiDiaChi(location.pathname); return khoiDong(); })
       .catch(function (e2) { $('dnLoi').textContent = e2.message; })
       .then(function () { $('dnNut').disabled = false; });
   });
@@ -1169,7 +1171,7 @@
     e.preventDefault();
     $('dkNut').disabled = true; $('dkLoi').textContent = '';
     guiApi('/api/dang-ky', { hoTen: $('dkHoTen').value, tenKhongGian: $('dkKhongGian').value, email: $('dkEmail').value, matKhau: $('dkMatKhau').value })
-      .then(function () { $('dkMatKhau').value = ''; history.replaceState(null, '', location.pathname); return khoiDong(); })
+      .then(function () { $('dkMatKhau').value = ''; doiDiaChi(location.pathname); return khoiDong(); })
       .then(function () { bao('Chào mừng! Bắt đầu bằng cách tạo lớp và thêm học sinh.'); })
       .catch(function (e2) { $('dkLoi').textContent = e2.message; })
       .then(function () { $('dkNut').disabled = false; });
