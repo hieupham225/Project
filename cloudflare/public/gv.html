@@ -255,6 +255,7 @@
   .o-tat-ca-lop { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: var(--nen); cursor: pointer; font-weight: 600; }
   .o-tat-ca-lop input { width: 18px; height: 18px; margin: 2px 0 0; flex: none; }
   .o-tat-ca-lop .goi-y { display: block; font-weight: 400; margin-top: 4px; }
+  table.th td.ten-th { white-space: nowrap; }
   .huy-hieu.nho { min-width: 0; height: 18px; padding: 0 6px; font-size: 10.5px; margin-left: 6px; vertical-align: 1px; }
   .huy-hieu.h1 { background: linear-gradient(135deg, #FFE27A, #F2B705); color: #5C3D00; box-shadow: inset 0 0 0 1px rgba(150,100,0,.25); }
   .huy-hieu.h2 { background: linear-gradient(135deg, #F1F3F5, #C3CAD2); color: #39434D; box-shadow: inset 0 0 0 1px rgba(60,70,80,.2); }
@@ -1962,9 +1963,9 @@
       var ds = cot.map(function (d) { return diem[h.maHs][d.maDot]; }).filter(Boolean).map(thang10);
       return [h.maHs, ds.reduce(function (a, b) { return a + b; }, 0) / ds.length];
     }));
-    var huyHieu = function (hang) { return hang <= 3 ? the('span', { class: 'huy-hieu nho h' + hang, title: 'Hạng ' + hang + ' trong lớp', text: '#' + hang }) : null; };
+    var huyHieu = function (hang, ghiChu) { return hang <= 3 ? the('span', { class: 'huy-hieu nho h' + hang, title: 'Hạng ' + hang + ' trong lớp' + (ghiChu || ''), text: '#' + hang }) : null; };
     hs.forEach(function (h, i) {
-      var r = the('tr', {}, [the('td', { text: i + 1 }), the('td', {}, [the('b', { text: h.hoTen })])]);
+      var r = the('tr', {}, [the('td', { text: i + 1 }), the('td', { class: 'ten-th' }, [the('b', { text: h.hoTen }), huyHieu(hangTb[h.maHs], ' theo điểm trung bình')])]);
       var dong = [h.hoTen], ds10 = [];
       cot.forEach(function (d, j) {
         var v = diem[h.maHs] && diem[h.maHs][d.maDot];
@@ -1976,7 +1977,7 @@
       });
       var tb = ds10.length ? ds10.reduce(function (a, b) { return a + b; }, 0) / ds10.length : null;
       var tienBo = ds10.length > 1 ? ds10[ds10.length - 1] - ds10[0] : null;
-      r.appendChild(the('td', { class: 'diem' }, tb == null ? ['—'] : [tb.toFixed(2), huyHieu(hangTb[h.maHs])]));
+      r.appendChild(the('td', { class: 'diem', text: tb == null ? '—' : tb.toFixed(2) }));
       r.appendChild(the('td', { class: 'diem ' + (tienBo > 0 ? 'tang' : tienBo < 0 ? 'giam' : ''), text: tienBo == null ? '—' : (tienBo > 0 ? '▲ +' : tienBo < 0 ? '▼ ' : '') + tienBo.toFixed(2) }));
       dong.push(tb == null ? '' : tb.toFixed(2), tienBo == null ? '' : tienBo.toFixed(2));
       tsv.push(dong); tbody.appendChild(r);
