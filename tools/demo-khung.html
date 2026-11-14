@@ -307,7 +307,7 @@ window.__worker = index_default;
     try {
       if (!w.document.getElementById('manDangNhap').classList.contains('an')) { w.document.getElementById('dnTen').focus(); return; }
       w.document.querySelector('[data-tab=tabGui]').click();
-      var lop = w.document.getElementById('gMauLop').value; // '' = mẫu gồm tất cả lớp
+      var lop = w.lopMauChon || ''; // '' = mẫu gồm tất cả lớp
       var thang = new Date().getMonth() + 1;
       taoHaiFile('gv', lop, 'Kiểm tra tháng ' + thang, new Intl.DateTimeFormat('en-GB').format(new Date()), true).then(function (so) {
         return w.napFile('kq', so.kq, 'Ket_qua_' + (lop || 'tat_ca_lop').replace(/\s+/g, '_') + '.xlsx (mẫu)').then(function () { return w.napFile('da', so.da, 'Dap_an_theo_ma_de.xlsx (mẫu)'); })

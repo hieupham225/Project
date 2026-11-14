@@ -248,6 +248,7 @@
     .hop-form .luoi { grid-template-columns: 1fr !important; }
     .chan-hop { position: sticky; bottom: calc(-18px - env(safe-area-inset-bottom)); background: var(--be-mat); margin: 14px -14px 0; padding: 12px 14px 0; border-top: 1px solid var(--vien); }
     .chan-hop > button { flex: 1 1 0; }
+    .chan-hop > .gian { display: none; }
     /* Hộp thoại dạng trượt từ dưới lên */
     .phu-trang { align-items: flex-end; padding: 0; }
     .hop { width: 100vw; max-width: 100vw; max-height: 92vh; border-radius: 18px 18px 0 0; padding: 18px 14px calc(18px + env(safe-area-inset-bottom)); }
@@ -417,7 +418,6 @@
       <div class="dau-trang">
         <div class="tieu-de-trang"><h1>Gửi kết quả thi</h1><p class="goi-y">Tải lên bảng kết quả (có cột <b>Lớp</b>) và bảng đáp án. Hệ thống tự đưa từng dòng vào đúng lớp, đúng học sinh — một file có thể gồm nhiều lớp.</p></div>
         <div class="cum">
-          <select id="gMauLop" title="Mẫu bảng kết quả gồm học sinh của lớp nào"></select>
           <button id="nutTaiMauLop" class="phu">⬇ Mẫu bảng kết quả</button>
           <button id="nutTaiMauDapAn" class="phu">⬇ Mẫu đáp án</button>
         </div>
@@ -426,7 +426,7 @@
       <div id="khuChonFile" class="the">
         <h2><span class="buoc">1</span>Tải lên 2 file</h2>
         <p class="goi-y" style="margin-top:0">Mẫu bảng kết quả điền sẵn <b>Mã HS</b>, <b>họ tên</b> và <b>lớp</b> của học sinh — xóa dòng của em không làm bài này, <b>không sửa cột Mã HS</b>.
-          Lớp ghi trong file mà chưa có sẽ được tạo mới. <a href="#" id="linkSaoChepMau">Không tải được mẫu? Sao chép bảng để dán vào Excel</a></p>
+          Lớp ghi trong file mà chưa có sẽ được tạo mới.</p>
         <div class="file-o">
           <div>
             <h3>① Bảng kết quả học sinh</h3>
@@ -785,7 +785,7 @@
   }
   function moLop(n) { lopMo = n; veLop(); window.scrollTo(0, 0); }
   function chuyenTab(id) { document.querySelector('[data-tab=' + id + ']').click(); }
-  function guiKqChoLop(n) { chuyenTab('tabGui'); $('gMauLop').value = n; }
+  function guiKqChoLop(n) { chuyenTab('tabGui'); lopMauChon = n; }
 
   function veChiTietLop() {
     var n = lopMo, hs = hsCuaLop(n), dot = dotCuaLop(n);
@@ -1043,14 +1043,9 @@
   var quyetDinhKq = {}, quyetDinhLop = {};
   function hsCuaLop(n) { return DL.hocSinh.filter(function (h) { return h.nhom.indexOf(n) >= 0; }); }
 
-  // Ô chọn lớp chỉ để lọc FILE MẪU (mặc định: tất cả lớp)
-  function veChonLop() {
-    var sel = $('gMauLop'), cu = sel.value;
-    sel.textContent = '';
-    sel.appendChild(the('option', { value: '', text: 'Mẫu: tất cả lớp' }));
-    (DL.nhom || []).forEach(function (n) { sel.appendChild(the('option', { value: n, text: 'Mẫu: lớp ' + n + ' (' + hsCuaLop(n).length + ' em)' })); });
-    sel.value = (DL.nhom || []).indexOf(cu) >= 0 ? cu : '';
-  }
+  // Lớp của FILE MẪU: chọn trong hộp thoại khi bấm tải mẫu ('' = tất cả lớp)
+  var lopMauChon = '';
+  function veChonLop() { if (lopMauChon && (DL.nhom || []).indexOf(lopMauChon) < 0) lopMauChon = ''; }
   function taoLopMoi(sauKhiTao) {
     hoi('Học sinh có thể học nhiều lớp mà vẫn chỉ có 1 mã tra cứu.', { tieuDe: 'Tạo lớp mới', nhan: 'Tên lớp *', nhap: '', goiY: 'VD: Toán 2, Tiếng Anh A1', nut: 'Tạo lớp' }).then(function (ten) {
       if (!ten || !ten.trim()) return;
@@ -1072,26 +1067,43 @@
     });
     XLSX.writeFile(wb, tenFile);
   }
-  function tenMau() { var n = $('gMauLop').value; return n ? 'Ket_qua_' + n : 'Ket_qua_tat_ca_lop'; }
-  $('nutTaiMauLop').onclick = function () {
-    var n = $('gMauLop').value;
+  function tenMau(n) { return n ? 'Ket_qua_' + n : 'Ket_qua_tat_ca_lop'; }
+  function taiMauKq(n) {
     if (!window.XLSX) return bao('Không tải được thư viện Excel. Kiểm tra kết nối mạng.', true);
     goi('gvLayMau', n).then(function (mau) {
-      luuXlsx(mau.ketQua, tenFileKhongDau(tenMau()) + '.xlsx');
+      luuXlsx(mau.ketQua, tenFileKhongDau(tenMau(n)) + '.xlsx');
       bao('Đã tải bảng kết quả mẫu (' + (n ? 'lớp ' + n : 'tất cả lớp') + ', ' + (mau.ketQua.KetQua.length - 1) + ' dòng).');
     }).catch(baoLoi);
-  };
-  $('nutTaiMauDapAn').onclick = function () {
-    if (!window.XLSX) return bao('Không tải được thư viện Excel. Kiểm tra kết nối mạng.', true);
-    goi('gvLayMau', '').then(function (mau) { luuXlsx(mau.dapAn, 'Dap_an_theo_ma_de.xlsx'); bao('Đã tải bảng đáp án mẫu.'); }).catch(baoLoi);
-  };
-  $('linkSaoChepMau').onclick = function (e) {
-    e.preventDefault();
-    var n = $('gMauLop').value;
+  }
+  function chepMauKq(n) {
     goi('gvLayMau', n).then(function (mau) {
       var tsv = mau.ketQua.KetQua.map(function (r) { return r.join('\t'); }).join('\n');
       hopTinNhan('Bảng kết quả ' + (n ? 'lớp ' + n : 'tất cả lớp') + ' — dán vào ô A1 của Excel', tsv);
     }).catch(baoLoi);
+  }
+  // Bấm "Mẫu bảng kết quả" -> hộp chọn lớp: tất cả lớp hoặc 1 lớp
+  $('nutTaiMauLop').onclick = function () {
+    var ds = DL.nhom || [], chon = ds.indexOf(lopMauChon) >= 0 ? lopMauChon : '';
+    var khung = the('div', { class: 'ds-co-san ds-chon-lop' });
+    var muc = function (gt, ten, phu) {
+      var r = the('input', { type: 'radio', name: 'lopMau', value: gt }); r.checked = gt === chon;
+      r.onchange = function () { chon = gt; };
+      khung.appendChild(the('label', {}, [r, the('div', {}, [the('b', { text: ten }), the('div', { class: 'goi-y', text: phu })])]));
+    };
+    muc('', 'Tất cả lớp', DL.hocSinh.length + ' học sinh · mỗi dòng ghi sẵn lớp, em học 2 lớp có 2 dòng');
+    ds.forEach(function (n) { muc(n, n, hsCuaLop(n).length + ' học sinh'); });
+    var dong = function () { $('hop').classList.add('an'); lopMauChon = chon; };
+    moHop('Tải mẫu bảng kết quả', the('div', {}, [
+      the('p', { class: 'goi-y', style: 'margin-top:0', text: 'Mẫu điền sẵn Mã HS, họ tên và lớp của học sinh. Xóa dòng của em không làm bài, không sửa cột Mã HS.' }),
+      khung,
+      the('div', { class: 'chan-hop' }, [
+        the('button', { class: 'phu', text: 'Sao chép bảng', title: 'Không tải được file? Sao chép bảng để dán vào Excel', onclick: function () { dong(); chepMauKq(chon); } }),
+        the('span', { class: 'gian' }),
+        the('button', { text: '⬇ Tải mẫu', onclick: function () { dong(); taiMauKq(chon); } })])]));
+  };
+  $('nutTaiMauDapAn').onclick = function () {
+    if (!window.XLSX) return bao('Không tải được thư viện Excel. Kiểm tra kết nối mạng.', true);
+    goi('gvLayMau', '').then(function (mau) { luuXlsx(mau.dapAn, 'Dap_an_theo_ma_de.xlsx'); bao('Đã tải bảng đáp án mẫu.'); }).catch(baoLoi);
   };
 
   function trangFile(id, chu, kieu) { var el = $(id); el.textContent = chu; el.className = 'trang' + (kieu ? ' ' + kieu : ''); }
