@@ -41,7 +41,7 @@
     <td>
       <div class="tieu-de"><?= d.tieuDe ?></div>
       <? if (d.moTa) { ?><div class="mo-ta">(<?= d.moTa ?>)</div><? } ?>
-      <? if (d.stt) { ?><div class="stt">(STT: <?= d.stt ?>)</div><? } ?>
+      <div class="stt"><? if (d.stt) { ?>(STT: <?= d.stt ?>)<? } ?><? if (d.lan > 1 || d.lichSu.length) { ?> · Lần <?= d.lan ?><? } ?><? if (d.ngayThi) { ?> · Ngày thi: <?= d.ngayThi ?><? } ?></div>
     </td>
   </tr>
 </table>
@@ -62,6 +62,18 @@
     </td>
   </tr>
 </table>
+<? if (d.lichSu.length) { ?>
+<table class="bang" style="width:auto;margin-top:6px">
+  <tr><th>Kết quả các lần làm</th>
+    <? d.lichSu.forEach(function (x) { ?><th>Lần <?= x.lan ?><? if (x.ngayThi) { ?><br><span style="font-weight:normal;font-size:9.5pt"><?= x.ngayThi ?></span><? } ?></th><? }); ?>
+    <th>Lần <?= d.lan ?> (lần này)<? if (d.ngayThi) { ?><br><span style="font-weight:normal;font-size:9.5pt"><?= d.ngayThi ?></span><? } ?></th>
+    <th>So với lần trước</th></tr>
+  <tr><td class="giua"><b>Tổng điểm</b></td>
+    <? d.lichSu.forEach(function (x) { ?><td class="giua"><?= x.tong ?></td><? }); ?>
+    <td class="giua do"><?= dm.tong ?></td>
+    <td class="giua <?= d.tangDiem ? 'xanh' : (d.giamDiem ? 'do' : '') ?>"><?= d.chenhLech ?><?= d.tangDiem ? ' ▲' : (d.giamDiem ? ' ▼' : '') ?></td></tr>
+</table>
+<? } ?>
 <div class="ke"></div>
 
 <h3>B. PHÂN TÍCH BÀI THI</h3>

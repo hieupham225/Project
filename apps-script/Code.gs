@@ -37,8 +37,10 @@ var CAU_HINH = {
 };
 
 var COT_HS = ['Mã HS', 'Họ tên', 'Lớp', 'Ngày sinh', 'SĐT phụ huynh', 'Ghi chú', 'Mã tra cứu', 'Ngày tạo'];
-var COT_DOT = ['Mã đợt', 'Tên đợt', 'Ngày tạo', 'Số phiếu', 'Công bố', 'Thư mục'];
-var COT_PHIEU = ['Mã phiếu', 'Mã đợt', 'Mã HS', 'Họ tên', 'Tổng điểm', 'File ID', 'Thời gian'];
+// Mỗi dòng DotThi = 1 LẦN LÀM của 1 bài thi trong 1 nhóm (cùng bài thi có thể làm nhiều lần)
+var COT_DOT = ['Mã đợt', 'Bài thi', 'Lần', 'Nhóm', 'Ngày thi', 'Ngày tạo', 'Số phiếu', 'Công bố', 'Thư mục'];
+var COT_PHIEU = ['Mã phiếu', 'Mã đợt', 'Mã HS', 'Họ tên', 'Tổng điểm', 'Điểm tối đa', 'File ID', 'Thời gian'];
+var CD = { MA: 1, BAI: 2, LAN: 3, NHOM: 4, NGAY_THI: 5, NGAY_TAO: 6, SO_PHIEU: 7, CONG_BO: 8, THU_MUC: 9 }; // số thứ tự cột DotThi
 
 /* =====================================================================
  * 1. TRANG WEB
@@ -74,7 +76,8 @@ function traCuu(maNhap) {
       ok: true,
       hocSinh: { hoTen: hs.hoTen, lop: hs.lop },
       phieu: phieuDaCongBo_(ss, hs.maHs).map(function (p) {
-        return { maPhieu: p.maPhieu, tenDot: p.tenDot, tongDiem: p.tongDiem, ngay: p.ngay };
+        return { maPhieu: p.maPhieu, baiThi: p.baiThi, lan: p.lan, nhom: p.nhom, ngayThi: p.ngayThi,
+          tongDiem: p.tongDiem, diemToiDa: p.diemToiDa };
       })
     };
   });
@@ -105,13 +108,18 @@ function chayVoiMa_(maNhap, xuLy) {
   }
 }
 
+/** Phiếu của 1 học sinh thuộc các lần thi đã công bố, sắp theo ngày thi (cũ -> mới). */
 function phieuDaCongBo_(ss, maHs) {
-  var congBo = {};
-  dsDot_(ss).forEach(function (d) { if (d.congBo) congBo[d.maDot] = d.tenDot; });
+  var dot = {};
+  dsDot_(ss).forEach(function (d) { if (d.congBo) dot[d.maDot] = d; });
   return dsPhieu_(ss)
-    .filter(function (p) { return p.maHs === maHs && congBo[p.maDot] !== undefined; })
-    .map(function (p) { p.tenDot = congBo[p.maDot]; return p; })
-    .sort(function (a, b) { return b.thoiGian - a.thoiGian; });
+    .filter(function (p) { return p.maHs === maHs && dot[p.maDot]; })
+    .map(function (p) {
+      var d = dot[p.maDot];
+      p.baiThi = d.baiThi; p.lan = d.lan; p.nhom = d.nhom; p.ngayThi = d.ngayThi; p.thuTu = d.thuTu;
+      return p;
+    })
+    .sort(function (a, b) { return a.thuTu - b.thuTu || a.lan - b.lan; });
 }
 
 /* =====================================================================
@@ -128,16 +136,26 @@ function gvTaiDuLieu() {
   yeuCauGiaoVien_();
   var ss = laySpreadsheet_();
   khoiTao_(ss);
+  var phieu = dsPhieu_(ss);
   var demPhieu = {};
-  dsPhieu_(ss).forEach(function (p) { demPhieu[p.maDot] = (demPhieu[p.maDot] || 0) + 1; });
+  phieu.forEach(function (p) { demPhieu[p.maDot] = (demPhieu[p.maDot] || 0) + 1; });
   var linkMacDinh = '';
   try { linkMacDinh = ScriptApp.getService().getUrl() || ''; } catch (e) { /* chưa triển khai */ }
   var cd = layCaiDat_();
+  var hocSinh = dsHocSinh_(ss).map(function (h) { delete h.dong; return h; });
+  var dot = dsDot_(ss).map(function (d) {
+    return { maDot: d.maDot, baiThi: d.baiThi, lan: d.lan, nhom: d.nhom, ngayThi: d.ngayThi, thuTu: d.thuTu, ngayTao: d.ngayTao,
+      soPhieu: demPhieu[d.maDot] || 0, congBo: d.congBo, thuMuc: d.thuMuc };
+  });
+  var nhom = {};
+  hocSinh.forEach(function (h) { if (h.lop) nhom[h.lop] = true; });
+  dot.forEach(function (d) { if (d.nhom) nhom[d.nhom] = true; });
   return {
-    hocSinh: dsHocSinh_(ss).map(function (h) { delete h.dong; return h; }),
-    dot: dsDot_(ss).map(function (d) {
-      return { maDot: d.maDot, tenDot: d.tenDot, ngayTao: d.ngayTao, soPhieu: demPhieu[d.maDot] || 0, congBo: d.congBo, thuMuc: d.thuMuc };
-    }).reverse(),
+    hocSinh: hocSinh,
+    dot: dot,
+    // Điểm gọn để vẽ bảng tổng hợp: [maDot, maHs, tổng điểm, điểm tối đa]
+    diem: phieu.map(function (p) { return [p.maDot, p.maHs, p.tongDiem, p.diemToiDa]; }),
+    nhom: Object.keys(nhom).sort(),
     caiDat: cd,
     linkTraCuu: cd.linkTraCuu || linkMacDinh
   };
@@ -245,6 +263,40 @@ function gvCapLaiMa(maHs) {
   });
 }
 
+/** Chuyển nhiều học sinh sang 1 nhóm. */
+function gvChuyenNhom(dsMaHs, nhom) {
+  yeuCauGiaoVien_();
+  nhom = chuoi_(nhom);
+  if (!nhom) throw new Error('Vui lòng nhập tên nhóm.');
+  return voiKhoa_(function () {
+    var ss = laySpreadsheet_();
+    var sh = ss.getSheetByName(CAU_HINH.SHEET_HOC_SINH);
+    var can = {};
+    (dsMaHs || []).forEach(function (m) { can[m] = true; });
+    var so = 0;
+    dsHocSinh_(ss).forEach(function (h) { if (can[h.maHs]) { sh.getRange(h.dong, 3).setValue(nhom); so++; } });
+    var kq = gvTaiDuLieu();
+    kq.thongBao = 'Đã chuyển ' + so + ' học sinh sang nhóm "' + nhom + '".';
+    return kq;
+  });
+}
+
+/** Đổi tên nhóm: cập nhật cả học sinh và các bài thi của nhóm. */
+function gvDoiTenNhom(cu, moi) {
+  yeuCauGiaoVien_();
+  cu = chuoi_(cu); moi = chuoi_(moi);
+  if (!cu || !moi) throw new Error('Thiếu tên nhóm.');
+  return voiKhoa_(function () {
+    var ss = laySpreadsheet_();
+    var shHs = ss.getSheetByName(CAU_HINH.SHEET_HOC_SINH), shDot = ss.getSheetByName(CAU_HINH.SHEET_DOT);
+    dsHocSinh_(ss).forEach(function (h) { if (h.lop === cu) shHs.getRange(h.dong, 3).setValue(moi); });
+    dsDot_(ss).forEach(function (d) { if (d.nhom === cu) shDot.getRange(d.dong, CD.NHOM).setValue(moi); });
+    var kq = gvTaiDuLieu();
+    kq.thongBao = 'Đã đổi tên nhóm "' + cu + '" thành "' + moi + '".';
+    return kq;
+  });
+}
+
 /** Ghi các dòng [hoTen, lop, ngaySinh, sdt, ghiChu] vào tab HocSinh, tự sinh Mã HS + mã tra cứu. Trả về Mã HS mới. */
 function themHocSinhVaoSheet_(sh, ds, dong) {
   if (!dong.length) return [];
@@ -289,47 +341,66 @@ function gvXemTruoc(so) {
   var kq = phanTichFile_(so);
   if (!kq.ok) return kq;
   var ghep = ghepDanhSach_(kq.hocSinh, dsHocSinh_(ss));
-  var dauTien = null;
+  var dauTien = null, demLop = {};
   var dsXem = kq.hocSinh.map(function (h, i) {
     var g = ghep[i];
     var cham = chamBai_(kq, h);
     if (!dauTien && !g.loi) dauTien = { h: h, cham: cham, hs: g.hs || { hoTen: h.hoTen, lop: h.lop } };
+    var lop = h.lop || (g.hs && g.hs.lop) || '';
+    if (lop) demLop[lop] = (demLop[lop] || 0) + 1;
     return { stt: h.stt, hoTen: h.hoTen, lop: h.lop, maDe: h.maDe, tongDiem: cham.diem.tong, maxTong: cham.diem.maxTong,
       trangThai: g.loi ? 'loi' : (g.hs ? 'co' : 'moi'), loi: g.loi || '', maHs: g.hs ? g.hs.maHs : '' };
   });
+  var nhomGoiY = Object.keys(demLop).sort(function (a, b) { return demLop[b] - demLop[a]; })[0] || '';
   return {
     ok: true,
     tieuDe: kq.thongTin.tieuDe,
+    ngayThi: kq.thongTin.ngayThi,
+    nhomGoiY: nhomGoiY,
     soCau: { I: kq.cauHoi.I.length, II: kq.cauHoi.II.length, III: kq.cauHoi.III.length },
     canhBao: kq.canhBao,
     hocSinh: dsXem,
-    trungTen: dsDot_(ss).some(function (d) { return khongDau_(d.tenDot) === khongDau_(kq.thongTin.tieuDe); }),
-    htmlXemTruoc: dauTien ? taoHtmlPhieu_(kq, dauTien.h, dauTien.cham, dauTien.hs, '(xem trước)', layLogo_()) : ''
+    htmlXemTruoc: dauTien ? taoHtmlPhieu_(kq, dauTien.h, dauTien.cham, dauTien.hs, '(xem trước)', layLogo_(),
+      { lan: 1, ngayThi: kq.thongTin.ngayThi, lichSu: [] }) : ''
   };
 }
 
-/** Bước 2: tạo đợt thi (thêm học sinh mới nếu chọn), trả về danh sách dòng cần tạo phiếu. */
-function gvBatDauDot(so, tenDot, themHsMoi, ghiDe) {
+/**
+ * Bước 2: tạo 1 lần thi.
+ * tuyChon = { baiThi, nhom, ngayThi (dd/MM/yyyy), themHsMoi, ghiDe }
+ *   - Bài thi chưa có trong nhóm -> Lần 1.
+ *   - Đã có -> Lần tiếp theo (giữ nguyên các lần trước), hoặc ghi đè lần gần nhất nếu ghiDe = true.
+ */
+function gvBatDauDot(so, tuyChon) {
   yeuCauGiaoVien_();
-  tenDot = String(tenDot || '').trim();
-  if (!tenDot) throw new Error('Vui lòng nhập tên đợt thi.');
+  tuyChon = tuyChon || {};
+  var baiThi = chuoi_(tuyChon.baiThi).replace(/\s+/g, ' ');
+  var nhom = chuoi_(tuyChon.nhom);
+  var ngayThi = chuanHoaNgay_(tuyChon.ngayThi) || Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'dd/MM/yyyy');
+  if (!baiThi) throw new Error('Vui lòng nhập tên bài thi.');
+  if (!nhom) throw new Error('Vui lòng chọn nhóm học sinh.');
   var kq = phanTichFile_(so);
   if (!kq.ok) return kq;
   return voiKhoa_(function () {
     var ss = laySpreadsheet_();
     khoiTao_(ss);
-    var trung = dsDot_(ss).filter(function (d) { return khongDau_(d.tenDot) === khongDau_(tenDot); });
-    if (trung.length && !ghiDe) return { ok: false, canXacNhan: true, loi: 'Đã có đợt thi "' + trung[0].tenDot + '". Gửi lại sẽ thay thế toàn bộ phiếu cũ của đợt này.' };
-    trung.forEach(function (d) { xoaDot_(ss, d.maDot); });
+    var cacLan = dsDot_(ss).filter(function (d) { return khongDau_(d.nhom) === khongDau_(nhom) && khongDau_(d.baiThi) === khongDau_(baiThi); });
+    var lan = 1;
+    if (cacLan.length) {
+      var ganNhat = cacLan.reduce(function (a, b) { return b.lan > a.lan ? b : a; });
+      baiThi = ganNhat.baiThi; nhom = ganNhat.nhom; // giữ đúng cách viết đã có
+      if (tuyChon.ghiDe) { lan = ganNhat.lan; xoaDot_(ss, ganNhat.maDot); }
+      else lan = ganNhat.lan + 1;
+    }
 
-    // Thêm học sinh mới
+    // Thêm học sinh mới (vào nhóm đã chọn)
     var shHs = ss.getSheetByName(CAU_HINH.SHEET_HOC_SINH);
     var ghep = ghepDanhSach_(kq.hocSinh, dsHocSinh_(ss));
-    if (themHsMoi) {
+    if (tuyChon.themHsMoi) {
       var moi = [];
       kq.hocSinh.forEach(function (h, i) {
         if (!ghep[i].loi && !ghep[i].hs) {
-          var d = [h.hoTen, h.lop, '', '', ''];
+          var d = [h.hoTen, nhom, '', '', ''];
           if (h.maHs) d.maHs = h.maHs;
           moi.push(d);
         }
@@ -338,17 +409,18 @@ function gvBatDauDot(so, tenDot, themHsMoi, ghiDe) {
       ghep = ghepDanhSach_(kq.hocSinh, dsHocSinh_(ss));
     }
 
-    var maDot = 'D' + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyMMddHHmmss');
-    var goc = layThuMucGoc_();
-    var thuMuc = goc.createFolder(tenDot + ' (' + maDot + ')');
-    ss.getSheetByName(CAU_HINH.SHEET_DOT).appendRow([maDot, tenDot, new Date(), 0, false, thuMuc.getUrl()]);
+    var maDot = 'D' + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyMMddHHmmss') + taoMaNgauNhien_().slice(0, 3);
+    var thuMuc = layThuMucGoc_().createFolder(nhom + ' - ' + baiThi + ' - Lần ' + lan + ' (' + maDot + ')');
+    var shDot = ss.getSheetByName(CAU_HINH.SHEET_DOT);
+    shDot.getRange(shDot.getLastRow() + 1, 1, 1, COT_DOT.length).setNumberFormat('@')
+      .setValues([[maDot, baiThi, String(lan), nhom, ngayThi, Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'dd/MM/yyyy'), '0', 'FALSE', thuMuc.getUrl()]]);
 
     var canTao = [], boQua = [];
     kq.hocSinh.forEach(function (h, i) {
       if (ghep[i].hs) canTao.push(i);
       else boQua.push((h.hoTen || h.maHs) + ': ' + (ghep[i].loi || 'chưa có trong danh sách học sinh'));
     });
-    return { ok: true, maDot: maDot, canTao: canTao, boQua: boQua, thuMuc: thuMuc.getUrl() };
+    return { ok: true, maDot: maDot, baiThi: baiThi, lan: lan, nhom: nhom, canTao: canTao, boQua: boQua, thuMuc: thuMuc.getUrl() };
   });
 }
 
@@ -356,25 +428,36 @@ function gvBatDauDot(so, tenDot, themHsMoi, ghiDe) {
 function gvTaoPhieuLo(maDot, so, dsChiSo) {
   yeuCauGiaoVien_();
   var ss = laySpreadsheet_();
-  var dot = dsDot_(ss).filter(function (d) { return d.maDot === maDot; })[0];
-  if (!dot) throw new Error('Không tìm thấy đợt thi.');
+  var dsD = dsDot_(ss);
+  var dot = dsD.filter(function (d) { return d.maDot === maDot; })[0];
+  if (!dot) throw new Error('Không tìm thấy lần thi.');
   var kq = phanTichFile_(so);
   if (!kq.ok) throw new Error(kq.loi);
   var ghep = ghepDanhSach_(kq.hocSinh, dsHocSinh_(ss));
   var thuMuc = DriveApp.getFolderById(layIdTuLink_(dot.thuMuc));
   var logo = layLogo_();
-  var dongMoi = [], loi = [];
 
+  // Các lần trước của cùng bài thi, cùng nhóm -> để in "so với lần trước"
+  var lanTruoc = {};
+  dsD.forEach(function (d) {
+    if (d.maDot !== maDot && d.lan < dot.lan && khongDau_(d.baiThi) === khongDau_(dot.baiThi) && khongDau_(d.nhom) === khongDau_(dot.nhom)) lanTruoc[d.maDot] = d;
+  });
+  var phieuTruoc = dsPhieu_(ss).filter(function (p) { return lanTruoc[p.maDot]; });
+
+  var dongMoi = [], loi = [];
   (dsChiSo || []).forEach(function (i) {
     var h = kq.hocSinh[i], g = ghep[i];
     if (!h || !g || !g.hs) { loi.push((h && h.hoTen) + ': chưa có trong danh sách học sinh'); return; }
     try {
       var cham = chamBai_(kq, h);
       var maPhieu = maDot + '-' + g.hs.maHs;
-      var html = taoHtmlPhieu_(kq, h, cham, g.hs, maPhieu, logo);
-      var ten = dot.tenDot + ' - ' + g.hs.hoTen + ' - ' + g.hs.maHs;
+      var lichSu = phieuTruoc.filter(function (p) { return p.maHs === g.hs.maHs; })
+        .map(function (p) { return { lan: lanTruoc[p.maDot].lan, ngayThi: lanTruoc[p.maDot].ngayThi, tong: p.tongDiem }; })
+        .sort(function (a, b) { return a.lan - b.lan; });
+      var html = taoHtmlPhieu_(kq, h, cham, g.hs, maPhieu, logo, { lan: dot.lan, ngayThi: dot.ngayThi, lichSu: lichSu });
+      var ten = dot.baiThi + ' - Lần ' + dot.lan + ' - ' + g.hs.hoTen + ' - ' + g.hs.maHs;
       var pdf = thuMuc.createFile(Utilities.newBlob(html, MimeType.HTML, ten + '.html').getAs(MimeType.PDF).setName(ten + '.pdf'));
-      dongMoi.push([maPhieu, maDot, g.hs.maHs, g.hs.hoTen, cham.diem.tong, pdf.getId(), new Date()]);
+      dongMoi.push([maPhieu, maDot, g.hs.maHs, g.hs.hoTen, cham.diem.tong, cham.diem.maxTong, pdf.getId(), new Date()]);
     } catch (e) {
       loi.push(h.hoTen + ': ' + e.message);
     }
@@ -382,9 +465,12 @@ function gvTaoPhieuLo(maDot, so, dsChiSo) {
 
   voiKhoa_(function () {
     var sh = ss.getSheetByName(CAU_HINH.SHEET_PHIEU);
-    if (dongMoi.length) sh.getRange(sh.getLastRow() + 1, 1, dongMoi.length, COT_PHIEU.length).setValues(dongMoi);
+    if (dongMoi.length) {
+      sh.getRange(sh.getLastRow() + 1, 1, dongMoi.length, COT_PHIEU.length).setValues(dongMoi);
+      sh.getRange(sh.getLastRow() - dongMoi.length + 1, 5, dongMoi.length, 2).setNumberFormat('@');
+    }
     var tong = dsPhieu_(ss).filter(function (p) { return p.maDot === maDot; }).length;
-    ss.getSheetByName(CAU_HINH.SHEET_DOT).getRange(dot.dong, 4).setValue(tong);
+    ss.getSheetByName(CAU_HINH.SHEET_DOT).getRange(dot.dong, CD.SO_PHIEU).setValue(String(tong));
   });
   return { xong: dongMoi.length, loi: loi };
 }
@@ -394,7 +480,7 @@ function gvCongBo(maDot, congBo) {
   return voiKhoa_(function () {
     var ss = laySpreadsheet_();
     var d = dsDot_(ss).filter(function (x) { return x.maDot === maDot; })[0];
-    if (d) ss.getSheetByName(CAU_HINH.SHEET_DOT).getRange(d.dong, 5).setValue(!!congBo);
+    if (d) ss.getSheetByName(CAU_HINH.SHEET_DOT).getRange(d.dong, CD.CONG_BO).setValue(congBo ? 'TRUE' : 'FALSE');
     return gvTaiDuLieu();
   });
 }
@@ -412,7 +498,7 @@ function xoaDot_(ss, maDot) {
   var v = shP.getDataRange().getValues();
   for (var i = v.length - 1; i >= 1; i--) {
     if (String(v[i][1]) !== maDot) continue;
-    try { DriveApp.getFileById(String(v[i][5])).setTrashed(true); } catch (e) { /* đã xóa */ }
+    try { DriveApp.getFileById(String(v[i][6])).setTrashed(true); } catch (e) { /* đã xóa */ }
     shP.deleteRow(i + 1);
   }
   var d = dsDot_(ss).filter(function (x) { return x.maDot === maDot; })[0];
@@ -465,6 +551,7 @@ function phanTichFile_(so) {
   var thongTin = {
     tieuDe: tt.tieudephieu || tt.tieude || tt.tenbaithi || 'PHIẾU KẾT QUẢ KIỂM TRA',
     moTa: tt.mota || '',
+    ngayThi: chuanHoaNgay_(tt.ngaythi),
     nhanLop: tt.nhanlop || 'Lớp',
     diemCauI: soThuc_(tt.diemmoicauphani, CAU_HINH.DIEM_CAU_PHAN_I),
     diemCauIII: soThuc_(tt.diemmoicauphaniii, CAU_HINH.DIEM_CAU_PHAN_III),
@@ -594,8 +681,11 @@ function chamBai_(kq, h) {
   };
 }
 
-function taoHtmlPhieu_(kq, h, cham, hs, maPhieu, logo) {
+function taoHtmlPhieu_(kq, h, cham, hs, maPhieu, logo, lanThi) {
   var cd = layCaiDat_();
+  lanThi = lanThi || { lan: 1, ngayThi: '', lichSu: [] };
+  var truoc = lanThi.lichSu.length ? lanThi.lichSu[lanThi.lichSu.length - 1] : null;
+  var chenhLech = truoc ? soThuc_(cham.diem.tong, 0) - soThuc_(truoc.tong, 0) : 0;
   var t = HtmlService.createTemplateFromFile('Phieu');
   t.d = {
     trungTam: cd.tenTrungTam || '', khauHieu: cd.khauHieu || '', logo: logo || '',
@@ -603,6 +693,9 @@ function taoHtmlPhieu_(kq, h, cham, hs, maPhieu, logo) {
     tenPhan: kq.thongTin.tenPhan, moTaPhan: kq.thongTin.moTaPhan,
     stt: h.stt, hoTen: hs.hoTen || h.hoTen, lop: h.lop || hs.lop || '', maDe: h.maDe,
     cham: cham, nhanXet: h.nhanXet, maPhieu: maPhieu,
+    lan: lanThi.lan, ngayThi: lanThi.ngayThi, lichSu: lanThi.lichSu,
+    chenhLech: truoc ? (chenhLech > 0 ? '+' : '') + dinhDangDiem_(chenhLech) : '',
+    tangDiem: chenhLech > 0, giamDiem: chenhLech < 0,
     ngay: Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'dd/MM/yyyy')
   };
   return t.evaluate().getContent();
@@ -673,10 +766,11 @@ function dsHocSinh_(ss) {
 function dsDot_(ss) {
   var sh = ss.getSheetByName(CAU_HINH.SHEET_DOT);
   if (!sh || sh.getLastRow() < 2) return [];
-  return sh.getRange(2, 1, sh.getLastRow() - 1, COT_DOT.length).getValues().map(function (r, i) {
-    return { dong: i + 2, maDot: String(r[0]).trim(), tenDot: String(r[1]).trim(),
-      ngayTao: r[2] && r[2].getTime ? Utilities.formatDate(r[2], 'Asia/Ho_Chi_Minh', 'dd/MM/yyyy') : String(r[2]),
-      soPhieu: Number(r[3]) || 0, congBo: r[4] === true || String(r[4]).toUpperCase() === 'TRUE', thuMuc: String(r[5]) };
+  return sh.getRange(2, 1, sh.getLastRow() - 1, COT_DOT.length).getDisplayValues().map(function (r, i) {
+    var ngayThi = r[CD.NGAY_THI - 1].trim();
+    return { dong: i + 2, maDot: r[0].trim(), baiThi: r[CD.BAI - 1].trim(), lan: parseInt(r[CD.LAN - 1], 10) || 1,
+      nhom: r[CD.NHOM - 1].trim(), ngayThi: ngayThi, thuTu: soThuTuNgay_(ngayThi), ngayTao: r[CD.NGAY_TAO - 1].trim(),
+      soPhieu: Number(r[CD.SO_PHIEU - 1]) || 0, congBo: /^(true|có|x)$/i.test(r[CD.CONG_BO - 1].trim()), thuMuc: r[CD.THU_MUC - 1].trim() };
   }).filter(function (d) { return d.maDot; });
 }
 
@@ -684,10 +778,8 @@ function dsPhieu_(ss) {
   var sh = ss.getSheetByName(CAU_HINH.SHEET_PHIEU);
   if (!sh || sh.getLastRow() < 2) return [];
   return sh.getRange(2, 1, sh.getLastRow() - 1, COT_PHIEU.length).getValues().map(function (r) {
-    var tg = r[6] && r[6].getTime ? r[6] : null;
     return { maPhieu: String(r[0]), maDot: String(r[1]), maHs: String(r[2]).trim(), hoTen: String(r[3]),
-      tongDiem: String(r[4]), fileId: String(r[5]), thoiGian: tg ? tg.getTime() : 0,
-      ngay: tg ? Utilities.formatDate(tg, 'Asia/Ho_Chi_Minh', 'dd/MM/yyyy') : '' };
+      tongDiem: chuoiDiem_(r[4]), diemToiDa: String(r[5]), fileId: String(r[6]) };
   }).filter(function (p) { return p.maPhieu && p.fileId; });
 }
 
@@ -760,6 +852,25 @@ function soThuc_(s, macDinh) {
 function dinhDangDiem_(n) { return (Math.round(n * 100) / 100).toFixed(2); }
 
 function dinhDangSo_(n) { return String(Math.round(n * 100) / 100); }
+
+/** Điểm đọc từ Sheet có thể là số (8.5) hoặc chuỗi ("8.50") -> luôn trả "8.50". */
+function chuoiDiem_(x) { return x === '' || x == null ? '' : dinhDangDiem_(soThuc_(x, 0)); }
+
+/** "5/9/2026", "05-09-2026", "2026-09-05" -> "05/09/2026" ('' nếu không hiểu). */
+function chuanHoaNgay_(s) {
+  s = chuoi_(s);
+  var m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s);
+  if (m) return ('0' + m[3]).slice(-2) + '/' + ('0' + m[2]).slice(-2) + '/' + m[1];
+  m = /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/.exec(s);
+  if (m) return ('0' + m[1]).slice(-2) + '/' + ('0' + m[2]).slice(-2) + '/' + m[3];
+  return '';
+}
+
+/** "05/09/2026" -> 20260905 để sắp xếp theo thời gian. */
+function soThuTuNgay_(s) {
+  var m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(chuanHoaNgay_(s));
+  return m ? Number(m[3] + m[2] + m[1]) : 0;
+}
 
 function layIdTuLink_(s) {
   s = String(s).trim();
@@ -863,6 +974,7 @@ var MAU_FILE_KET_QUA = {
     ['Mục', 'Giá trị', 'Ghi chú'],
     ['Tiêu đề phiếu', 'PHÂN TÍCH BÀI THI - THÁNG 9 NĂM 2026', 'Dòng tiêu đề lớn trên phiếu; cũng là tên đợt thi mặc định'],
     ['Mô tả', 'Bài thi cuối khóa 1 – Lớp 11', 'Dòng ngay dưới tiêu đề'],
+    ['Ngày thi', '28/09/2026', 'dd/mm/yyyy — để sắp xếp các bài thi và lần làm theo thời gian'],
     ['Nhãn lớp', 'Lớp toán', 'Chữ hiển thị trước tên lớp trên phiếu'],
     ['Điểm mỗi câu phần I', '0.25', 'Dùng khi cột "Điểm phần I" để trống'],
     ['Điểm mỗi câu phần III', '0.5', 'Dùng khi cột "Điểm phần III" để trống và có nhập câu trả lời phần III'],
@@ -879,6 +991,7 @@ var MAU_FILE_KET_QUA = {
     ['• Cột điểm để trống thì hệ thống tự tính: phần I 0,25đ/câu; phần II theo số ý đúng (1 ý 0,1 – 2 ý 0,25 – 3 ý 0,5 – 4 ý 1đ); phần III 0,5đ/câu.'],
     ['• Muốn thêm/bớt câu: thêm/xóa cột trong KetQua (vd I.13) và dòng tương ứng trong DeThi.'],
     ['• Tab DeThi: chủ đề, nội dung và đáp án đúng của từng câu. Nhiều mã đề: thêm cột "Đáp án mã 106", "Đáp án mã 107"…'],
+    ['• Cùng 1 bài thi làm lại nhiều lần: gửi file mới và chọn đúng tên bài thi cũ → hệ thống tự ghi Lần 2, Lần 3… (giữ nguyên các lần trước).'],
     ['• Nhận xét (Ưu điểm, Nhược điểm, Hướng khắc phục, Lời khuyên) để trống thì phiếu sẽ bỏ qua mục đó (Lời khuyên có câu mặc định).']
   ]
 };
