@@ -113,8 +113,9 @@
   table.xn td { vertical-align: top; }
   .file-o { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .file-o > div { border: 1.5px dashed var(--vien-dam); border-radius: var(--r-khung); padding: 16px; min-width: 0; background: #FCFAF6; }
-  .file-o h3 { margin: 0 0 6px; font-size: 14px; font-weight: 700; }
-  .file-o .trang { font-size: 13px; margin-top: 8px; min-height: 1.2em; }
+  .file-o h3 { margin: 0 0 14px; font-size: 14px; font-weight: 700; }
+  .file-o .trang { font-size: 13px; margin-top: 10px; }
+  .file-o .trang:empty { display: none; }
   .file-o .trang.ok { color: var(--xanh); } .file-o .trang.loi { color: var(--do); }
   .chuyen-dk { margin-top: 16px; text-align: center; font-size: 14px; color: var(--phu); }
   .chuyen-dk a, a { color: var(--thuong-hieu); cursor: pointer; text-decoration: none; font-weight: 500; }
@@ -280,6 +281,9 @@
     .chan-hop > .gian { display: none; }
     /* Ô tải file: nút "Chọn file Excel" 1 hàng; link Google Sheet + Đọc (+ Bỏ file) chung hàng dưới */
     .file-o .thanh > label.nut { flex: 1 1 100%; }
+    /* Gửi kết quả: 2 nút tải mẫu dàn đều hết chiều ngang */
+    #tabGui .hang-tieu-de .cum { flex: 1 1 100%; flex-wrap: nowrap; }
+    #tabGui .hang-tieu-de .cum > button { flex: 1 1 0; padding: 0 10px; }
     .file-o .thanh > input { flex: 1 1 0 !important; width: auto !important; }
     /* Hộp thoại dạng trượt từ dưới lên */
     .phu-trang { align-items: flex-end; padding: 0; }
