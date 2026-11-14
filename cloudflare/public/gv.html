@@ -458,7 +458,7 @@
             <button id="nutThemMoiVaoLop" type="button" class="nut-icon lon" title="Học sinh mới / nhập Excel" aria-label="Học sinh mới / nhập Excel"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4"/><path d="m7 9 5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></button>
           </div>
           <table class="ds">
-            <thead><tr><th>STT</th><th>Mã HS</th><th>Họ tên</th><th>Học cả lớp khác</th><th>SĐT phụ huynh</th><th>Mã tra cứu</th><th></th></tr></thead>
+            <thead><tr><th>Mã HS</th><th>Họ tên</th><th>Học cả lớp khác</th><th>SĐT phụ huynh</th><th>Mã tra cứu</th><th></th></tr></thead>
             <tbody id="bangHsLop"></tbody>
           </table>
         </div>
@@ -976,11 +976,11 @@
     $('ctTabHs').textContent = 'Học sinh (' + hs.length + ')'; $('ctTabBt').textContent = 'Bài thi (' + dot.length + ')';
     doiTabLop(ctTab);
     var tb = $('bangHsLop'); tb.textContent = '';
-    if (!hs.length) tb.appendChild(the('tr', {}, [the('td', { colspan: 7, class: 'goi-y', text: 'Lớp chưa có học sinh. Bấm nút 👤+ (thêm học sinh đã có) hoặc ⬆ (học sinh mới / nhập Excel) ở góc phải. Cũng có thể gửi kết quả thi lần đầu: hệ thống tự thêm các em trong file.' })]));
+    if (!hs.length) tb.appendChild(the('tr', {}, [the('td', { colspan: 6, class: 'goi-y', text: 'Lớp chưa có học sinh. Bấm nút 👤+ (thêm học sinh đã có) hoặc ⬆ (học sinh mới / nhập Excel) ở góc phải. Cũng có thể gửi kết quả thi lần đầu: hệ thống tự thêm các em trong file.' })]));
     hs.slice().sort(function (a, b) { return a.maHs < b.maHs ? -1 : 1; }).forEach(function (h, i) {
       var khac = h.nhom.filter(function (x) { return x !== n; });
       tb.appendChild(the('tr', {}, [
-        the('td', { text: i + 1 }), the('td', { text: h.maHs }), the('td', {}, [the('b', { text: h.hoTen })]),
+        the('td', { text: h.maHs }), the('td', {}, [the('b', { text: h.hoTen })]),
         the('td', {}, khac.map(function (x) { return the('span', { class: 'chip', text: x }); })),
         the('td', { text: h.sdt || '' }), the('td', {}, [oMaTraCuu(h)]),
         the('td', {}, [
