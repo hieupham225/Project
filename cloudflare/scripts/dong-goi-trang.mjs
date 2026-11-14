@@ -14,6 +14,9 @@ for (const ten of fs.readdirSync(path.join(goc, 'public'))) {
   if (!LOAI[duoi]) continue;
   trang['/' + ten] = { loai: LOAI[duoi], noiDung: fs.readFileSync(path.join(goc, 'public', ten), 'utf8') };
 }
-fs.writeFileSync(path.join(goc, 'src', 'trang.js'),
-  '// Tự sinh bởi scripts/dong-goi-trang.mjs từ thư mục public/ — không sửa tay.\nexport default ' + JSON.stringify(trang) + ';\n');
-console.log('Đã đóng gói ' + Object.keys(trang).length + ' trang vào src/trang.js');
+const dich = path.join(goc, 'src', 'trang.js');
+const noiDung = '// Tự sinh bởi scripts/dong-goi-trang.mjs từ thư mục public/ — không sửa tay.\nexport default ' + JSON.stringify(trang) + ';\n';
+// Chỉ ghi khi nội dung đổi: src/ nằm trong watch_dir của `wrangler dev`, ghi lại y hệt sẽ gây build lặp vô hạn.
+const cu = fs.existsSync(dich) ? fs.readFileSync(dich, 'utf8') : '';
+if (cu !== noiDung) fs.writeFileSync(dich, noiDung);
+console.log('Đã đóng gói ' + Object.keys(trang).length + ' trang vào src/trang.js' + (cu === noiDung ? ' (không đổi)' : ''));
