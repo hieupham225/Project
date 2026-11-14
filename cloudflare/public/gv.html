@@ -58,6 +58,10 @@
   input[type=file]::file-selector-button { font: 500 13px var(--font); height: var(--cao-nho); padding: 0 12px; margin-right: 10px; border: 0; border-radius: var(--r-tron); background: var(--mau-nhat); color: var(--chu); cursor: pointer; }
   /* Ô nhiều dòng: giữ bo góc (bo tròn hai đầu sẽ cắt chữ ở các góc) */
   textarea { width: 100%; height: auto; min-height: 120px; padding: 10px 14px; border-radius: var(--r-phan-tu); }
+  /* iOS Safari: ô ngày có bề rộng nội tại, tràn khỏi khung và căn giữa -> ép co theo khung, căn trái */
+  input[type=date] { -webkit-appearance: none; appearance: none; min-width: 0; max-width: 100%; display: block; }
+  input[type=date]::-webkit-date-and-time-value { text-align: left; }
+  label.o > *, div.o > * { min-width: 0; }
   label.o, div.o { display: flex; flex-direction: column; gap: 6px; font-weight: 500; font-size: 13px; color: var(--chu); }
   .luoi { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
   table.ds { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--be-mat); }
@@ -234,7 +238,8 @@
   /* tên học sinh bên trái, huy hiệu hạng ở cuối hàng (mép phải) */
   .ten-hang { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: 1 1 0; min-width: 0; }
   .ten-hang .huy-hieu { flex: none; }
-  .form-sua-bai { display: flex; flex-direction: column; gap: 14px; width: min(520px, 100%); }
+  .form-sua-bai { display: flex; flex-direction: column; gap: 14px; width: min(520px, 100%); min-width: 0; }
+  .form-sua-bai > * { min-width: 0; }
   .form-sua-bai input:not([type=checkbox]) { width: 100%; }
   .o-tat-ca-lop { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: var(--nen); cursor: pointer; font-weight: 600; }
   .o-tat-ca-lop input { width: 18px; height: 18px; margin: 2px 0 0; flex: none; }
@@ -1890,7 +1895,7 @@
       dongTatCa,
       the('p', { class: 'goi-y', style: 'margin:0', text: 'Phiếu của lần này cập nhật theo ngay, kể cả phiếu đã công bố. Tiêu đề phiếu đổi theo nếu đang lấy theo tên bài.' }),
       the('div', { class: 'chan-hop' }, [the('button', { class: 'phu', text: 'Hủy', onclick: function () { $('hop').classList.add('an'); } }), nut])]));
-    setTimeout(function () { oTen.focus(); }, 50);
+    if (!matchMedia('(pointer: coarse)').matches) setTimeout(function () { oTen.focus(); }, 50); // điện thoại: không bật bàn phím ngay
   }
   function doiCongBo(d, congBo, nut) {
     nut.disabled = true;

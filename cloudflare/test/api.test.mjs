@@ -261,6 +261,12 @@ test('mời giáo viên + phân quyền theo lớp', async () => {
   await assert.rejects(C.rpc('gvBatDauDot', { kq: dienKetQua(st.mau.ketQua), da: st.mau.dapAn }, { baiThi: 'X' }).then((r) => { if (!r.ok) throw new Error(r.loi); }), /Không có dòng nào/);
   await assert.rejects(C.rpc('gvXemPhieu', st.maPhieu), /Không tìm thấy/);
   await assert.rejects(C.rpc('gvLuuCaiDat', { tenTrungTam: 'X' }), /quản trị/);
+  // đổi tên trung tâm / khẩu hiệu -> phiếu đã tạo cũng đổi theo
+  const cdCu = (await A.rpc('gvTaiDuLieu')).caiDat;
+  await A.rpc('gvLuuCaiDat', { tenTrungTam: 'Trung tâm Mới', khauHieu: 'Học vui', logo: cdCu.logo });
+  const dPh = (await A.rpc('gvXemPhieu', st.maPhieu)).d;
+  assert.deepEqual([dPh.trungTam, dPh.khauHieu], ['Trung tâm Mới', 'Học vui']);
+  await A.rpc('gvLuuCaiDat', cdCu);
   await assert.rejects(C.rpc('gvLuuTaiKhoan', { ten: 'x@y.vn', hoTen: 'X' }), /quản trị/);
   await assert.rejects(C.rpc('gvThemNhieuHocSinh', [['Em Mới', 'Toán 1']], {}, ''), /không phụ trách/);
   await assert.rejects(C.rpc('gvTaoNhom', 'Toán 1'), /giáo viên khác phụ trách/);

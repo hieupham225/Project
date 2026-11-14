@@ -501,7 +501,11 @@ const HAM = {
     const logo = String(cd.logo || '');
     if (logo && (!/^data:image\/(png|jpeg|webp);base64,/.test(logo) || logo.length > 200000)) throw new Loi('Logo phải là ảnh PNG/JPG, dung lượng nhỏ (dưới khoảng 150 KB).');
     const caiDat = { ...c.nd.caiDat, khauHieu: L.chuoi_(cd.khauHieu), logo };
-    await c.db.prepare('UPDATE khong_gian SET ten = ?, cai_dat = ? WHERE id = ?').bind(ten, JSON.stringify(caiDat), c.kg).run();
+    await c.db.batch([
+      c.db.prepare('UPDATE khong_gian SET ten = ?, cai_dat = ? WHERE id = ?').bind(ten, JSON.stringify(caiDat), c.kg),
+      // phiếu đã tạo (kể cả đã công bố) cũng đổi tên trung tâm / khẩu hiệu theo
+      c.db.prepare("UPDATE phieu SET du_lieu = json_set(du_lieu, '$.trungTam', ?, '$.khauHieu', ?) WHERE kg = ?").bind(ten, caiDat.khauHieu, c.kg),
+    ]);
     c.nd.tenKg = ten; c.nd.caiDat = caiDat;
     return HAM.gvTaiDuLieu(c);
   },
