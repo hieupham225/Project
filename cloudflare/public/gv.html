@@ -161,6 +161,15 @@
   .cum-thao-tac { display: flex; align-items: center; gap: 6px; width: 100%; }
   .cum-thao-tac .gian { flex: 1; min-width: 12px; }
   td > .cum-thao-tac { flex: 1 1 100%; }
+  /* Nút "i" giải thích: rê chuột / bấm để xem */
+  button.tip { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; min-height: 0; padding: 0; margin-left: 6px; vertical-align: 2px;
+    border-radius: 50%; background: var(--mau-nhat); color: var(--phu); font: italic 700 11px/1 Georgia, serif; position: relative; cursor: help; }
+  button.tip:hover:not(:disabled), button.tip.mo { background: var(--mau); color: var(--tren-mau); }
+  h1 button.tip { width: 20px; height: 20px; font-size: 12px; vertical-align: 5px; }
+  .tip-noi-dung { display: none; position: fixed; z-index: 50; width: max-content; max-width: min(320px, calc(100vw - 24px)); padding: 10px 12px;
+    border-radius: var(--r-phan-tu); background: #0A1317; color: #fff; font: 400 13px/1.5 var(--font); letter-spacing: 0; text-align: left; white-space: normal; box-shadow: var(--bong-cao); }
+  .tip-noi-dung b { color: #fff; }
+  button.tip.mo .tip-noi-dung { display: block; }
   /* Tab Lớp học */
   .luoi-lop { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
   .the-lop { background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); padding: 18px; box-shadow: var(--bong-thap); display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: box-shadow .125s var(--em), transform .125s var(--em); }
@@ -250,6 +259,9 @@
     .chan-hop { position: sticky; bottom: calc(-18px - env(safe-area-inset-bottom)); background: var(--be-mat); margin: 14px -14px 0; padding: 12px 14px 0; border-top: 1px solid var(--vien); }
     .chan-hop > button { flex: 1 1 0; }
     .chan-hop > .gian { display: none; }
+    /* Ô tải file: nút "Chọn file Excel" 1 hàng; link Google Sheet + Đọc (+ Bỏ file) chung hàng dưới */
+    .file-o .thanh > label.nut { flex: 1 1 100%; }
+    .file-o .thanh > input { flex: 1 1 0 !important; width: auto !important; }
     /* Hộp thoại dạng trượt từ dưới lên */
     .phu-trang { align-items: flex-end; padding: 0; }
     .hop { width: 100vw; max-width: 100vw; max-height: 92vh; border-radius: 18px 18px 0 0; padding: 18px 14px calc(18px + env(safe-area-inset-bottom)); }
@@ -397,10 +409,7 @@
 
       <div id="formNhieu" class="phu-trang an"><div class="hop hop-form" role="dialog" aria-modal="true" aria-labelledby="tieuDeNhieu">
         <div class="dau-hop"><h2 id="tieuDeNhieu">Thêm nhiều học sinh</h2><button type="button" class="dong-x phu" data-dong aria-label="Đóng">✕</button></div>
-        <p class="goi-y">Cách 1: Sao chép các cột <b>Họ tên – Nhóm/lớp – SĐT phụ huynh</b> từ Excel và dán vào ô dưới (mỗi dòng 1 học sinh).<br>
-          Cách 2: Chọn file Excel có dòng tiêu đề "Họ và tên", "Lớp", "SĐT phụ huynh"… (có thể dùng luôn file kết quả thi).<br>
-          Mỗi em được tự cấp Mã HS và mã tra cứu. Em đã có trong nhóm sẽ được bỏ qua; em <b>trùng tên với học sinh ở nhóm khác</b>
-          (vd học thêm môn mới) sẽ được hỏi lại để <b>gộp vào cùng 1 mã tra cứu</b> hoặc tạo học sinh mới.</p>
+        <p class="goi-y" style="margin-top:0">Dán các cột <b>Họ tên – Lớp – SĐT phụ huynh</b> từ Excel, hoặc chọn file Excel.<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">File Excel cần dòng tiêu đề "Họ và tên", "Lớp", "SĐT phụ huynh"… (dùng được luôn file kết quả thi). Mỗi em được tự cấp Mã HS và mã tra cứu. Em đã có trong lớp được bỏ qua; em <b>trùng tên với học sinh ở lớp khác</b> (vd học thêm môn) sẽ được hỏi lại để <b>gộp vào cùng 1 mã tra cứu</b> hoặc tạo học sinh mới.</span></button></p>
         <textarea id="danNhieu" placeholder="Nguyễn Văn An	Toán 2	0912345678&#10;Trần Thị Bình	Toán 2	0987654321"></textarea>
         <div class="chan-hop">
           <label class="nut phu">📄 Chọn file Excel…<input id="fileHs" type="file" accept=".xlsx,.xls,.csv" class="an"></label>
@@ -428,23 +437,19 @@
     <section id="tabGui" class="an">
       <div class="dau-trang">
         <div class="hang-tieu-de">
-          <h1>Gửi kết quả<span class="chu-dai"> thi</span></h1>
+          <h1>Gửi kết quả<span class="chu-dai"> thi</span><button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Tải lên bảng kết quả (có cột <b>Lớp</b>) và bảng đáp án. Hệ thống tự đưa từng dòng vào đúng lớp, đúng học sinh — một file có thể gồm nhiều lớp.</span></button></h1>
           <div class="cum">
             <button id="nutTaiMauLop" class="phu"><span>⬇ Mẫu<span class="chu-dai"> bảng</span> kết quả</span></button>
             <button id="nutTaiMauDapAn" class="phu">⬇ Mẫu đáp án</button>
           </div>
         </div>
-        <p class="goi-y mo-ta-trang">Tải lên bảng kết quả (có cột <b>Lớp</b>) và bảng đáp án. Hệ thống tự đưa từng dòng vào đúng lớp, đúng học sinh — một file có thể gồm nhiều lớp.</p>
       </div>
 
       <div id="khuChonFile" class="the">
-        <h2><span class="buoc">1</span>Tải lên 2 file</h2>
-        <p class="goi-y" style="margin-top:0">Mẫu bảng kết quả điền sẵn <b>Mã HS</b>, <b>họ tên</b> và <b>lớp</b> của học sinh — xóa dòng của em không làm bài này, <b>không sửa cột Mã HS</b>.
-          Lớp ghi trong file mà chưa có sẽ được tạo mới.</p>
+        <h2><span class="buoc">1</span>Tải lên 2 file<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Mẫu bảng kết quả điền sẵn <b>Mã HS</b>, <b>họ tên</b> và <b>lớp</b> của học sinh — xóa dòng của em không làm bài này, <b>không sửa cột Mã HS</b>. Lớp ghi trong file mà chưa có sẽ được tạo mới.</span></button></h2>
         <div class="file-o">
           <div>
-            <h3>① Bảng kết quả học sinh</h3>
-            <p class="goi-y" style="margin:0 0 8px">Mỗi học sinh 1 dòng: mã đề, đáp án đã chọn, điểm, nhận xét. Dùng được luôn bảng tổng hợp đang dùng để trộn thư Word.</p>
+            <h3>① Bảng kết quả học sinh<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Mỗi học sinh 1 dòng: lớp, mã đề, đáp án đã chọn, điểm, nhận xét. Dùng được luôn bảng tổng hợp đang dùng để trộn thư Word.</span></button></h3>
             <div class="thanh" style="margin:0">
               <label class="nut">📄 Chọn file Excel…<input id="fileKq" type="file" accept=".xlsx,.xls,.csv" class="an"></label>
               <input id="linkKq" type="text" placeholder="hoặc link Google Sheet" style="width:170px">
@@ -453,8 +458,7 @@
             <div id="tenFileKq" class="trang"></div>
           </div>
           <div>
-            <h3>② Bảng đáp án theo mã đề</h3>
-            <p class="goi-y" style="margin:0 0 8px">Mỗi mã đề 1 dòng (Mã đề | Câu 1…N), thêm tab CauHoi để có chủ đề / nội dung từng câu trên phiếu.</p>
+            <h3>② Bảng đáp án theo mã đề<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Mỗi mã đề 1 dòng (Mã đề | Câu 1…N). Thêm tab CauHoi để có chủ đề / nội dung từng câu trên phiếu. Không có file này thì hệ thống dùng đáp án chép trong bảng kết quả (nếu có).</span></button></h3>
             <div class="thanh" style="margin:0">
               <label class="nut">📄 Chọn file Excel…<input id="fileDa" type="file" accept=".xlsx,.xls,.csv" class="an"></label>
               <input id="linkDa" type="text" placeholder="hoặc link Google Sheet" style="width:170px">
@@ -468,7 +472,7 @@
 
       <div id="khuXemTruoc" class="an">
         <div class="the">
-          <h2><span class="buoc">2</span>Kiểm tra bảng ghép</h2>
+          <h2><span class="buoc">2</span>Kiểm tra bảng ghép<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Cột Lớp trống: hệ thống lấy lớp của học sinh (nếu em chỉ học 1 lớp), không thì hỏi. Lớp mới hoặc lớp chưa có học sinh: các em trong file được tự thêm vào lớp. Lớp đã có danh sách: dòng không khớp phải chọn đúng em (thường do gõ sai tên) hoặc chọn "Học sinh mới".</span></button></h2>
           <div id="tomTat"></div>
           <div id="tomTatLop" class="tom-tat-lop"></div>
           <ul id="canhBao" class="canh-bao"></ul>
@@ -477,8 +481,6 @@
             <tbody id="bangXemTruoc"></tbody>
           </table>
           <div id="khuVang" style="margin-top:10px"></div>
-          <p class="goi-y" style="margin-top:10px">Cột Lớp trống: hệ thống lấy lớp của học sinh (nếu em chỉ học 1 lớp), không thì hỏi. Lớp mới hoặc lớp chưa có học sinh: các em trong file được tự thêm vào lớp.
-            Lớp đã có danh sách: dòng không khớp phải chọn đúng em (thường do gõ sai tên) hoặc chọn "Học sinh mới".</p>
           <input id="themHsMoi" type="checkbox" checked hidden>
         </div>
         <div class="the">
@@ -508,9 +510,8 @@
     <section id="tabDot" class="an">
       <div class="dau-trang">
         <div class="hang-tieu-de">
-          <h1>Bài thi</h1>
+          <h1>Bài thi<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Phụ huynh chỉ xem được các lần thi đã <b>Công bố</b>. Xóa một lần thi sẽ xóa toàn bộ phiếu của lần đó.</span></button></h1>
         </div>
-        <p class="goi-y mo-ta-trang">Phụ huynh chỉ xem được các lần thi đã <b>Công bố</b>. Xóa một lần thi sẽ xóa toàn bộ phiếu của lần đó.</p>
         <div class="hang-loc">
           <select id="locNhomDot"></select>
         </div>
@@ -524,7 +525,7 @@
     <section id="tabTongHop" class="an">
       <div class="dau-trang">
         <div class="hang-tieu-de">
-          <h1>Tổng hợp</h1>
+          <h1>Tổng hợp<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Ô xanh: ≥ 80% điểm tối đa · Ô đỏ: &lt; 50%. "Tiến bộ" = điểm lần gần nhất − điểm lần đầu (tính theo thang 10).</span></button></h1>
           <div class="cum">
             <button id="nutSaoChepTH" class="phu" title="Sao chép bảng để dán vào Excel">Sao chép bảng</button>
           </div>
@@ -535,24 +536,19 @@
         </div>
       </div>
       <div style="overflow:auto"><table class="ds th" id="bangTH"></table></div>
-      <p class="goi-y">Ô xanh: ≥ 80% điểm tối đa · Ô đỏ: &lt; 50% · "Tiến bộ" = điểm lần gần nhất − điểm lần đầu (tính theo thang 10).</p>
     </section>
 
     <!-- ============ TÀI KHOẢN GIÁO VIÊN (chỉ quản trị) ============ -->
     <section id="tabTaiKhoan" class="an">
       <div class="dau-trang">
         <div class="hang-tieu-de">
-          <h1>Giáo viên</h1>
+          <h1>Giáo viên<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Mời giáo viên bằng email và chọn lớp phụ trách. Hệ thống tạo mật khẩu tạm và soạn sẵn tin nhắn gửi cho giáo viên. Giáo viên đăng nhập rồi chỉ thấy và gửi điểm cho các lớp mình phụ trách; giáo viên đã có tài khoản chỉ cần nhập đúng email. Chủ không gian luôn có toàn quyền.</span></button></h1>
           <div class="cum">
             <button id="nutThemTk"><span>+ Thêm<span class="chu-dai"> giáo viên</span></span></button>
           </div>
         </div>
-        <p class="goi-y mo-ta-trang">Mời giáo viên khác và giao lớp phụ trách. Chủ không gian luôn có toàn quyền.</p>
       </div>
       <div class="the">
-        <h2>Cách mời giáo viên</h2>
-        <p class="goi-y" style="margin-top:0">Thêm giáo viên bằng email và chọn lớp phụ trách. Hệ thống tạo mật khẩu tạm và soạn sẵn tin nhắn gửi cho giáo viên.
-          Giáo viên mở link, đăng nhập, rồi chỉ thấy và gửi điểm cho các lớp mình phụ trách. Giáo viên đã có tài khoản thì chỉ cần nhập đúng email.</p>
         <div class="o-link"><span>Link trang giáo viên:</span><code id="tkLinkGv"></code><button class="phu nho" id="tkChepLink">Sao chép</button></div>
       </div>
       <div id="formTk" class="phu-trang an"><div class="hop hop-form" role="dialog" aria-modal="true" aria-labelledby="formTkTieuDe">
@@ -584,7 +580,6 @@
             <button id="nutLuuCaiDat"><span>Lưu<span class="chu-dai"> cài đặt</span></span></button>
           </div>
         </div>
-        <p class="goi-y mo-ta-trang">Thông tin in trên phiếu và link gửi cho phụ huynh, giáo viên.</p>
       </div>
       <div class="the">
         <h2>Link sử dụng</h2>
@@ -1777,6 +1772,35 @@
   new MutationObserver(function () {
     document.body.classList.toggle('co-hop', [].some.call(document.querySelectorAll('.phu-trang'), function (x) { return !x.classList.contains('an'); }));
   }).observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class'] });
+
+  // Nút "i": rê chuột (máy tính) hoặc bấm (điện thoại) để xem giải thích; tự căn để không tràn màn hình
+  (function () {
+    var dangMo = null;
+    function dong() { if (dangMo) { dangMo.classList.remove('mo'); dangMo = null; } }
+    function mo(nut) {
+      if (dangMo === nut) return;
+      dong(); dangMo = nut; nut.classList.add('mo');
+      var o = nut.querySelector('.tip-noi-dung'), r = nut.getBoundingClientRect();
+      o.style.left = '0px'; o.style.top = '0px';
+      var w = o.offsetWidth, h = o.offsetHeight, vw = document.documentElement.clientWidth;
+      var trai = Math.min(Math.max(12, r.left + r.width / 2 - w / 2), vw - w - 12);
+      var tren = r.bottom + 8 + h > window.innerHeight - 8 ? r.top - h - 8 : r.bottom + 8;
+      o.style.left = trai + 'px'; o.style.top = Math.max(8, tren) + 'px';
+    }
+    document.addEventListener('click', function (e) {
+      var nut = e.target.closest && e.target.closest('button.tip');
+      if (nut) { e.preventDefault(); e.stopPropagation(); if (dangMo === nut && !window.matchMedia('(hover: hover)').matches) dong(); else mo(nut); return; }
+      dong();
+    }, true);
+    document.addEventListener('mouseover', function (e) {
+      if (!window.matchMedia('(hover: hover)').matches) return;
+      var nut = e.target.closest && e.target.closest('button.tip');
+      if (nut) mo(nut); else if (dangMo && !e.target.closest('.tip-noi-dung')) dong();
+    });
+    window.addEventListener('scroll', dong, true);
+    window.addEventListener('resize', dong);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') dong(); });
+  })();
 </script>
 </body>
 </html>
