@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    :root { --mau: #1a73e8; --nen: #f4f6fb; --chu: #1f2937; --phu: #6b7280; --vien: #e5e7eb; --loi: #c62828; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background: var(--nen); color: var(--chu); }
+    .khung { max-width: 560px; margin: 0 auto; padding: 24px 16px 48px; }
+    h1 { font-size: 22px; margin: 8px 0 4px; }
+    .mo-ta { color: var(--phu); margin: 0 0 20px; font-size: 15px; }
+    .the { background: #fff; border: 1px solid var(--vien); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+    label { display: block; font-weight: 600; margin-bottom: 8px; }
+    input { width: 100%; font-size: 20px; letter-spacing: 2px; text-transform: uppercase; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; }
+    input:focus { outline: 2px solid var(--mau); border-color: var(--mau); }
+    button { width: 100%; margin-top: 12px; font-size: 17px; font-weight: 600; padding: 12px; border: 0; border-radius: 8px; background: var(--mau); color: #fff; cursor: pointer; }
+    button:disabled { opacity: .6; cursor: wait; }
+    button.phu { background: #fff; color: var(--mau); border: 1px solid var(--mau); }
+    .loi { color: var(--loi); margin-top: 10px; min-height: 1em; }
+    .ten-hs { font-size: 20px; font-weight: 700; margin: 0; }
+    .lop { color: var(--phu); margin: 4px 0 0; }
+    h2 { font-size: 17px; margin: 0 0 10px; color: var(--mau); }
+    table { width: 100%; border-collapse: collapse; }
+    td { padding: 9px 4px; border-top: 1px solid var(--vien); vertical-align: top; }
+    tr:first-child td { border-top: 0; }
+    td.ten { color: var(--phu); width: 45%; }
+    td.gt { font-weight: 600; white-space: pre-wrap; word-break: break-word; }
+    .an { display: none; }
+    .ghi-chu { color: var(--phu); font-size: 13px; text-align: center; margin-top: 24px; }
+  </style>
+</head>
+<body>
+  <div class="khung">
+    <h1><?= tieuDe ?></h1>
+    <p class="mo-ta">Nhập mã tra cứu giáo viên đã gửi riêng cho quý phụ huynh.</p>
+
+    <div id="manNhap" class="the">
+      <form id="form">
+        <label for="ma">Mã tra cứu</label>
+        <input id="ma" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="VD: K7X9-2QMP" maxlength="20" required>
+        <button id="nut" type="submit">Xem điểm</button>
+        <div id="loi" class="loi" role="alert"></div>
+      </form>
+    </div>
+
+    <div id="manKetQua" class="an">
+      <div class="the">
+        <p id="tenHs" class="ten-hs"></p>
+        <p id="lopHs" class="lop"></p>
+      </div>
+      <div id="dsBang"></div>
+      <button id="nutLai" class="phu" type="button">Tra cứu mã khác</button>
+    </div>
+
+    <p class="ghi-chu">Vui lòng không chia sẻ mã tra cứu cho người khác.</p>
+  </div>
+
+  <script>
+    var $ = function (id) { return document.getElementById(id); };
+
+    $('form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var ma = $('ma').value.trim();
+      if (!ma) return;
+      $('nut').disabled = true;
+      $('nut').textContent = 'Đang tra cứu...';
+      $('loi').textContent = '';
+      google.script.run
+        .withSuccessHandler(hienKetQua)
+        .withFailureHandler(function () { baoLoi('Không kết nối được. Vui lòng thử lại.'); })
+        .traCuu(ma);
+    });
+
+    $('nutLai').addEventListener('click', function () {
+      $('ma').value = '';
+      $('dsBang').textContent = '';
+      $('manKetQua').classList.add('an');
+      $('manNhap').classList.remove('an');
+      $('ma').focus();
+    });
+
+    function baoLoi(msg) {
+      $('nut').disabled = false;
+      $('nut').textContent = 'Xem điểm';
+      $('loi').textContent = msg;
+    }
+
+    // Dùng textContent (không dùng innerHTML) để nội dung trong Sheet không thể chèn mã độc.
+    function taoThe(tag, cls, text) {
+      var el = document.createElement(tag);
+      if (cls) el.className = cls;
+      if (text != null) el.textContent = text;
+      return el;
+    }
+
+    function hienKetQua(kq) {
+      if (!kq || !kq.ok) { baoLoi((kq && kq.loi) || 'Có lỗi xảy ra.'); return; }
+      $('nut').disabled = false;
+      $('nut').textContent = 'Xem điểm';
+      $('tenHs').textContent = kq.hocSinh.hoTen || 'Học sinh';
+      $('lopHs').textContent = kq.hocSinh.lop ? 'Lớp ' + kq.hocSinh.lop : '';
+
+      var ds = $('dsBang');
+      ds.textContent = '';
+      if (!kq.bangDiem.length) {
+        ds.appendChild(taoThe('div', 'the', 'Chưa có điểm được cập nhật.'));
+      }
+      kq.bangDiem.forEach(function (bang) {
+        var the = taoThe('div', 'the');
+        the.appendChild(taoThe('h2', null, bang.tenBang));
+        var tb = document.createElement('table');
+        bang.muc.forEach(function (m) {
+          var tr = document.createElement('tr');
+          tr.appendChild(taoThe('td', 'ten', m.ten));
+          tr.appendChild(taoThe('td', 'gt', m.giaTri || '—'));
+          tb.appendChild(tr);
+        });
+        the.appendChild(tb);
+        ds.appendChild(the);
+      });
+
+      $('manNhap').classList.add('an');
+      $('manKetQua').classList.remove('an');
+      window.scrollTo(0, 0);
+    }
+  </script>
+</body>
+</html>
