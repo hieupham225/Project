@@ -211,6 +211,8 @@
   /* Thẻ Bài thi: tên bài + nút Xem phiếu cùng hàng, nút ở bên phải */
   .o-bai-thi { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: 1 1 0; min-width: 0; }
   .o-bai-thi b.lap-lai { color: var(--phu); font-weight: 500; }
+  .o-bai-thi .ten-bai { display: flex; flex-direction: column; min-width: 0; }
+  .o-bai-thi .nhan-phu { display: none; font-size: 12px; color: var(--phu); font-weight: 500; }
   /* Tab Lớp học */
   .luoi-lop { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
   .the-lop { background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); padding: 18px; box-shadow: var(--bong-thap); display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: box-shadow .125s var(--em), transform .125s var(--em); }
@@ -309,6 +311,11 @@
     .thanh-chon-ghep [data-hd=moi], .thanh-chon-ghep [data-hd=goiy], .thanh-chon-ghep [data-hd=boqua] { order: 2; flex: 1 1 0; padding: 0 8px; }
     .thanh-chon-ghep .doi-lop { order: 3; flex: 1 1 100%; }
     .thanh-chon-ghep .doi-lop select.qd { flex: 1 1 auto; max-width: none; }
+    /* Thẻ Bài thi: "Bài thi" (phụ, trên) + tên bài (tiêu đề, dưới), nút Xem phiếu bên phải */
+    #bangDot td:has(> .o-bai-thi)::before { display: none; }
+    #bangDot td:has(> .o-bai-thi) { padding: 10px 0; }
+    .o-bai-thi .nhan-phu { display: block; margin-bottom: 2px; }
+    .o-bai-thi b { font-size: 16px; line-height: 1.35; }
     #bangGhep td:first-child { display: inline-flex; border: 0; padding: 8px 10px 4px 0; }
     #bangGhep td:first-child + td { display: inline-flex; border: 0; padding: 8px 0 4px; color: var(--phu); font-weight: 600; }
     #bangGhep td:first-child + td::before { content: "#"; flex: none; max-width: none; font-size: inherit; color: inherit; }
@@ -1728,7 +1735,7 @@
       if (d.soPhieu) nutCongBo.removeAttribute('disabled');
       tb.appendChild(the('tr', {}, [
         the('td', {}, [the('div', { class: 'o-bai-thi' }, [
-          the('b', { text: d.baiThi, class: d.baiThi !== baiTruoc ? '' : 'lap-lai' }),
+          the('div', { class: 'ten-bai' }, [the('span', { class: 'nhan-phu', text: 'Bài thi' }), the('b', { text: d.baiThi, class: d.baiThi !== baiTruoc ? '' : 'lap-lai' })]),
           d.soPhieu ? the('button', { class: 'phu nho', text: 'Xem phiếu', onclick: function () { hopDsPhieu(d); } }) : null])]),
         the('td', { text: 'Lần ' + d.lan }), the('td', { text: d.ngayThi }), the('td', { text: d.soPhieu }),
         the('td', {}, [the('span', { class: 'nhan ' + (d.congBo ? 'co' : 'moi'), text: d.congBo ? 'Đã công bố' : 'Chưa công bố' })]),
