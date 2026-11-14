@@ -1728,11 +1728,9 @@
   function veDot() {
     dienSelect($('locNhomDot'), DL.nhom || [], 'Tất cả lớp');
     var loc = $('locNhomDot').value;
-    // Mới tạo gần nhất lên đầu; vẫn gom theo lớp (lớp có lần thi mới nhất đứng trước)
-    var moiNhat = {};
-    DL.dot.forEach(function (d) { moiNhat[d.nhom] = Math.max(moiNhat[d.nhom] || 0, d.sttTao || 0); });
+    // Lớp theo thứ tự chữ cái; trong mỗi lớp, lần thi mới tạo gần nhất lên đầu
     var ds = DL.dot.filter(function (d) { return !loc || d.nhom === loc; }).sort(function (a, b) {
-      return (moiNhat[b.nhom] - moiNhat[a.nhom]) || a.nhom.localeCompare(b.nhom) || (b.sttTao || 0) - (a.sttTao || 0) || b.lan - a.lan;
+      return a.nhom.localeCompare(b.nhom, 'vi', { numeric: true }) || (b.sttTao || 0) - (a.sttTao || 0) || b.lan - a.lan;
     });
     var tb = $('bangDot'); tb.textContent = '';
     if (!ds.length) tb.appendChild(the('tr', {}, [the('td', { colspan: 6, class: 'goi-y', text: 'Chưa có bài thi nào. Bấm "📤 Gửi kết quả thi" để tải lên bảng kết quả và tạo phiếu.' })]));
