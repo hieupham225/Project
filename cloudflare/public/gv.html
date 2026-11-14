@@ -334,6 +334,10 @@
     .thanh-chon-ghep [data-hd=moi], .thanh-chon-ghep [data-hd=goiy], .thanh-chon-ghep [data-hd=boqua] { order: 2; flex: 1 1 0; padding: 0 8px; }
     .thanh-chon-ghep .doi-lop { order: 3; flex: 1 1 100%; }
     .thanh-chon-ghep .doi-lop select.qd { flex: 1 1 auto; max-width: none; }
+    /* Danh sách học sinh: ô chọn nằm bên phải hàng Mã HS (hàng đầu thẻ) */
+    #bangHs tr { position: relative; }
+    #bangHs td.o-chon { position: absolute; top: 6px; right: 12px; height: 34px; padding: 0; border: 0; display: flex; align-items: center; }
+    #bangHs td.o-chon input { width: 20px; height: 20px; }
     /* Thẻ Bài thi: "Bài thi" (phụ, trên) + tên bài (tiêu đề, dưới), nút Xem phiếu bên phải */
     #bangDot td:has(> .o-bai-thi)::before { display: none; }
     #bangDot td:has(> .o-bai-thi) { padding: 10px 0; }
@@ -532,7 +536,7 @@
         <button id="nutBoChon" class="phu nho">Bỏ chọn</button>
       </div>
       <table class="ds">
-        <thead><tr><th><input id="chonTatCa" class="chon-tat-ca" type="checkbox"></th><th>#</th><th>Mã HS</th><th>Họ tên</th><th>Lớp</th><th>SĐT phụ huynh</th><th>Mã tra cứu</th><th style="width:300px"></th></tr></thead>
+        <thead><tr><th><input id="chonTatCa" class="chon-tat-ca" type="checkbox"></th><th>Mã HS</th><th>Họ tên</th><th>Lớp</th><th>SĐT phụ huynh</th><th>Mã tra cứu</th><th style="width:300px"></th></tr></thead>
         <tbody id="bangHs"></tbody>
       </table>
     </section>
@@ -1099,13 +1103,13 @@
     $('demHs').textContent = ds.length + ' / ' + DL.hocSinh.length + ' học sinh';
     var tb = $('bangHs'); tb.textContent = '';
     if (!DL.hocSinh.length) {
-      tb.appendChild(the('tr', {}, [the('td', { colspan: 8, class: 'goi-y', text: 'Chưa có học sinh. Bấm "+ Thêm học sinh", "Thêm nhiều / nhập Excel", hoặc gửi kết quả thi lần đầu (hệ thống tự thêm).' })]));
+      tb.appendChild(the('tr', {}, [the('td', { colspan: 7, class: 'goi-y', text: 'Chưa có học sinh. Bấm "+ Thêm học sinh", "Thêm nhiều / nhập Excel", hoặc gửi kết quả thi lần đầu (hệ thống tự thêm).' })]));
     }
     ds.forEach(function (h, i) {
       var cb = the('input', { type: 'checkbox' }); cb.checked = !!daChon[h.maHs];
       cb.onchange = function () { if (cb.checked) daChon[h.maHs] = true; else delete daChon[h.maHs]; capNhatChon(); };
       tb.appendChild(the('tr', {}, [
-        the('td', {}, [cb]), the('td', { text: i + 1 }), the('td', { text: h.maHs }), the('td', {}, [the('b', { text: h.hoTen })]),
+        the('td', { class: 'o-chon' }, [cb]), the('td', { text: h.maHs }), the('td', {}, [the('b', { text: h.hoTen })]),
         the('td', {}, h.nhom.map(function (n) { return the('span', { class: 'chip', text: n }); })), the('td', { text: h.sdt }), the('td', {}, [oMaTraCuu(h)]),
         the('td', {}, [the('div', { class: 'cum-thao-tac' }, [
           the('button', { class: 'phu nho', text: 'Cấp lại mã', onclick: function () {
