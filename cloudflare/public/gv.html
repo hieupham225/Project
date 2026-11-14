@@ -58,7 +58,7 @@
   input[type=file]::file-selector-button { font: 500 13px var(--font); height: var(--cao-nho); padding: 0 12px; margin-right: 10px; border: 0; border-radius: var(--r-tron); background: var(--mau-nhat); color: var(--chu); cursor: pointer; }
   /* Ô nhiều dòng: giữ bo góc (bo tròn hai đầu sẽ cắt chữ ở các góc) */
   textarea { width: 100%; height: auto; min-height: 120px; padding: 10px 14px; border-radius: var(--r-phan-tu); }
-  label.o { display: flex; flex-direction: column; gap: 6px; font-weight: 500; font-size: 13px; color: var(--chu); }
+  label.o, div.o { display: flex; flex-direction: column; gap: 6px; font-weight: 500; font-size: 13px; color: var(--chu); }
   .luoi { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
   table.ds { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--be-mat); }
   table.ds th, table.ds td { padding: 9px 10px; border-bottom: 1px solid var(--vien); text-align: left; vertical-align: middle; }
@@ -124,8 +124,8 @@
   /* Đầu trang: hàng 1 = tiêu đề (trái) + nút tạo mới / tải lên (phải); mô tả; hàng 2 = tìm kiếm + bộ lọc */
   .dau-trang { margin: 4px 0 18px; }
   .hang-tieu-de { display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; }
-  .hang-tieu-de h1 { margin: 0; font-size: 26px; line-height: 1.25; font-weight: 600; letter-spacing: -.015em; min-width: 0; }
-  .mo-ta-trang { margin: 4px 0 0; }
+  .hang-tieu-de h1 { margin: 0; font-size: 26px; line-height: 1.15; font-weight: 600; letter-spacing: -.015em; min-width: 0; }
+  .mo-ta-trang { margin: 0; }
   .mo-ta-trang:empty { display: none; }
   .duong-dan { display: inline-block; font-size: 13px; color: var(--phu); margin-bottom: 4px; }
   .cum { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; margin-left: auto; }
@@ -142,7 +142,7 @@
   .dong-x { width: 32px; height: 32px; min-height: 32px; padding: 0; flex: none; font-size: 14px; }
   .chan-hop { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 18px; }
   .hop-form .luoi { grid-template-columns: 1fr 1fr; }
-  .hop-form .luoi label:first-child, .hop-form .luoi label:nth-child(2) { grid-column: 1 / -1; }
+  .hop-form .luoi > :nth-child(-n+2) { grid-column: 1 / -1; }
   .phu-trang:not(.an) .hop { animation: hop-vao .2s var(--em); }
   @keyframes sheet-vao { from { transform: translateY(100%); } }
   @keyframes hop-vao { from { opacity: 0; transform: translateY(8px) scale(.98); } }
@@ -171,6 +171,24 @@
     border-radius: var(--r-phan-tu); background: #0A1317; color: #fff; font: 400 13px/1.5 var(--font); letter-spacing: 0; text-align: left; white-space: normal; box-shadow: var(--bong-cao); }
   .tip-noi-dung b { color: #fff; }
   button.tip.mo .tip-noi-dung { display: block; }
+  /* Ô chọn lớp nhiều lựa chọn */
+  .chon-lop { position: relative; }
+  .chon-lop-khung { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: var(--cao); padding: 4px 6px 4px 6px; border: 1px solid var(--vien-dam); border-radius: 20px; background: var(--be-mat); cursor: text; transition: border-color .125s, box-shadow .125s; }
+  .chon-lop-khung:focus-within { border-color: var(--thuong-hieu); box-shadow: 0 0 0 3px rgba(34,91,255,.18); }
+  .chon-lop-khung input[type=text] { flex: 1 1 120px; min-width: 100px; height: 26px; min-height: 0; border: 0 !important; box-shadow: none !important; padding: 0 8px; background: none; }
+  .chip-chon { display: inline-flex; align-items: center; gap: 2px; padding: 0 2px 0 10px; height: 26px; border-radius: var(--r-tron); background: var(--mau-nhat); font-size: 13px; font-weight: 500; }
+  .chip-chon.moi { background: var(--vang-nen); color: var(--vang); }
+  button.chip-bo { width: 22px; height: 22px; min-height: 0; padding: 0; border-radius: 50%; background: none; color: inherit; font-size: 16px; line-height: 1; }
+  button.chip-bo:hover:not(:disabled) { background: rgba(21,17,12,.12); }
+  .chon-lop-ds { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 5; max-height: 240px; overflow: auto; background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-phan-tu); box-shadow: var(--bong-cao); padding: 4px; }
+  .muc-lop { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--r-trong); cursor: pointer; }
+  .muc-lop:hover { background: var(--phu-hover); }
+  .muc-lop .goi-y { margin-left: auto; font-size: 12px; }
+  .muc-lop .o-tick { width: 18px; height: 18px; flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 5px; border: 1.5px solid var(--vien-dam); font-size: 12px; font-weight: 700; }
+  .muc-lop.chon .o-tick { background: var(--mau); border-color: var(--mau); color: var(--tren-mau); }
+  .muc-lop.tao-moi { color: var(--thuong-hieu); }
+  .muc-lop.tao-moi .o-tick { border-color: var(--thuong-hieu); }
+  .muc-lop.trong { cursor: default; }
   /* Tab Lớp học */
   .luoi-lop { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
   .the-lop { background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); padding: 18px; box-shadow: var(--bong-thap); display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: box-shadow .125s var(--em), transform .125s var(--em); }
@@ -399,7 +417,16 @@
         <div class="dau-hop"><h2 id="formHsTieuDe">Thêm học sinh</h2><button type="button" class="dong-x phu" data-dong aria-label="Đóng">✕</button></div>
         <div class="luoi">
           <label class="o">Họ và tên *<input id="fTen" type="text"></label>
-          <label class="o">Lớp (không bắt buộc; nhiều lớp cách nhau bằng ;)<input id="fLop" type="text" list="dsLop" placeholder="VD: Toán 2; Tiếng Anh A1 — để trống nếu chưa xếp lớp"></label>
+          <div class="o">
+            <label for="fLopTim">Lớp <span class="goi-y">(không bắt buộc, chọn được nhiều lớp)</span></label>
+            <div class="chon-lop">
+              <div id="fLopKhung" class="chon-lop-khung">
+                <input id="fLopTim" type="text" autocomplete="off" placeholder="Tìm hoặc gõ tên lớp mới…" role="combobox" aria-expanded="false" aria-controls="fLopDs">
+              </div>
+              <div id="fLopDs" class="chon-lop-ds an" role="listbox"></div>
+            </div>
+            <input id="fLop" type="hidden">
+          </div>
           <label class="o">Ngày sinh<input id="fNgaySinh" type="text" placeholder="dd/mm/yyyy"></label>
           <label class="o">SĐT phụ huynh<input id="fSdt" type="text"></label>
           <label class="o">Ghi chú<input id="fGhiChu" type="text"></label>
@@ -989,11 +1016,65 @@
       goi('gvCapNhatNhom', Object.keys(daChon), nhom, nut.dataset.hd).then(function (dl) { daChon = {}; $('chonTatCa').checked = false; capNhat(dl); capNhatChon(); }).catch(baoLoi);
     };
   });
+  /* Ô chọn lớp (form học sinh): chọn nhiều, tìm kiếm, gõ tên lớp chưa có -> "+ Tạo lớp mới" */
+  var lopChon = [];
+  function khoaTen(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase().replace(/\s+/g, ' ').trim(); }
+  function datLopChon(ds) { lopChon = (ds || []).slice(); $('fLopTim').value = ''; veLopChon(); dongDsLop(); }
+  function veLopChon() {
+    $('fLop').value = lopChon.join('; ');
+    var k = $('fLopKhung');
+    [].slice.call(k.querySelectorAll('.chip-chon')).forEach(function (x) { x.remove(); });
+    lopChon.forEach(function (n) {
+      var moi = (DL.nhom || []).map(khoaTen).indexOf(khoaTen(n)) < 0;
+      var bo = the('button', { type: 'button', class: 'chip-bo', 'aria-label': 'Bỏ lớp ' + n, text: '×', onclick: function (e) { e.stopPropagation(); lopChon = lopChon.filter(function (x) { return x !== n; }); veLopChon(); $('fLopTim').focus(); } });
+      k.insertBefore(the('span', { class: 'chip-chon' + (moi ? ' moi' : '') }, [n + (moi ? ' (mới)' : ''), bo]), $('fLopTim'));
+    });
+    $('fLopTim').placeholder = lopChon.length ? 'Thêm lớp…' : 'Tìm hoặc gõ tên lớp mới…';
+  }
+  function chonLop(n) {
+    var k = khoaTen(n), i = lopChon.map(khoaTen).indexOf(k);
+    if (i >= 0) lopChon.splice(i, 1); else lopChon.push(n);
+    $('fLopTim').value = ''; veLopChon(); veDsLop(); $('fLopTim').focus();
+  }
+  function dongDsLop() { $('fLopDs').classList.add('an'); $('fLopTim').setAttribute('aria-expanded', 'false'); }
+  function veDsLop() {
+    var tu = $('fLopTim').value.replace(/[;,]/g, ' ').replace(/\s+/g, ' ').trim(), kt = khoaTen(tu);
+    var ds = (DL.nhom || []).filter(function (n) { return !kt || khoaTen(n).indexOf(kt) >= 0; });
+    var o = $('fLopDs'); o.textContent = '';
+    var daChon = lopChon.map(khoaTen);
+    ds.forEach(function (n) {
+      var co = daChon.indexOf(khoaTen(n)) >= 0;
+      o.appendChild(the('div', { class: 'muc-lop' + (co ? ' chon' : ''), role: 'option', 'aria-selected': co ? 'true' : 'false',
+        onmousedown: function (e) { e.preventDefault(); }, onclick: function () { chonLop(n); } },
+        [the('span', { class: 'o-tick', text: co ? '✓' : '' }), the('span', { text: n }), the('span', { class: 'goi-y', text: hsCuaLop(n).length + ' em' })]));
+    });
+    var trung = (DL.nhom || []).concat(lopChon).some(function (n) { return khoaTen(n) === kt; });
+    if (tu && !trung) {
+      o.appendChild(the('div', { class: 'muc-lop tao-moi', role: 'option', onmousedown: function (e) { e.preventDefault(); }, onclick: function () { chonLop(tu); } },
+        [the('span', { class: 'o-tick', text: '+' }), the('span', {}, ['Tạo lớp mới “', the('b', { text: tu }), '”'])]));
+    }
+    if (!o.children.length) o.appendChild(the('div', { class: 'muc-lop trong goi-y', text: (DL.nhom || []).length ? 'Không có lớp khớp.' : 'Chưa có lớp nào — gõ tên để tạo lớp mới.' }));
+    o.classList.remove('an'); $('fLopTim').setAttribute('aria-expanded', 'true');
+  }
+  $('fLopTim').addEventListener('focus', veDsLop);
+  $('fLopTim').addEventListener('input', veDsLop);
+  $('fLopTim').addEventListener('blur', function () { setTimeout(dongDsLop, 120); });
+  $('fLopTim').addEventListener('keydown', function (e) {
+    var tu = this.value.replace(/[;,]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (e.key === 'Enter') {
+      e.preventDefault(); if (!tu) return;
+      var khop = (DL.nhom || []).filter(function (n) { return khoaTen(n) === khoaTen(tu); })[0];
+      chonLop(khop || tu);
+    } else if (e.key === 'Backspace' && !this.value && lopChon.length) { lopChon.pop(); veLopChon(); veDsLop(); }
+    else if (e.key === 'Escape' && !$('fLopDs').classList.contains('an')) { e.stopPropagation(); dongDsLop(); }
+  });
+  $('fLopKhung').addEventListener('click', function () { $('fLopTim').focus(); });
+
   var dangSua = null;
   function moFormHs(h) {
     dangSua = h ? h.maHs : null;
     $('formHsTieuDe').textContent = h ? 'Sửa thông tin: ' + h.hoTen + ' (' + h.maHs + ')' : 'Thêm học sinh';
-    $('fTen').value = h ? h.hoTen : ''; $('fLop').value = h ? h.nhom.join('; ') : (lopLoc() || '');
+    $('fTen').value = h ? h.hoTen : ''; datLopChon(h ? h.nhom : (lopLoc() ? [lopLoc()] : []));
     $('fNgaySinh').value = h ? h.ngaySinh : ''; $('fSdt').value = h ? h.sdt : ''; $('fGhiChu').value = h ? h.ghiChu : '';
     $('formNhieu').classList.add('an'); $('formHs').classList.remove('an'); $('fTen').focus();
   }

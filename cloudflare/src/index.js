@@ -378,15 +378,19 @@ class NguCanh {
     const ids = [], moi = [];
     for (const ten of dsTen) {
       let l = this.lopTheoTen(ten);
-      if (!l) {
-        if (!this.tatCaLop) throw new Loi('Bạn không phụ trách lớp "' + ten + '".', 403);
+      if (!l) { // lớp mới: ai cũng tạo được (như nút "+ Lớp mới"); giáo viên thường -> tự giao lớp cho mình
         l = { id: taoId(), kg: this.kg, ten: ten.replace(/[;,]/g, ' ').replace(/\s+/g, ' ').trim(), khoa: L.khongDau_(ten), ngay_tao: ngayVN() };
         this.lop.push(l);
         moi.push([l.id, this.kg, l.ten, l.khoa, l.ngay_tao]);
       } else if (!this.duocLopId(l.id)) throw new Loi('Bạn không phụ trách lớp "' + ten + '".', 403);
       ids.push(l.id);
     }
-    await chay(this.db, lenhChenNhieu(this.db, 'lop', ['id', 'kg', 'ten', 'khoa', 'ngay_tao'], moi));
+    const lenh = lenhChenNhieu(this.db, 'lop', ['id', 'kg', 'ten', 'khoa', 'ngay_tao'], moi);
+    if (moi.length && !this.tatCaLop) {
+      this.nd.lop = [...this.nd.lop, ...moi.map((x) => x[0])];
+      lenh.push(this.db.prepare('UPDATE thanh_vien SET lop = ? WHERE kg = ? AND tai_khoan = ?').bind(JSON.stringify(this.nd.lop), this.kg, this.nd.tkId));
+    }
+    await chay(this.db, lenh);
     return ids;
   }
 

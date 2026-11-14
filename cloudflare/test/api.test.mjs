@@ -217,6 +217,11 @@ test('mời giáo viên + phân quyền theo lớp', async () => {
   await assert.rejects(C.rpc('gvXoaLop', 'Toán 1'), /không phụ trách/);
   const xoa = await C.rpc('gvXoaLop', 'Toán 2 nâng cao');
   assert.deepEqual(xoa.nhom, ['Toán 2']); assert.match(xoa.thongBao, /Đã xóa lớp/);
+  // tạo học sinh kèm lớp hoàn toàn mới -> lớp được tạo và giao cho giáo viên
+  const moiLop = await C.rpc('gvLuuHocSinh', { hoTen: 'Hà Thu Trang', lop: 'Văn 7; Toán 2' });
+  assert.deepEqual(moiLop.nhom.sort(), ['Toán 2', 'Văn 7']);
+  assert.deepEqual(moiLop.hocSinh.find((h) => h.hoTen === 'Hà Thu Trang').nhom.sort(), ['Toán 2', 'Văn 7']);
+  await C.rpc('gvXoaLop', 'Văn 7');
   // đổi mật khẩu
   await assert.rejects(C.rpc('gvDoiMatKhau', 'sai', 'matkhau789'), /không đúng/);
   await C.rpc('gvDoiMatKhau', mk, 'matkhau789');
