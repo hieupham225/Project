@@ -38,7 +38,15 @@ Nhóm (vd "Toán 2")
 |---|---|
 | ![Danh sách phiếu](docs/man-hinh-danh-sach.png) | ![Xem phiếu](docs/man-hinh-phieu.png) |
 
-- Miễn phí: chạy trên Google Sheet + Apps Script của giáo viên, dữ liệu nằm trong Drive của giáo viên.
+**Ai cần làm gì:**
+
+| Người dùng | Cần làm gì | Mở ở đâu |
+|---|---|---|
+| **Quản trị trung tâm** | Cài đặt **một lần** (khoảng 15 phút, mục A), rồi tạo tài khoản cho giáo viên | Google Sheet của trung tâm |
+| **Giáo viên** | **Không cài gì, không cần tài khoản Google**: mở link và đăng nhập | `…/exec?gv` (máy tính hoặc điện thoại) |
+| **Phụ huynh** | Nhập mã tra cứu | `…/exec` |
+
+- Miễn phí: chạy trên Google Sheet + Apps Script của trung tâm. Toàn bộ dữ liệu và phiếu PDF nằm trong Drive của trung tâm.
 - Link trang tra cứu là link chung, có thể gửi vào nhóm Zalo vì link không chứa thông tin của ai.
 - Phiếu có bố cục giống mẫu "Phân tích bài thi": thông tin chung, 3 phần đề thi, đáp án của học sinh (đúng **xanh**, sai **đỏ**), nhận xét, lời khuyên.
 
@@ -46,15 +54,17 @@ Nhóm (vd "Toán 2")
 
 ## Dùng thử trước khi cài
 - **Bản dùng thử chạy trên trình duyệt**: file [`demo/index.html`](demo/index.html), chạy đúng mã của hệ thống với Google Sheet/Drive giả lập và dữ liệu mẫu có sẵn.
-  Có thể bấm thử cả hai vai: **Giáo viên** (bảng điều khiển) và **Phụ huynh** (trang tra cứu).
+  Có thể bấm thử cả ba vai: **Quản trị**, **Giáo viên** (đăng nhập bằng tài khoản thử `co.lan` / `demo1234`) và **Phụ huynh**.
   Trong bản dùng thử, phiếu hiển thị dạng HTML thay cho PDF, và không tải file xuống được.
   Sinh lại bản dùng thử sau khi sửa mã: `node tools/tao-demo.js`.
 - **Chạy thật**: làm theo mục A bên dưới, mất khoảng 15 phút với một tài khoản Google.
-  Sau bước A2 sẽ có link trang tra cứu thật `https://script.google.com/macros/s/…/exec`, mở được trên điện thoại.
+  Sau bước A2 sẽ có link trang tra cứu thật `https://script.google.com/macros/s/…/exec` cho phụ huynh, và `…/exec?gv` cho giáo viên.
 
 ---
 
-## A. Cài đặt (làm một lần, khoảng 15 phút)
+## A. Cài đặt — chỉ quản trị làm, một lần (khoảng 15 phút)
+
+Nên dùng **một tài khoản Google chung của trung tâm** (ví dụ `ketqua.trungtam@gmail.com`) để mọi dữ liệu ở một chỗ và không phụ thuộc vào cá nhân nào.
 
 ### A1. Tạo file và dán mã
 1. Vào https://sheets.new để tạo một Google Sheet mới, ví dụ đặt tên "Quản lý kết quả học tập". **Không chia sẻ file này cho ai.**
@@ -65,7 +75,7 @@ Nhóm (vd "Toán 2")
    | Tên file | Dán nội dung từ |
    |---|---|
    | `Index` | [`apps-script/Index.html`](apps-script/Index.html) — trang tra cứu cho phụ huynh |
-   | `GiaoVien` | [`apps-script/GiaoVien.html`](apps-script/GiaoVien.html) — bảng điều khiển của giáo viên |
+   | `GiaoVien` | [`apps-script/GiaoVien.html`](apps-script/GiaoVien.html) — bảng điều khiển (quản trị và giáo viên dùng chung) |
    | `Phieu` | [`apps-script/Phieu.html`](apps-script/Phieu.html) — bố cục phiếu kết quả |
 
 5. Bấm 💾 **Lưu**.
@@ -80,7 +90,7 @@ Nhóm (vd "Toán 2")
 > Tài khoản Google do trường cấp (Workspace) có thể không có lựa chọn "Bất kỳ ai".
 > Khi đó hãy dùng Gmail cá nhân, hoặc nhờ quản trị viên của trường bật quyền này.
 
-### A3. Mở bảng điều khiển
+### A3. Mở bảng điều khiển (quản trị)
 1. Quay lại Google Sheet và tải lại trang (F5). Chọn **📋 Kết quả học tập → Mở bảng điều khiển**.
 2. Lần đầu, Google sẽ hỏi quyền. Bấm **Tiếp tục**, chọn tài khoản của bạn.
    Nếu thấy cảnh báo "Google chưa xác minh ứng dụng này", bấm **Nâng cao → Đi tới … (không an toàn)** → **Cho phép**.
@@ -89,6 +99,21 @@ Nhóm (vd "Toán 2")
    - Dán **link trang tra cứu** (bước A2).
    - Điền **tên trung tâm**, **khẩu hiệu** và **link logo** (ảnh PNG/JPG trên Drive của bạn) để in lên phiếu.
    - Bấm **Lưu cài đặt**.
+
+### A4. Tạo tài khoản cho giáo viên (thẻ 👥 Giáo viên)
+1. Tạo các lớp trước (thẻ Học sinh → **+ Lớp mới**).
+2. Vào thẻ **👥 Giáo viên** → **+ Thêm giáo viên**: nhập tên đăng nhập (ví dụ `co.lan`), họ tên, rồi tích **các lớp phụ trách**.
+3. Hệ thống tạo **mật khẩu tạm** và soạn sẵn tin nhắn gồm link trang giáo viên, tên đăng nhập và mật khẩu. Mật khẩu tạm **chỉ hiện một lần**, nên sao chép và gửi riêng cho giáo viên ngay.
+4. Giáo viên mở link `…/exec?gv`, đăng nhập, rồi nên **đổi mật khẩu** (nút ở góc trên).
+
+| Quản trị làm được | Giáo viên làm được |
+|---|---|
+| Mọi việc: mọi lớp, tài khoản, cài đặt, mở thư mục PDF trên Drive | Chỉ **các lớp mình phụ trách**: thêm/sửa học sinh, tạo lớp mới (tự giao cho mình), gửi kết quả, công bố, xem tổng hợp |
+
+- Giáo viên quên mật khẩu: quản trị bấm **Đặt lại mật khẩu**.
+- Giáo viên nghỉ: **Sửa → Trạng thái: Khóa**. Giáo viên bị đăng xuất ngay, dữ liệu học sinh và phiếu vẫn giữ nguyên.
+- Muốn người khác cùng quản trị mà không cần đưa file Google Sheet: tạo tài khoản với vai trò **Quản trị**.
+- Khi giáo viên xóa một em đang học thêm lớp của giáo viên khác, em đó chỉ bị bỏ khỏi lớp của giáo viên này. Mã tra cứu và các lớp khác giữ nguyên.
 
 ---
 
@@ -195,7 +220,9 @@ Chọn nhóm để xem bảng **học sinh × (bài thi, lần làm)** theo th�
 - Trang tra cứu **kiểm tra mã ở mỗi lần xem**. Mỗi mã chỉ mở được phiếu của đúng học sinh đó, và chỉ những đợt đã công bố.
 - **Mã tra cứu ngẫu nhiên** gồm 8 ký tự (khoảng 850 tỷ khả năng), không dựa trên tên hay ngày sinh. Mã phiếu in trên PDF không dùng để tra cứu được.
 - **Chống dò mã:** mỗi lần nhập sai bị chậm 1 giây. Nếu cả hệ thống có quá 30 lần nhập sai trong một phút, trang tra cứu tạm khóa.
-- **Các chức năng của giáo viên chỉ chạy khi người dùng là chủ file.** Người mở trang tra cứu công khai không gọi được các chức năng này.
+- **Các chức năng quản lý chỉ chạy khi là chủ file, hoặc có phiên đăng nhập hợp lệ.** Mỗi thao tác đều được kiểm tra quyền theo lớp ở máy chủ.
+- **Mật khẩu giáo viên** được lưu dạng mã hóa (SHA-256 nhiều vòng, có muối riêng), không lưu dạng chữ thường. Phiên đăng nhập hết hạn sau 6 giờ không dùng. Đăng nhập sai nhiều lần sẽ bị tạm khóa.
+- Mọi thao tác chạy bằng tài khoản của trung tâm. Vì vậy giáo viên chỉ đọc được link Google Sheet đã chia sẻ công khai bằng link, không đọc được các file riêng khác trong Drive của trung tâm.
 
 ## Tùy chỉnh
 - **Giao diện phiếu:** sửa file `Phieu.html` (màu, cỡ chữ, tiêu đề các phần…).
@@ -221,4 +248,4 @@ tools/
 docs/                    Ảnh minh họa
 ```
 
-Dữ liệu được lưu trong các tab của Google Sheet: `HocSinh` (cột "Nhóm / lớp" ghi các nhóm, cách nhau bằng `;`), `Nhom` (danh sách lớp), `DotThi` (mỗi dòng là một lần làm của một bài thi), `PhieuKetQua`. Nên thao tác qua bảng điều khiển; sửa trực tiếp trên tab sẽ có cảnh báo.
+Dữ liệu được lưu trong các tab của Google Sheet: `HocSinh` (cột "Nhóm / lớp" ghi các nhóm, cách nhau bằng `;`), `Nhom` (danh sách lớp), `TaiKhoan` (tài khoản giáo viên), `DotThi` (mỗi dòng là một lần làm của một bài thi), `PhieuKetQua`. Nên thao tác qua bảng điều khiển; sửa trực tiếp trên tab sẽ có cảnh báo.

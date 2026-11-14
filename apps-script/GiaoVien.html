@@ -52,6 +52,18 @@
   table.th tr.tb td { background: #f8fafc; font-weight: 700; }
   .tang { color: var(--xanh); font-weight: 700; } .giam { color: var(--do); font-weight: 700; }
   .nhom-dau td { background: #eef2ff; font-weight: 700; }
+  /* đăng nhập (trang giáo viên trên web) */
+  .dang-nhap { max-width: 380px; margin: 8vh auto; background: #fff; border: 1px solid var(--vien); border-radius: 12px; padding: 24px; }
+  .dang-nhap h1 { font-size: 20px; margin: 0 0 4px; }
+  .dang-nhap label.o { margin-top: 12px; }
+  .dang-nhap input[type=text], .dang-nhap input[type=password] { width: 100%; font-size: 16px; padding: 10px; }
+  .dang-nhap button { width: 100%; margin-top: 16px; padding: 10px; font-size: 16px; }
+  .nguoi-dung { margin-left: auto; display: flex; gap: 8px; align-items: center; padding-bottom: 6px; font-size: 13px; color: var(--phu); }
+  .nguoi-dung b { color: var(--chu); }
+  .o-link { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
+  .o-link code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: #f1f5f9; padding: 6px 10px; border-radius: 6px; font-size: 13px; }
+  .lop-chon { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 8px 0; }
+  .lop-chon label { display: inline-flex; gap: 6px; align-items: center; font-weight: 500; }
   .chip { display: inline-block; padding: 1px 8px; margin: 1px 3px 1px 0; border-radius: 10px; background: var(--mau-nhat); color: #174ea6; font-size: 12px; font-weight: 600; }
   .nhan.xacnhan { background: #fff4e5; color: #8a4b00; }
   select.qd { max-width: 340px; }
@@ -59,16 +71,35 @@
 </style>
 </head>
 <body>
-  <div class="tabs">
+  <!-- Đăng nhập: chỉ hiện khi mở trang giáo viên trên web (…/exec?gv) -->
+  <div id="manDangNhap" class="an">
+    <form id="formDangNhap" class="dang-nhap">
+      <h1 id="dnTieuDe">Đăng nhập giáo viên</h1>
+      <p class="goi-y" style="margin:0">Dùng tên đăng nhập và mật khẩu do quản trị trung tâm cấp.</p>
+      <label class="o">Tên đăng nhập<input id="dnTen" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+      <label class="o">Mật khẩu<input id="dnMatKhau" type="password" autocomplete="current-password" required></label>
+      <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-weight:500"><input id="dnNho" type="checkbox" checked> Ghi nhớ trên máy này</label>
+      <button id="dnNut" type="submit">Đăng nhập</button>
+      <p id="dnLoi" class="goi-y" style="color:var(--do);min-height:1em"></p>
+    </form>
+  </div>
+
+  <div class="tabs an" id="thanhTabs">
     <button class="tab chon" data-tab="tabHs">👩‍🎓 Học sinh</button>
     <button class="tab" data-tab="tabGui">📤 Gửi kết quả thi</button>
     <button class="tab" data-tab="tabDot">🗂️ Bài thi</button>
     <button class="tab" data-tab="tabTongHop">📊 Tổng hợp</button>
-    <button class="tab" data-tab="tabCaiDat">⚙️ Cài đặt</button>
+    <button class="tab chi-quan-tri" data-tab="tabTaiKhoan">👥 Giáo viên</button>
+    <button class="tab chi-quan-tri" data-tab="tabCaiDat">⚙️ Cài đặt</button>
+    <div class="nguoi-dung">
+      <span id="tenNguoiDung"></span>
+      <button id="nutDoiMk" class="phu nho an">Đổi mật khẩu</button>
+      <button id="nutDangXuat" class="phu nho an">Đăng xuất</button>
+    </div>
   </div>
 
   <div class="noi-dung">
-    <div id="dangTai" class="dang-tai">Đang tải dữ liệu…</div>
+    <div id="dangTai" class="dang-tai an">Đang tải dữ liệu…</div>
 
     <!-- ============ HỌC SINH ============ -->
     <section id="tabHs" class="an">
@@ -138,7 +169,8 @@
         <div id="khuMauLop" class="an">
           <div class="thanh" style="margin:12px 0 4px">
             <button id="nutTaiMauLop">⬇ Tải file mẫu Excel của lớp</button>
-            <a href="#" id="linkTaoMau" target="_self">hoặc tạo file mẫu trên Google Drive</a><span id="ketQuaMau" class="goi-y"></span>
+            <a href="#" id="linkSaoChepMau" target="_self">Không tải được? Sao chép bảng để dán vào Excel</a>
+            <a href="#" id="linkTaoMau" target="_self" class="chi-quan-tri">· tạo file mẫu trên Google Drive</a><span id="ketQuaMau" class="goi-y"></span>
           </div>
           <p class="goi-y">File mẫu đã điền sẵn <b>Mã HS</b> và <b>họ tên</b> của học sinh trong lớp. Giáo viên chỉ điền đáp án / điểm / nhận xét, <b>không sửa cột Mã HS</b>.</p>
         </div>
@@ -214,8 +246,45 @@
       <p class="goi-y">Ô xanh: ≥ 80% điểm tối đa · Ô đỏ: &lt; 50% · "Tiến bộ" = điểm lần gần nhất − điểm lần đầu (tính theo thang 10).</p>
     </section>
 
+    <!-- ============ TÀI KHOẢN GIÁO VIÊN (chỉ quản trị) ============ -->
+    <section id="tabTaiKhoan" class="an">
+      <div class="the">
+        <h2>Giáo viên dùng hệ thống không cần cài đặt gì</h2>
+        <p class="goi-y" style="margin-top:0">Tạo tài khoản, chọn lớp phụ trách, rồi gửi cho giáo viên <b>link trang giáo viên</b> kèm tên đăng nhập và mật khẩu.
+          Giáo viên mở link trên máy tính hoặc điện thoại, đăng nhập, rồi chỉ thấy và gửi điểm cho các lớp mình phụ trách. Giáo viên không cần tài khoản Google.</p>
+        <div class="o-link"><span>Link trang giáo viên:</span><code id="tkLinkGv"></code><button class="phu nho" id="tkChepLink">Sao chép</button></div>
+      </div>
+      <div class="thanh">
+        <button id="nutThemTk">+ Thêm giáo viên</button>
+        <span class="goi-y">Quản trị trung tâm (chủ file Google Sheet) luôn có toàn quyền và không cần tài khoản ở đây.</span>
+      </div>
+      <div id="formTk" class="the an">
+        <h2 id="formTkTieuDe">Thêm giáo viên</h2>
+        <div class="luoi">
+          <label class="o">Tên đăng nhập *<input id="tkTen" type="text" placeholder="vd: co.lan" autocapitalize="none" spellcheck="false"></label>
+          <label class="o">Họ tên *<input id="tkHoTen" type="text" placeholder="vd: Nguyễn Thị Lan"></label>
+          <label class="o">Vai trò<select id="tkVaiTro"><option>Giáo viên</option><option>Quản trị</option></select></label>
+          <label class="o">Trạng thái<select id="tkTrangThai"><option>Hoạt động</option><option>Khóa</option></select></label>
+        </div>
+        <div style="margin-top:10px"><b>Lớp phụ trách</b>
+          <label style="margin-left:12px;font-weight:500"><input id="tkTatCaLop" type="checkbox"> Tất cả lớp</label>
+          <div id="tkDsLop" class="lop-chon"></div>
+        </div>
+        <div class="thanh" style="margin:12px 0 0"><button id="nutLuuTk">Lưu</button><button id="nutHuyTk" class="phu">Hủy</button></div>
+      </div>
+      <table class="ds">
+        <thead><tr><th>Tên đăng nhập</th><th>Họ tên</th><th>Vai trò</th><th>Lớp phụ trách</th><th>Trạng thái</th><th style="width:260px"></th></tr></thead>
+        <tbody id="bangTk"></tbody>
+      </table>
+    </section>
+
     <!-- ============ CÀI ĐẶT ============ -->
     <section id="tabCaiDat" class="an">
+      <div class="the">
+        <h2>Link sử dụng</h2>
+        <div class="o-link"><span>Phụ huynh:</span><code id="cdLinkPh">(chưa có)</code></div>
+        <div class="o-link"><span>Giáo viên:</span><code id="cdLinkGv">(chưa có)</code></div>
+      </div>
       <div class="the">
         <h2>Trang tra cứu cho phụ huynh</h2>
         <label class="o">Link trang tra cứu (Web App, kết thúc bằng /exec)<input id="cLink" type="text" style="width:100%"></label>
@@ -258,16 +327,28 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script>
   var $ = function (id) { return document.getElementById(id); };
-  var DL = { hocSinh: [], dot: [], caiDat: {}, linkTraCuu: '' };
+  var DL = { hocSinh: [], dot: [], caiDat: {}, linkTraCuu: '', toi: {} };
   var soHienTai = null, xemTruoc = null;
+  // 'sheet' = mở từ menu Google Sheet (chủ file); 'web' = trang giáo viên …/exec?gv (đăng nhập)
+  var CHE_DO = '<?= cheDo ?>';
+  var KHOA_PHIEN = 'phieu-kq-phien';
+  var PHIEN = '';
+  try { PHIEN = (CHE_DO === 'web' && (localStorage.getItem(KHOA_PHIEN) || sessionStorage.getItem(KHOA_PHIEN))) || ''; } catch (e) { /* bỏ qua */ }
 
   /* ---------- tiện ích ---------- */
+  // Mọi chức năng đi qua gvGoi(phiên, tên hàm, tham số) để máy chủ kiểm tra quyền
   function goi(ten) {
     var args = Array.prototype.slice.call(arguments, 1);
     return new Promise(function (ok, loi) {
-      var r = google.script.run.withSuccessHandler(ok).withFailureHandler(loi);
-      r[ten].apply(r, args);
+      google.script.run.withSuccessHandler(ok).withFailureHandler(function (e) {
+        if (/PHIEN_HET_HAN/.test(e && e.message || e)) { hetPhien(); return loi(new Error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.')); }
+        loi(e);
+      }).gvGoi(PHIEN, ten, args);
     });
+  }
+  function goiTrucTiep(ten) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return new Promise(function (ok, loi) { var r = google.script.run.withSuccessHandler(ok).withFailureHandler(loi); r[ten].apply(r, args); });
   }
   function the(tag, thuocTinh, con) {
     var el = document.createElement(tag);
@@ -317,7 +398,8 @@
       $('hoiNhap').onkeydown = function (e) { if (e.key === 'Enter') xong(true); if (e.key === 'Escape') xong(false); };
     });
   }
-  function capNhat(dl) { if (dl) { DL = dl; veHocSinh(); veChonLop(); veDot(); veTongHop(); veCaiDat(); capNhatLanInfo(); } if (dl && dl.thongBao) bao(dl.thongBao); }
+  function capNhat(dl) { if (dl) { DL = dl; apDungQuyen(); veHocSinh(); veChonLop(); veDot(); veTongHop(); veCaiDat(); veTaiKhoan(); capNhatLanInfo(); }
+    if (dl && dl.matKhauTam) hopMatKhau(dl.matKhauTam); if (dl && dl.thongBao) bao(dl.thongBao); }
   function dienSelect(sel, ds, nhanTatCa) {
     var cu = sel.value; sel.textContent = '';
     if (nhanTatCa) sel.appendChild(the('option', { value: '', text: nhanTatCa }));
@@ -330,7 +412,7 @@
   document.querySelectorAll('.tab').forEach(function (t) {
     t.onclick = function () {
       document.querySelectorAll('.tab').forEach(function (x) { x.classList.toggle('chon', x === t); });
-      ['tabHs', 'tabGui', 'tabDot', 'tabTongHop', 'tabCaiDat'].forEach(function (id) { $(id).classList.toggle('an', id !== t.dataset.tab); });
+      ['tabHs', 'tabGui', 'tabDot', 'tabTongHop', 'tabTaiKhoan', 'tabCaiDat'].forEach(function (id) { $(id).classList.toggle('an', id !== t.dataset.tab); });
     };
   });
 
@@ -581,6 +663,13 @@
       bao('Đã tải file mẫu của lớp ' + n + '. Nếu trình duyệt chặn tải, dùng "tạo file mẫu trên Google Drive".');
     }).catch(baoLoi);
   };
+  $('linkSaoChepMau').onclick = function (e) {
+    e.preventDefault();
+    goi('gvLayMauLop', lopDangChon()).then(function (mau) {
+      var tsv = mau.KetQua.map(function (r) { return r.join('\t'); }).join('\n');
+      hopTinNhan('Bảng kết quả của lớp ' + lopDangChon() + ' — dán vào ô A1 của Excel', tsv);
+    }).catch(baoLoi);
+  };
   $('linkTaoMau').onclick = function (e) {
     e.preventDefault();
     $('ketQuaMau').textContent = ' — đang tạo…';
@@ -772,7 +861,7 @@
   function hienKetQuaTao(kq, soPhieu, loi) {
     var k = $('khuXong'); k.textContent = ''; k.classList.remove('an');
     k.appendChild(the('p', {}, [the('b', { text: '✔ ' + kq.nhom + ' · ' + kq.baiThi + ' – Lần ' + kq.lan + ': đã tạo ' + soPhieu + ' phiếu PDF. ' }),
-      the('a', { href: kq.thuMuc, text: 'Mở thư mục PDF để kiểm tra' })]));
+      kq.thuMuc ? the('a', { href: kq.thuMuc, text: 'Mở thư mục PDF để kiểm tra' }) : the('span', { class: 'goi-y', text: 'Phiếu PDF được lưu trong Drive của trung tâm.' })]));
     if (kq.vang && kq.vang.length) k.appendChild(the('p', { class: 'goi-y', text: 'Không có kết quả (không có phiếu): ' + kq.vang.join(', ') }));
     if (loi.length) {
       var ul = the('ul', { class: 'canh-bao' });
@@ -784,7 +873,7 @@
       goi('gvCongBo', kq.maDot, true).then(function (dl) { capNhat(dl); nut.textContent = '✔ Đã công bố'; bao('Đã công bố. Phụ huynh có thể tra cứu ngay.'); })
         .catch(function (e) { nut.disabled = false; baoLoi(e); });
     } });
-    k.appendChild(the('div', { class: 'thanh' }, [nut, the('span', { class: 'goi-y', text: 'Nên mở vài phiếu kiểm tra trước khi công bố. Có thể công bố sau ở thẻ "Bài thi".' })]));
+    k.appendChild(the('div', { class: 'thanh' }, [nut, the('span', { class: 'goi-y', text: 'Nên kiểm tra phiếu (nút "Xem thử phiếu") trước khi công bố. Có thể công bố sau ở thẻ "Bài thi".' })]));
   }
 
   /* =================== BÀI THI (nhóm → bài thi → các lần) =================== */
@@ -888,6 +977,8 @@
   /* =================== CÀI ĐẶT =================== */
   function veCaiDat() {
     var c = DL.caiDat || {};
+    $('cdLinkPh').textContent = DL.linkTraCuu || '(chưa có — dán link Web App ở dưới)';
+    $('cdLinkGv').textContent = DL.linkGiaoVien || '(chưa có)';
     $('cLink').value = DL.linkTraCuu || ''; $('cTieuDeTraCuu').value = c.tieuDeTraCuu || '';
     $('cTrungTam').value = c.tenTrungTam || ''; $('cKhauHieu').value = c.khauHieu || ''; $('cLogo').value = c.logo || '';
   }
@@ -898,12 +989,143 @@
       .then(function (dl) { capNhat(dl); bao('Đã lưu cài đặt.'); }).catch(baoLoi);
   };
 
+  /* =================== QUYỀN & ĐĂNG NHẬP =================== */
+  function apDungQuyen() {
+    var qt = !!(DL.toi && DL.toi.quanTri);
+    document.querySelectorAll('.chi-quan-tri').forEach(function (el) { el.classList.toggle('an', !qt); });
+    $('tenNguoiDung').textContent = '';
+    if (DL.toi && DL.toi.hoTen) {
+      $('tenNguoiDung').appendChild(document.createTextNode('👤 '));
+      $('tenNguoiDung').appendChild(the('b', { text: DL.toi.hoTen }));
+      if (!qt) $('tenNguoiDung').appendChild(document.createTextNode(' · ' + (DL.toi.lop === '*' ? 'tất cả lớp' : (DL.toi.lop || []).length + ' lớp')));
+    }
+    $('nutDoiMk').classList.toggle('an', !(DL.toi && DL.toi.coPhien));
+    $('nutDangXuat').classList.toggle('an', CHE_DO !== 'web');
+    // đang ở thẻ chỉ dành cho quản trị mà không có quyền -> về thẻ Học sinh
+    var dangChon = document.querySelector('.tab.chon');
+    if (!qt && dangChon && dangChon.classList.contains('chi-quan-tri')) document.querySelector('[data-tab=tabHs]').click();
+  }
+
+  function hienBangDieuKhien() {
+    $('manDangNhap').classList.add('an');
+    $('thanhTabs').classList.remove('an');
+    $('dangTai').classList.remove('an');
+    goi('gvTaiDuLieu').then(function (dl) {
+      capNhat(dl);
+      $('dangTai').classList.add('an');
+      document.querySelector('.tab.chon').click();
+      if (!dl.linkTraCuu && dl.toi.quanTri) bao('Chưa có link trang tra cứu. Vào thẻ "Cài đặt" để thêm.');
+    }).catch(function (e) { $('dangTai').textContent = 'Lỗi: ' + (e.message || e); });
+  }
+
+  function hetPhien() {
+    PHIEN = '';
+    try { localStorage.removeItem(KHOA_PHIEN); sessionStorage.removeItem(KHOA_PHIEN); } catch (e) { /* bỏ qua */ }
+    ['tabHs', 'tabGui', 'tabDot', 'tabTongHop', 'tabTaiKhoan', 'tabCaiDat'].forEach(function (id) { $(id).classList.add('an'); });
+    $('thanhTabs').classList.add('an'); $('dangTai').classList.add('an');
+    $('manDangNhap').classList.remove('an');
+    $('dnMatKhau').value = ''; $('dnTen').focus();
+  }
+
+  $('formDangNhap').addEventListener('submit', function (e) {
+    e.preventDefault();
+    $('dnNut').disabled = true; $('dnLoi').textContent = '';
+    goiTrucTiep('gvDangNhap', $('dnTen').value, $('dnMatKhau').value).then(function (kq) {
+      $('dnNut').disabled = false;
+      if (!kq.ok) { $('dnLoi').textContent = kq.loi; return; }
+      PHIEN = kq.phien;
+      try { ($('dnNho').checked ? localStorage : sessionStorage).setItem(KHOA_PHIEN, PHIEN); } catch (e2) { /* bỏ qua */ }
+      $('dnMatKhau').value = '';
+      hienBangDieuKhien();
+    }).catch(function () { $('dnNut').disabled = false; $('dnLoi').textContent = 'Không kết nối được, vui lòng thử lại.'; });
+  });
+  $('nutDangXuat').onclick = function () { goiTrucTiep('gvDangXuat', PHIEN).catch(function () {}); hetPhien(); };
+  $('nutDoiMk').onclick = function () {
+    var cu = the('input', { type: 'password', autocomplete: 'current-password', style: 'width:100%' });
+    var moi = the('input', { type: 'password', autocomplete: 'new-password', style: 'width:100%' });
+    var moi2 = the('input', { type: 'password', autocomplete: 'new-password', style: 'width:100%' });
+    var nut = the('button', { text: 'Đổi mật khẩu', onclick: function () {
+      if (moi.value.length < 6) return bao('Mật khẩu mới tối thiểu 6 ký tự.', true);
+      if (moi.value !== moi2.value) return bao('Hai lần nhập mật khẩu mới không khớp.', true);
+      nut.disabled = true;
+      goi('gvDoiMatKhau', cu.value, moi.value).then(function () { $('hop').classList.add('an'); bao('Đã đổi mật khẩu.'); })
+        .catch(baoLoi).then(function () { nut.disabled = false; });
+    } });
+    moHop('Đổi mật khẩu', the('div', { class: 'luoi', style: 'grid-template-columns:1fr' }, [
+      the('label', { class: 'o' }, ['Mật khẩu hiện tại', cu]), the('label', { class: 'o' }, ['Mật khẩu mới (tối thiểu 6 ký tự)', moi]),
+      the('label', { class: 'o' }, ['Nhập lại mật khẩu mới', moi2]), the('div', {}, [nut])]));
+  };
+
+  /* =================== TÀI KHOẢN GIÁO VIÊN (quản trị) =================== */
+  var dangSuaTk = null;
+  function veTaiKhoan() {
+    $('tkLinkGv').textContent = DL.linkGiaoVien || '(chưa có — nhập link trang tra cứu ở thẻ Cài đặt trước)';
+    var tb = $('bangTk'); tb.textContent = '';
+    var ds = DL.taiKhoan || [];
+    if (!ds.length) tb.appendChild(the('tr', {}, [the('td', { colspan: 6, class: 'goi-y', text: 'Chưa có tài khoản giáo viên nào. Bấm "+ Thêm giáo viên".' })]));
+    ds.forEach(function (tk) {
+      tb.appendChild(the('tr', {}, [
+        the('td', { class: 'ma', text: tk.ten }), the('td', {}, [the('b', { text: tk.hoTen })]), the('td', { text: tk.vaiTro }),
+        the('td', {}, tk.vaiTro === 'Quản trị' || tk.lop === '*' ? [the('span', { class: 'chip', text: 'Tất cả lớp' })]
+          : (tk.lop.length ? tk.lop.map(function (n) { return the('span', { class: 'chip', text: n }); }) : [the('span', { class: 'goi-y', text: 'Chưa có lớp' })])),
+        the('td', {}, [the('span', { class: 'nhan ' + (tk.trangThai === 'Khóa' ? 'loi' : 'co'), text: tk.trangThai })]),
+        the('td', {}, [
+          the('button', { class: 'phu nho', text: 'Sửa', onclick: function () { moFormTk(tk); } }), ' ',
+          the('button', { class: 'phu nho', text: 'Đặt lại mật khẩu', onclick: function () {
+            hoi('Tạo mật khẩu mới cho ' + tk.hoTen + '? Mật khẩu cũ sẽ không dùng được nữa.', { nut: 'Đặt lại' }).then(function (ok) {
+              if (ok) goi('gvDatLaiMatKhau', tk.ten).then(capNhat).catch(baoLoi);
+            });
+          } }), ' ',
+          the('button', { class: 'nguy nho', text: 'Xóa', onclick: function () {
+            hoi('Xóa tài khoản ' + tk.ten + ' (' + tk.hoTen + ')? Dữ liệu học sinh và phiếu không bị ảnh hưởng.', { nut: 'Xóa', nguyHiem: true }).then(function (ok) {
+              if (ok) goi('gvXoaTaiKhoan', tk.ten).then(function (dl) { capNhat(dl); bao('Đã xóa tài khoản.'); }).catch(baoLoi);
+            });
+          } })
+        ])
+      ]));
+    });
+  }
+  function moFormTk(tk) {
+    dangSuaTk = tk ? tk.ten : null;
+    $('formTkTieuDe').textContent = tk ? 'Sửa tài khoản ' + tk.ten : 'Thêm giáo viên';
+    $('tkTen').value = tk ? tk.ten : ''; $('tkTen').disabled = !!tk;
+    $('tkHoTen').value = tk ? tk.hoTen : ''; $('tkVaiTro').value = tk ? tk.vaiTro : 'Giáo viên'; $('tkTrangThai').value = tk ? tk.trangThai : 'Hoạt động';
+    $('tkTatCaLop').checked = !!tk && tk.lop === '*';
+    var chon = tk && tk.lop !== '*' ? tk.lop : [];
+    var k = $('tkDsLop'); k.textContent = '';
+    (DL.tatCaNhom || DL.nhom || []).forEach(function (n) {
+      var cb = the('input', { type: 'checkbox', value: n }); cb.checked = chon.indexOf(n) >= 0;
+      k.appendChild(the('label', {}, [cb, n]));
+    });
+    if (!(DL.tatCaNhom || []).length) k.appendChild(the('span', { class: 'goi-y', text: 'Chưa có lớp nào — tạo lớp ở thẻ Học sinh trước.' }));
+    $('formTk').classList.remove('an'); (tk ? $('tkHoTen') : $('tkTen')).focus();
+  }
+  $('nutThemTk').onclick = function () { moFormTk(null); };
+  $('nutHuyTk').onclick = function () { $('formTk').classList.add('an'); };
+  $('nutLuuTk').onclick = function () {
+    var lop = $('tkTatCaLop').checked ? '*' : Array.from($('tkDsLop').querySelectorAll('input:checked')).map(function (c) { return c.value; });
+    goi('gvLuuTaiKhoan', { ten: dangSuaTk || $('tkTen').value, hoTen: $('tkHoTen').value, vaiTro: $('tkVaiTro').value, trangThai: $('tkTrangThai').value, lop: lop, sua: !!dangSuaTk })
+      .then(function (dl) { capNhat(dl); bao(dl.thongBao); $('formTk').classList.add('an'); }).catch(baoLoi);
+  };
+  $('tkChepLink').onclick = function () { chepChu(DL.linkGiaoVien || ''); };
+  function chepChu(t) {
+    var xong = function () { bao('Đã sao chép.'); };
+    var cach2 = function () { var ta = the('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); xong(); };
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(xong, cach2); else cach2();
+  }
+  /* Mật khẩu tạm chỉ hiện 1 lần -> soạn sẵn tin nhắn gửi giáo viên */
+  function hopMatKhau(x) {
+    hopTinNhan('Thông tin đăng nhập của ' + x.hoTen + ' (chỉ hiện 1 lần — hãy gửi ngay)',
+      'Chào ' + x.hoTen + ',\n' +
+      'Thầy/cô vào trang giáo viên để gửi kết quả thi cho phụ huynh:\n' + (DL.linkGiaoVien || '[link trang giáo viên]') + '\n' +
+      'Tên đăng nhập: ' + x.ten + '\n' +
+      'Mật khẩu: ' + x.matKhau + '\n' +
+      'Sau khi đăng nhập, thầy/cô nên bấm "Đổi mật khẩu" ở góc trên.');
+  }
+
   /* ---------- khởi động ---------- */
-  goi('gvTaiDuLieu').then(function (dl) {
-    capNhat(dl);
-    $('dangTai').classList.add('an'); $('tabHs').classList.remove('an');
-    if (!dl.linkTraCuu) bao('Chưa có link trang tra cứu. Vào thẻ "Cài đặt" để thêm.');
-  }).catch(function (e) { $('dangTai').textContent = 'Lỗi: ' + (e.message || e); });
+  if (CHE_DO === 'web' && !PHIEN) hetPhien();
+  else hienBangDieuKhien();
   </script>
 </body>
 </html>
