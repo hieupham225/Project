@@ -108,6 +108,16 @@
   .o-link { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
   code { font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
   .o-link code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: var(--mau-nhat); height: var(--cao); line-height: var(--cao); padding: 0 16px; border-radius: var(--r-tron); font-size: 13px; }
+  .khu-lop-tk { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .dau-lop-tk { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; }
+  .cong-tac { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .lop-chon-tk { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; min-width: 0; }
+  .lop-chon-tk label { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: var(--cao); padding: 6px 12px; border: 1px solid var(--vien-dam); border-radius: var(--r-tron); font-weight: 500; cursor: pointer; }
+  .lop-chon-tk label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .lop-chon-tk input { flex: none; margin: 0; }
+  .lop-chon-tk label:has(input:checked) { border-color: var(--mau); background: var(--nen); }
+  .lop-chon-tk.tat label { opacity: .45; pointer-events: none; }
+  .lop-chon-tk .goi-y { grid-column: 1 / -1; }
   .lop-chon { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 8px 0; }
   .lop-chon label { display: inline-flex; gap: 6px; align-items: center; font-weight: 500; }
   .chip { display: inline-flex; padding: 1px 8px; margin: 1px 4px 1px 0; border-radius: var(--r-tron); background: var(--mau-nhat); color: var(--chu); font-size: 12px; font-weight: 500; }
@@ -697,9 +707,10 @@
           <label class="o">Vai trò<select id="tkVaiTro"><option>Giáo viên</option><option>Quản trị</option></select></label>
           <label class="o">Trạng thái<select id="tkTrangThai"><option>Hoạt động</option><option>Khóa</option></select></label>
         </div>
-        <div style="margin-top:10px"><b>Lớp phụ trách</b>
-          <label style="margin-left:12px;font-weight:500"><input id="tkTatCaLop" type="checkbox"> Tất cả lớp</label>
-          <div id="tkDsLop" class="lop-chon"></div>
+        <div class="khu-lop-tk">
+          <div class="dau-lop-tk"><b>Lớp phụ trách</b>
+            <label class="cong-tac"><input id="tkTatCaLop" type="checkbox"> Tất cả lớp</label></div>
+          <div id="tkDsLop" class="lop-chon-tk"></div>
         </div>
         <div class="chan-hop"><button id="nutHuyTk" class="phu">Hủy</button><button id="nutLuuTk">Lưu</button></div>
       </div></div>
@@ -817,6 +828,9 @@
     clearTimeout(hetHanTB); hetHanTB = setTimeout(function () { tb.classList.add('an'); }, laLoi ? 8000 : 4000);
   }
   function baoLoi(e) { bao((e && e.message ? e.message : String(e)).replace(/^Error: /, ''), true); }
+  function laCamUng() { return matchMedia('(pointer: coarse)').matches; }
+  // các popup nằm trong từng tab -> đưa ra <body> để position: fixed không bị khung cha ảnh hưởng (Safari iOS)
+  ['formHs', 'formNhieu', 'formTk'].forEach(function (id) { document.body.appendChild($(id)); });
   function moHop(tieuDe, noiDung) {
     $('hopTieuDe').textContent = tieuDe;
     var k = $('hopNoiDung'); k.textContent = ''; k.appendChild(noiDung);
@@ -1236,7 +1250,7 @@
     $('formHsTieuDe').textContent = h ? 'Sửa thông tin: ' + h.hoTen + ' (' + h.maHs + ')' : 'Thêm học sinh';
     $('fTen').value = h ? h.hoTen : ''; datLopChon(h ? h.nhom : (lopLoc() ? [lopLoc()] : []));
     $('fNgaySinh').value = h ? h.ngaySinh : ''; $('fSdt').value = h ? h.sdt : ''; $('fGhiChu').value = h ? h.ghiChu : '';
-    $('formNhieu').classList.add('an'); $('formHs').classList.remove('an'); $('fTen').focus();
+    $('formNhieu').classList.add('an'); $('formHs').classList.remove('an'); if (!laCamUng()) $('fTen').focus();
   }
   $('nutThemHs').onclick = function () { moFormHs(null); };
   $('nutHuyHs').onclick = function () { $('formHs').classList.add('an'); };
@@ -1895,7 +1909,7 @@
       dongTatCa,
       the('p', { class: 'goi-y', style: 'margin:0', text: 'Phiếu của lần này cập nhật theo ngay, kể cả phiếu đã công bố. Tiêu đề phiếu đổi theo nếu đang lấy theo tên bài.' }),
       the('div', { class: 'chan-hop' }, [the('button', { class: 'phu', text: 'Hủy', onclick: function () { $('hop').classList.add('an'); } }), nut])]));
-    if (!matchMedia('(pointer: coarse)').matches) setTimeout(function () { oTen.focus(); }, 50); // điện thoại: không bật bàn phím ngay
+    if (!laCamUng()) setTimeout(function () { oTen.focus(); }, 50); // điện thoại: không bật bàn phím ngay
   }
   function doiCongBo(d, congBo, nut) {
     nut.disabled = true;
@@ -2136,11 +2150,14 @@
     var k = $('tkDsLop'); k.textContent = '';
     (DL.tatCaNhom || DL.nhom || []).forEach(function (n) {
       var cb = the('input', { type: 'checkbox', value: n }); cb.checked = chon.indexOf(n) >= 0;
-      k.appendChild(the('label', {}, [cb, n]));
+      k.appendChild(the('label', { title: n }, [cb, the('span', { text: n })]));
     });
-    if (!(DL.tatCaNhom || []).length) k.appendChild(the('span', { class: 'goi-y', text: 'Chưa có lớp nào — tạo lớp ở thẻ Học sinh trước.' }));
-    $('formTk').classList.remove('an'); (tk ? $('tkHoTen') : $('tkTen')).focus();
+    if (!(DL.tatCaNhom || DL.nhom || []).length) k.appendChild(the('span', { class: 'goi-y', text: 'Chưa có lớp nào — tạo lớp ở thẻ Lớp học trước.' }));
+    k.classList.toggle('tat', $('tkTatCaLop').checked);
+    $('formTk').classList.remove('an'); $('formTk').querySelector('.hop').scrollTop = 0;
+    if (!laCamUng()) (tk ? $('tkHoTen') : $('tkTen')).focus(); // điện thoại: không bật bàn phím ngay khi mở
   }
+  $('tkTatCaLop').onchange = function () { $('tkDsLop').classList.toggle('tat', this.checked); };
   $('nutThemTk').onclick = function () { moFormTk(null); };
   $('nutHuyTk').onclick = function () { $('formTk').classList.add('an'); };
   $('nutLuuTk').onclick = function () {
