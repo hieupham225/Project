@@ -62,7 +62,6 @@
   .luoi { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
   table.ds { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--be-mat); }
   table.ds th, table.ds td { padding: 9px 10px; border-bottom: 1px solid var(--vien); text-align: left; vertical-align: middle; }
-  table.ds tbody tr:hover td { background: var(--phu-hover); }
   table.ds th { background: #F4F1EB; font-size: 12px; font-weight: 600; color: var(--phu); position: sticky; top: 49px; z-index: 1; }
   table.ds tr:last-child td { border-bottom: 0; }
   .ma { font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-weight: 600; letter-spacing: .5px; }
@@ -238,7 +237,15 @@
   /* Tab Lớp học */
   .luoi-lop { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
   .the-lop { background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); padding: 18px; box-shadow: var(--bong-thap); display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: box-shadow .125s var(--em), transform .125s var(--em); }
-  .the-lop:hover { box-shadow: var(--bong-cao); transform: translateY(-1px); }
+  .dau-the-lop { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .dau-the-lop button { white-space: nowrap; flex: none; }
+  /* Hiệu ứng rê chuột: chỉ máy tính (thiết bị có chuột, màn hình rộng) — điện thoại không cần */
+  @media (hover: hover) and (min-width: 701px) {
+    .the-lop:hover { box-shadow: var(--bong-cao); transform: translateY(-2px); border-color: var(--vien-dam); }
+    table.ds tbody tr:not(.nhom-dau) td { transition: background-color .125s var(--em); }
+    table.ds tbody tr:not(.nhom-dau):hover td { background: #FBF8F2; }
+    table.ds tbody tr:not(.nhom-dau):hover td:first-child { box-shadow: inset 3px 0 0 var(--mau); }
+  }
   .the-lop h3 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
   .the-lop .so-lieu { display: flex; gap: 16px; }
   .the-lop .so-lieu div { display: flex; flex-direction: column; }
@@ -927,14 +934,12 @@
     loc.forEach(function (n) {
       var hs = hsCuaLop(n), dot = dotCuaLop(n), moi = dot[0];
       var the1 = the('div', { class: 'the-lop', tabindex: 0, role: 'button' }, [
-        the('h3', { text: n }),
+        the('div', { class: 'dau-the-lop' }, [the('h3', { text: n }),
+          the('button', { class: 'phu nho', text: '📤 Gửi kết quả', onclick: function (e) { e.stopPropagation(); guiKqChoLop(n); } })]),
         the('div', { class: 'so-lieu' }, [oSo(hs.length, 'học sinh'), oSo(soBai(dot), 'bài thi'), oSo(dot.length, 'lần thi'), oSo(diemTB(maDot(dot)), 'điểm TB')]),
-        the('div', { class: 'gan-nhat', text: moi ? 'Gần nhất: ' + tenLanThi(moi) + (moi.ngayThi ? ' · ' + moi.ngayThi : '') + (moi.congBo ? '' : ' (chưa công bố)') : 'Chưa có bài thi' }),
-        the('div', { class: 'nut-lop' }, [
-          the('button', { class: 'nho', text: 'Mở lớp' }),
-          the('button', { class: 'phu nho', text: '📤 Gửi kết quả', onclick: function (e) { e.stopPropagation(); guiKqChoLop(n); } })
-        ])
+        the('div', { class: 'gan-nhat', text: moi ? 'Gần nhất: ' + tenLanThi(moi) + (moi.ngayThi ? ' · ' + moi.ngayThi : '') + (moi.congBo ? '' : ' (chưa công bố)') : 'Chưa có bài thi' })
       ]);
+      the1.setAttribute('aria-label', 'Mở lớp ' + n);
       the1.onclick = function () { moLop(n); };
       the1.onkeydown = function (e) { if (e.key === 'Enter') moLop(n); };
       k.appendChild(the1);
