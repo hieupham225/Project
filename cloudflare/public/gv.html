@@ -120,17 +120,18 @@
   a:hover { text-decoration: underline; }
   .kg-chon { max-width: 200px; }
   .logo-xem { max-height: 60px; max-width: 180px; display: block; margin: 6px 0; }
-  /* Đầu trang: tiêu đề bên trái, cụm tìm kiếm / lọc / nút bên phải */
-  .dau-trang { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; margin: 4px 0 18px; }
-  .tieu-de-trang { min-width: 0; }
-  .tieu-de-trang h1 { margin: 0; font-size: 26px; line-height: 1.25; font-weight: 600; letter-spacing: -.015em; }
-  .tieu-de-trang p { margin: 4px 0 0; }
-  .tieu-de-trang p:empty { display: none; }
+  /* Đầu trang: hàng 1 = tiêu đề (trái) + nút tạo mới / tải lên (phải); mô tả; hàng 2 = tìm kiếm + bộ lọc */
+  .dau-trang { margin: 4px 0 18px; }
+  .hang-tieu-de { display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; }
+  .hang-tieu-de h1 { margin: 0; font-size: 26px; line-height: 1.25; font-weight: 600; letter-spacing: -.015em; min-width: 0; }
+  .mo-ta-trang { margin: 4px 0 0; }
+  .mo-ta-trang:empty { display: none; }
   .duong-dan { display: inline-block; font-size: 13px; color: var(--phu); margin-bottom: 4px; }
-  .cum { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+  .cum { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; margin-left: auto; }
   .cum:empty { display: none; }
-  .cum input[type=search] { width: 240px; }
-  .cum select { max-width: 220px; }
+  .hang-loc { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
+  .hang-loc input[type=search] { flex: 0 1 340px; min-width: 0; }
+  .hang-loc select { flex: 0 1 240px; min-width: 0; }
   /* Hộp thoại form */
   body.co-hop { overflow: hidden; }
   .hop-form { width: min(600px, 94vw); }
@@ -235,12 +236,12 @@
     /* Bảng tổng hợp nhiều cột: cuộn ngang trong khung */
     table.ds.th { font-size: 13px; }
     table.ds.th th, table.ds.th td { padding: 7px 8px; white-space: nowrap; }
-    /* Đầu trang: tiêu đề trên, cụm chức năng dưới, ô tìm kiếm chiếm cả dòng */
-    .dau-trang { flex-direction: column; align-items: stretch; margin-bottom: 14px; }
-    .tieu-de-trang h1 { font-size: 22px; }
-    .cum { justify-content: flex-start; }
-    .cum input[type=search] { flex: 1 1 100%; width: 100%; }
-    .cum select { flex: 1 1 auto; max-width: none; }
+    /* Đầu trang: tiêu đề và nút cùng hàng (nút rút gọn chữ); tìm kiếm + lọc cùng hàng bên dưới */
+    .hang-tieu-de h1 { font-size: 22px; }
+    .chu-dai { display: none; }
+    .hang-loc { margin-top: 12px; }
+    .hang-loc input[type=search] { flex: 1 1 auto; }
+    .hang-loc select { flex: 0 1 44%; }
     /* Sheet: trượt từ dưới lên, có thanh kéo */
     .hop-form, .hop-hoi { width: 100vw !important; max-width: 100vw; }
     .phu-trang:not(.an) .hop { animation: sheet-vao .25s var(--em); }
@@ -308,25 +309,30 @@
     <section id="tabLop" class="an">
       <div id="lopDs">
         <div class="dau-trang">
-        <div class="tieu-de-trang"><h1>Lớp học</h1><p class="goi-y" id="demLop"></p></div>
-        <div class="cum">
-          <input id="timLop" type="search" placeholder="Tìm lớp…">
-          <button id="nutTaoLopMoi">+ Lớp mới</button>
+          <div class="hang-tieu-de">
+            <h1>Lớp học</h1>
+            <div class="cum">
+              <button id="nutTaoLopMoi">+ Lớp mới</button>
+            </div>
+          </div>
+          <p class="goi-y mo-ta-trang" id="demLop"></p>
+          <div class="hang-loc">
+            <input id="timLop" type="search" placeholder="Tìm lớp…">
+          </div>
         </div>
-      </div>
         <div id="luoiLop" class="luoi-lop"></div>
       </div>
 
       <div id="lopCt" class="an">
         <div class="dau-trang">
-          <div class="tieu-de-trang">
-            <a id="nutVeDsLop" class="duong-dan" href="#lop">← Lớp học</a>
+          <a id="nutVeDsLop" class="duong-dan" href="#lop">← Lớp học</a>
+          <div class="hang-tieu-de">
             <h1 id="ctTenLop"></h1>
-          </div>
-          <div class="cum">
-            <button id="nutDoiTenLop" class="phu">Đổi tên</button>
-            <button id="nutXoaLop" class="nguy">Xóa lớp</button>
-            <button id="nutGuiKqLop">📤 Gửi kết quả thi</button>
+            <div class="cum">
+              <button id="nutDoiTenLop" class="phu">Đổi tên</button>
+              <button id="nutXoaLop" class="nguy">Xóa</button>
+              <button id="nutGuiKqLop">📤 Gửi kết quả</button>
+            </div>
           </div>
         </div>
         <div class="the dau-lop">
@@ -362,12 +368,17 @@
     <!-- ============ HỌC SINH ============ -->
     <section id="tabHs" class="an">
       <div class="dau-trang">
-        <div class="tieu-de-trang"><h1>Học sinh</h1><p class="goi-y" id="demHs"></p></div>
-        <div class="cum">
+        <div class="hang-tieu-de">
+          <h1>Học sinh</h1>
+          <div class="cum">
+            <button id="nutThemNhieu" class="phu">Nhập Excel</button>
+            <button id="nutThemHs"><span>+ Thêm<span class="chu-dai"> học sinh</span></span></button>
+          </div>
+        </div>
+        <p class="goi-y mo-ta-trang" id="demHs"></p>
+        <div class="hang-loc">
           <input id="timHs" type="search" placeholder="Tìm theo tên, mã HS, SĐT…">
           <select id="locLop"></select>
-          <button id="nutThemNhieu" class="phu">Nhập Excel</button>
-          <button id="nutThemHs">+ Thêm học sinh</button>
         </div>
       </div>
 
@@ -416,11 +427,14 @@
     <!-- ============ GỬI KẾT QUẢ (theo lớp) ============ -->
     <section id="tabGui" class="an">
       <div class="dau-trang">
-        <div class="tieu-de-trang"><h1>Gửi kết quả thi</h1><p class="goi-y">Tải lên bảng kết quả (có cột <b>Lớp</b>) và bảng đáp án. Hệ thống tự đưa từng dòng vào đúng lớp, đúng học sinh — một file có thể gồm nhiều lớp.</p></div>
-        <div class="cum">
-          <button id="nutTaiMauLop" class="phu">⬇ Mẫu bảng kết quả</button>
-          <button id="nutTaiMauDapAn" class="phu">⬇ Mẫu đáp án</button>
+        <div class="hang-tieu-de">
+          <h1>Gửi kết quả<span class="chu-dai"> thi</span></h1>
+          <div class="cum">
+            <button id="nutTaiMauLop" class="phu"><span>⬇ Mẫu<span class="chu-dai"> bảng</span> kết quả</span></button>
+            <button id="nutTaiMauDapAn" class="phu">⬇ Mẫu đáp án</button>
+          </div>
         </div>
+        <p class="goi-y mo-ta-trang">Tải lên bảng kết quả (có cột <b>Lớp</b>) và bảng đáp án. Hệ thống tự đưa từng dòng vào đúng lớp, đúng học sinh — một file có thể gồm nhiều lớp.</p>
       </div>
 
       <div id="khuChonFile" class="the">
@@ -493,8 +507,11 @@
     <!-- ============ CÁC ĐỢT THI ============ -->
     <section id="tabDot" class="an">
       <div class="dau-trang">
-        <div class="tieu-de-trang"><h1>Bài thi</h1><p class="goi-y">Phụ huynh chỉ xem được các lần thi đã <b>Công bố</b>. Xóa một lần thi sẽ xóa toàn bộ phiếu của lần đó.</p></div>
-        <div class="cum">
+        <div class="hang-tieu-de">
+          <h1>Bài thi</h1>
+        </div>
+        <p class="goi-y mo-ta-trang">Phụ huynh chỉ xem được các lần thi đã <b>Công bố</b>. Xóa một lần thi sẽ xóa toàn bộ phiếu của lần đó.</p>
+        <div class="hang-loc">
           <select id="locNhomDot"></select>
         </div>
       </div>
@@ -506,10 +523,15 @@
 
     <section id="tabTongHop" class="an">
       <div class="dau-trang">
-        <div class="tieu-de-trang"><h1>Tổng hợp</h1><p class="goi-y" id="moTaTH"></p></div>
-        <div class="cum">
+        <div class="hang-tieu-de">
+          <h1>Tổng hợp</h1>
+          <div class="cum">
+            <button id="nutSaoChepTH" class="phu" title="Sao chép bảng để dán vào Excel">Sao chép bảng</button>
+          </div>
+        </div>
+        <p class="goi-y mo-ta-trang" id="moTaTH"></p>
+        <div class="hang-loc">
           <select id="locNhomTH"></select>
-          <button id="nutSaoChepTH" class="phu">Sao chép bảng (dán vào Excel)</button>
         </div>
       </div>
       <div style="overflow:auto"><table class="ds th" id="bangTH"></table></div>
@@ -519,10 +541,13 @@
     <!-- ============ TÀI KHOẢN GIÁO VIÊN (chỉ quản trị) ============ -->
     <section id="tabTaiKhoan" class="an">
       <div class="dau-trang">
-        <div class="tieu-de-trang"><h1>Giáo viên</h1><p class="goi-y">Mời giáo viên khác và giao lớp phụ trách. Chủ không gian luôn có toàn quyền.</p></div>
-        <div class="cum">
-          <button id="nutThemTk">+ Thêm giáo viên</button>
+        <div class="hang-tieu-de">
+          <h1>Giáo viên</h1>
+          <div class="cum">
+            <button id="nutThemTk"><span>+ Thêm<span class="chu-dai"> giáo viên</span></span></button>
+          </div>
         </div>
+        <p class="goi-y mo-ta-trang">Mời giáo viên khác và giao lớp phụ trách. Chủ không gian luôn có toàn quyền.</p>
       </div>
       <div class="the">
         <h2>Cách mời giáo viên</h2>
@@ -553,10 +578,13 @@
     <!-- ============ CÀI ĐẶT ============ -->
     <section id="tabCaiDat" class="an">
       <div class="dau-trang">
-        <div class="tieu-de-trang"><h1>Cài đặt</h1><p class="goi-y">Thông tin in trên phiếu và link gửi cho phụ huynh, giáo viên.</p></div>
-        <div class="cum">
-          <button id="nutLuuCaiDat">Lưu cài đặt</button>
+        <div class="hang-tieu-de">
+          <h1>Cài đặt</h1>
+          <div class="cum">
+            <button id="nutLuuCaiDat"><span>Lưu<span class="chu-dai"> cài đặt</span></span></button>
+          </div>
         </div>
+        <p class="goi-y mo-ta-trang">Thông tin in trên phiếu và link gửi cho phụ huynh, giáo viên.</p>
       </div>
       <div class="the">
         <h2>Link sử dụng</h2>
