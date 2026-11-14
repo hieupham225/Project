@@ -440,7 +440,7 @@ class NguCanh {
     if (this.bo.lt) return this.bo.lt;
     this.bo.lt = (await this.db.prepare('SELECT rowid AS stt_tao, * FROM lan_thi WHERE kg = ?').bind(this.kg).all()).results.map((r) => ({
       sttTao: r.stt_tao, // thứ tự ghi (tăng dần theo thời gian tạo) — để sắp xếp mới nhất trước
-      maDot: r.id, lopId: r.lop, nhom: (this.lopTheoId(r.lop) || {}).ten || '', baiThi: r.bai_thi, lan: r.lan, ngayThi: r.ngay_thi,
+      maDot: r.id, lopId: r.lop, nhom: (this.lopTheoId(r.lop) || {}).ten || '', baiThi: r.bai_thi, lan: r.lan, ngayThi: r.ngay_thi, moTa: r.mo_ta || '',
       thuTu: r.thu_tu, congBo: !!r.cong_bo, ngayTao: r.ngay_tao
     }));
     return this.bo.lt;
@@ -785,8 +785,8 @@ const HAM = {
         } else { moi.push({ hoTen: h.hoTen, nhomId: [idLop], sdt: h.sdt, maHs: h.maHs }); chiSoMoi.push({ i, maTheoDong }); }
       });
       const maDot = taoId();
-      lenhCuoi.push(c.db.prepare('INSERT INTO lan_thi (id, kg, lop, bai_thi, lan, ngay_thi, thu_tu, cong_bo, ngay_tao) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)')
-        .bind(maDot, c.kg, idLop, baiThi, lan, ngayThi, L.soThuTuNgay_(ngayThi), homNay));
+      lenhCuoi.push(c.db.prepare('INSERT INTO lan_thi (id, kg, lop, bai_thi, lan, ngay_thi, mo_ta, thu_tu, cong_bo, ngay_tao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)')
+        .bind(maDot, c.kg, idLop, baiThi, lan, ngayThi, L.chuoi_(kq.thongTin.moTa), L.soThuTuNgay_(ngayThi), homNay));
       keHoach.push({ maDot, nhom: nh.nhom, lopMoi: nh.lopMoi, baiThi, lan, dongTao, maTheoDong, vang: nh.vang.map((x) => x.hoTen + ' (' + x.maHs + ')') });
     }
     if (!keHoach.length) return { ok: false, loi: 'Không có dòng nào để tạo phiếu (tất cả đều bỏ qua hoặc lỗi).' };
@@ -851,30 +851,62 @@ const HAM = {
     return HAM.gvTaiDuLieu(c);
   },
 
-  /** Đổi tên bài thi: mọi lần của bài đó trong lớp; tiêu đề phiếu đang lấy theo tên bài cũng đổi theo. */
-  async gvDoiTenBaiThi(c, maDot, tenMoi) {
-    const d = (await c.lanThi()).find((x) => x.maDot === maDot);
+  /**
+   * Sửa bài thi: tiêu đề (mọi lần của bài trong lớp; tiêu đề phiếu đang lấy theo tên bài đổi theo),
+   * mô tả + ngày thi (chỉ lần này; cập nhật phiếu của lần này và bảng "các lần làm" trên phiếu các lần sau).
+   */
+  async gvSuaBaiThi(c, maDot, tt) {
+    tt = tt || {};
+    const lt = await c.lanThi();
+    const d = lt.find((x) => x.maDot === maDot);
     if (!d) throw new Loi('Không tìm thấy lần thi.');
     if (!c.duocLopId(d.lopId)) throw new Loi('Bạn không phụ trách lớp "' + d.nhom + '".', 403);
-    tenMoi = L.chuoi_(tenMoi).replace(/\s+/g, ' ');
-    if (!tenMoi) throw new Loi('Vui lòng nhập tên bài thi.');
-    if (tenMoi.length > 200) throw new Loi('Tên bài thi quá dài.');
-    const cungLop = (await c.lanThi()).filter((x) => x.lopId === d.lopId);
+    const tenMoi = L.chuoi_(tt.baiThi === undefined ? d.baiThi : tt.baiThi).replace(/\s+/g, ' ');
+    if (!tenMoi) throw new Loi('Vui lòng nhập tiêu đề bài thi.');
+    if (tenMoi.length > 200) throw new Loi('Tiêu đề quá dài.');
+    const moTa = L.chuoi_(tt.moTa === undefined ? d.moTa : tt.moTa).replace(/\s+/g, ' ');
+    if (moTa.length > 300) throw new Loi('Mô tả quá dài.');
+    const ngayThi = tt.ngayThi === undefined ? d.ngayThi : L.chuanHoaNgay_(tt.ngayThi);
+    const ngayHopLe = (s) => { const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s); if (!m) return false; const dt = new Date(+m[3], +m[2] - 1, +m[1]); return dt.getDate() === +m[1] && dt.getMonth() === +m[2] - 1; };
+    if (tt.ngayThi !== undefined && L.chuoi_(tt.ngayThi) && !(ngayThi && ngayHopLe(ngayThi))) throw new Loi('Ngày thi không hợp lệ.');
+    const cungLop = lt.filter((x) => x.lopId === d.lopId);
     const cacLan = cungLop.filter((x) => L.khongDau_(x.baiThi) === L.khongDau_(d.baiThi));
-    const trung = cungLop.find((x) => L.khongDau_(x.baiThi) === L.khongDau_(tenMoi) && L.khongDau_(x.baiThi) !== L.khongDau_(d.baiThi));
-    if (trung) throw new Loi('Lớp "' + d.nhom + '" đã có bài thi "' + trung.baiThi + '". Đặt tên khác để không gộp nhầm 2 bài.');
-    const ids = cacLan.map((x) => x.maDot), ph = ids.map(() => '?').join(',');
-    const tieuDeCu = [...new Set(cacLan.map((x) => x.baiThi.toUpperCase()))];
-    await c.db.batch([
-      c.db.prepare(`UPDATE lan_thi SET bai_thi = ? WHERE kg = ? AND id IN (${ph})`).bind(tenMoi, c.kg, ...ids),
+    const lenh = [];
+    if (tenMoi !== d.baiThi) {
+      const trung = cungLop.find((x) => L.khongDau_(x.baiThi) === L.khongDau_(tenMoi) && L.khongDau_(x.baiThi) !== L.khongDau_(d.baiThi));
+      if (trung) throw new Loi('Lớp "' + d.nhom + '" đã có bài thi "' + trung.baiThi + '". Đặt tên khác để không gộp nhầm 2 bài.');
+      const ids = cacLan.map((x) => x.maDot), ph = ids.map(() => '?').join(',');
+      const tieuDeCu = [...new Set(cacLan.map((x) => x.baiThi.toUpperCase()))];
+      lenh.push(c.db.prepare(`UPDATE lan_thi SET bai_thi = ? WHERE kg = ? AND id IN (${ph})`).bind(tenMoi, c.kg, ...ids));
       // phiếu có tiêu đề = tên bài cũ (viết hoa, mặc định khi file không ghi tiêu đề) -> đổi theo
-      c.db.prepare(`UPDATE phieu SET du_lieu = json_set(du_lieu, '$.tieuDe', ?) WHERE kg = ? AND lan_thi IN (${ph})
-        AND json_extract(du_lieu, '$.tieuDe') IN (${tieuDeCu.map(() => '?').join(',')})`).bind(tenMoi.toUpperCase(), c.kg, ...ids, ...tieuDeCu)
-    ]);
+      lenh.push(c.db.prepare(`UPDATE phieu SET du_lieu = json_set(du_lieu, '$.tieuDe', ?) WHERE kg = ? AND lan_thi IN (${ph})
+        AND json_extract(du_lieu, '$.tieuDe') IN (${tieuDeCu.map(() => '?').join(',')})`).bind(tenMoi.toUpperCase(), c.kg, ...ids, ...tieuDeCu));
+    }
+    if (moTa !== d.moTa || ngayThi !== d.ngayThi) {
+      lenh.push(c.db.prepare('UPDATE lan_thi SET mo_ta = ?, ngay_thi = ?, thu_tu = ? WHERE id = ? AND kg = ?').bind(moTa, ngayThi, L.soThuTuNgay_(ngayThi), d.maDot, c.kg));
+      lenh.push(c.db.prepare("UPDATE phieu SET du_lieu = json_set(du_lieu, '$.moTa', ?, '$.ngayThi', ?) WHERE lan_thi = ? AND kg = ?").bind(moTa, ngayThi, d.maDot, c.kg));
+      if (ngayThi !== d.ngayThi) { // ngày của lần này trong bảng "Kết quả các lần làm" trên phiếu các lần sau
+        const sau = cacLan.filter((x) => x.lan > d.lan).map((x) => x.maDot);
+        if (sau.length) {
+          const ds = (await c.db.prepare(`SELECT id, du_lieu FROM phieu WHERE kg = ? AND lan_thi IN (${sau.map(() => '?').join(',')})`).bind(c.kg, ...sau).all()).results;
+          ds.forEach((p) => {
+            const j = JSON.parse(p.du_lieu); let doi = false;
+            (j.lichSu || []).forEach((x) => { if (x.lan === d.lan) { x.ngayThi = ngayThi; doi = true; } });
+            if (doi) lenh.push(c.db.prepare('UPDATE phieu SET du_lieu = ? WHERE id = ?').bind(JSON.stringify(j), p.id));
+          });
+        }
+      }
+    }
+    if (lenh.length) await c.db.batch(lenh);
     c.xoaBoNho();
     const kq = await HAM.gvTaiDuLieu(c);
-    kq.thongBao = 'Đã đổi tên "' + d.baiThi + '" thành "' + tenMoi + '"' + (cacLan.length > 1 ? ' (' + cacLan.length + ' lần thi)' : '') + '.';
+    kq.thongBao = lenh.length ? 'Đã lưu thay đổi cho ' + tenMoi + ' – Lần ' + d.lan + ' · lớp ' + d.nhom + '.' : 'Không có gì thay đổi.';
     return kq;
+  },
+
+  /** Giữ tương thích: chỉ đổi tiêu đề. */
+  async gvDoiTenBaiThi(c, maDot, tenMoi) {
+    return HAM.gvSuaBaiThi(c, maDot, { baiThi: tenMoi });
   },
 
   async gvXoaDot(c, maDot) {

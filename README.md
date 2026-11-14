@@ -72,7 +72,7 @@ Thử với bảng điểm thật của 117 học sinh: điểm tự tính khớ
    3. Kiểm tra bảng ghép: tóm tắt theo từng lớp, mỗi dòng có lớp và học sinh được ghép. Dòng "cần chọn" (chưa rõ lớp, gõ sai tên, Mã HS lạ, tên không khớp Mã HS) thì chọn lớp / đúng em.
    4. Đặt tên bài thi và bấm **Tạo phiếu**: mỗi lớp trong file được 1 lần thi. Lớp đã làm bài này thì thành **Lần 2, Lần 3…** (tính riêng từng lớp).
    5. Popup báo thành công: bấm **Xem phiếu** để kiểm tra, rồi **📢 Công bố**; **Xong** để về danh sách Bài thi.
-5. **Bài thi**: danh sách các lần thi theo lớp; Xem phiếu, Công bố / Ngừng công bố, Đổi tên bài (mọi lần của bài trong lớp), xóa từng lần. **Tổng hợp**: bảng điểm cả lớp qua các bài và các lần, kèm trung bình và tiến bộ.
+5. **Bài thi**: danh sách các lần thi theo lớp; Xem phiếu, Công bố / Ngừng công bố, Sửa tiêu đề (mọi lần của bài trong lớp), mô tả và ngày thi, xóa từng lần. **Tổng hợp**: bảng điểm cả lớp qua các bài và các lần, kèm trung bình và tiến bộ.
 6. **Giáo viên** (chủ / quản trị): mời giáo viên khác bằng email và giao lớp phụ trách.
 7. **Cài đặt**: tên trung tâm, khẩu hiệu, logo in trên phiếu.
 
@@ -105,6 +105,8 @@ npx wrangler login                                   # mở trình duyệt để
 npx wrangler d1 create phieu-ket-qua                 # chép "database_id" in ra vào wrangler.toml
 npx wrangler d1 execute phieu-ket-qua --remote --file=schema.sql
 npx wrangler deploy                                  # in ra link dạng https://phieu-ket-qua.<tên>.workers.dev
+# Cơ sở dữ liệu tạo từ bản cũ (trước khi có "Mô tả" của lần thi): chạy 1 lần
+# npx wrangler d1 execute phieu-ket-qua --remote --file=migrations_0002_mo_ta.sql
 ```
 
 Có thể gắn tên miền riêng trong Cloudflare: **Workers → phieu-ket-qua → Settings → Domains & Routes**.

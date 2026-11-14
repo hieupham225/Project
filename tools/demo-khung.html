@@ -92,6 +92,8 @@ window.__worker = index_default;
   function taoD1(duLieu) {
     var db = duLieu ? new SQL.Database(duLieu) : new SQL.Database();
     db.run('PRAGMA foreign_keys = ON');
+    // Dữ liệu lưu từ bản cũ: thêm cột mới nếu thiếu
+    try { var cot = db.exec("PRAGMA table_info(lan_thi)"); if (cot.length && !cot[0].values.some(function (r) { return r[1] === 'mo_ta'; })) db.run("ALTER TABLE lan_thi ADD COLUMN mo_ta TEXT NOT NULL DEFAULT ''"); } catch (e) { /* bảng chưa có -> tạo từ schema sau */ }
     var doi = function (v) { return v === undefined ? null : typeof v === 'boolean' ? (v ? 1 : 0) : v; };
     function chay(sql, ts) {
       var st = db.prepare(sql);

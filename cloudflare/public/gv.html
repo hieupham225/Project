@@ -234,6 +234,8 @@
   /* tên học sinh bên trái, huy hiệu hạng ở cuối hàng (mép phải) */
   .ten-hang { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: 1 1 0; min-width: 0; }
   .ten-hang .huy-hieu { flex: none; }
+  .form-sua-bai { display: flex; flex-direction: column; gap: 14px; width: min(520px, 100%); }
+  .form-sua-bai input { width: 100%; }
   .huy-hieu.h1 { background: linear-gradient(135deg, #FFE27A, #F2B705); color: #5C3D00; box-shadow: inset 0 0 0 1px rgba(150,100,0,.25); }
   .huy-hieu.h2 { background: linear-gradient(135deg, #F1F3F5, #C3CAD2); color: #39434D; box-shadow: inset 0 0 0 1px rgba(60,70,80,.2); }
   .huy-hieu.h3 { background: linear-gradient(135deg, #F6C9A0, #CD8A4F); color: #5A2E0B; box-shadow: inset 0 0 0 1px rgba(110,60,20,.25); }
@@ -645,7 +647,7 @@
         </div>
       </div>
       <table class="ds">
-        <thead><tr><th>Bài thi</th><th>Lần</th><th>Ngày thi</th><th>Số phiếu</th><th>Công bố</th><th></th></tr></thead>
+        <thead><tr><th>Bài thi</th><th>Mô tả</th><th>Lần</th><th>Ngày thi</th><th>Số phiếu</th><th>Công bố</th><th></th></tr></thead>
         <tbody id="bangDot"></tbody>
       </table>
     </section>
@@ -1801,11 +1803,11 @@
       return a.nhom.localeCompare(b.nhom, 'vi', { numeric: true }) || (b.sttTao || 0) - (a.sttTao || 0) || b.lan - a.lan;
     });
     var tb = $('bangDot'); tb.textContent = '';
-    if (!ds.length) tb.appendChild(the('tr', {}, [the('td', { colspan: 6, class: 'goi-y', text: 'Chưa có bài thi nào. Bấm "📤 Gửi kết quả thi" để tải lên bảng kết quả và tạo phiếu.' })]));
+    if (!ds.length) tb.appendChild(the('tr', {}, [the('td', { colspan: 7, class: 'goi-y', text: 'Chưa có bài thi nào. Bấm "📤 Gửi kết quả thi" để tải lên bảng kết quả và tạo phiếu.' })]));
     var nhomTruoc = null, baiTruoc = null;
     ds.forEach(function (d) {
       if (d.nhom !== nhomTruoc) {
-        tb.appendChild(the('tr', { class: 'nhom-dau' }, [the('td', { colspan: 6, text: '👥 Lớp: ' + (d.nhom || '(chưa đặt)') })]));
+        tb.appendChild(the('tr', { class: 'nhom-dau' }, [the('td', { colspan: 7, text: '👥 Lớp: ' + (d.nhom || '(chưa đặt)') })]));
         nhomTruoc = d.nhom; baiTruoc = null;
       }
       var nutCongBo = d.congBo
@@ -1819,10 +1821,11 @@
         the('td', {}, [the('div', { class: 'o-bai-thi' }, [
           the('div', { class: 'ten-bai' }, [the('span', { class: 'nhan-phu', text: 'Bài thi' }), the('b', { text: d.baiThi, class: d.baiThi !== baiTruoc ? '' : 'lap-lai' })]),
           d.soPhieu ? the('button', { class: 'phu nho', text: 'Xem phiếu', onclick: function () { hopDsPhieu(d); } }) : null])]),
+        the('td', { class: d.moTa ? '' : 'goi-y', text: d.moTa || '—' }),
         the('td', { text: 'Lần ' + d.lan }), the('td', { text: d.ngayThi }), the('td', { text: d.soPhieu }),
         the('td', {}, [the('span', { class: 'nhan ' + (d.congBo ? 'co' : 'moi'), text: d.congBo ? 'Đã công bố' : 'Chưa công bố' })]),
         the('td', {}, [the('div', { class: 'cum-thao-tac' }, [nutCongBo, the('span', { class: 'gian' }),
-          the('button', { class: 'phu nho', text: 'Đổi tên', onclick: function () { doiTenBaiThi(d); } }),
+          the('button', { class: 'phu nho', text: 'Sửa', onclick: function () { suaBaiThi(d); } }),
           the('button', { class: 'nguy nho', text: 'Xóa lần này', onclick: function () {
             hoi('Xóa ' + tenLanThi(d) + ' (lớp ' + d.nhom + ') và ' + d.soPhieu + ' phiếu?', { nut: 'Xóa', nguyHiem: true }).then(function (ok) { if (!ok) return;
             goi('gvXoaDot', d.maDot).then(function (dl) { capNhat(dl); bao('Đã xóa.'); }).catch(baoLoi); });
@@ -1858,14 +1861,26 @@
     }).catch(baoLoi);
   }
 
-  function doiTenBaiThi(d) {
+  // Sửa bài thi: tiêu đề (mọi lần của bài trong lớp) + mô tả, ngày thi (lần này)
+  function suaBaiThi(d) {
     var soLan = DL.dot.filter(function (x) { return x.nhom === d.nhom && khoaTen(x.baiThi) === khoaTen(d.baiThi); }).length;
-    hoi(soLan > 1 ? 'Áp dụng cho cả ' + soLan + ' lần của bài này trong lớp ' + d.nhom + '. Tiêu đề trên phiếu (nếu đang lấy theo tên bài) cũng đổi theo.'
-                  : 'Tiêu đề trên phiếu (nếu đang lấy theo tên bài) cũng đổi theo.',
-      { tieuDe: 'Đổi tên bài thi', nhan: 'Tên mới', nhap: d.baiThi, nut: 'Lưu' }).then(function (moi) {
-      if (!moi || !moi.trim() || moi.trim() === d.baiThi) return;
-      goi('gvDoiTenBaiThi', d.maDot, moi.trim()).then(capNhat).catch(baoLoi);
-    });
+    var oTen = the('input', { type: 'text', maxlength: 200 }); oTen.value = d.baiThi;
+    var oMoTa = the('input', { type: 'text', maxlength: 300, placeholder: 'VD: Bài thi cuối khóa 1 – Lớp 11' }); oMoTa.value = d.moTa || '';
+    var oNgay = the('input', { type: 'date' });
+    var m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(d.ngayThi || ''); oNgay.value = m ? m[3] + '-' + m[2] + '-' + m[1] : '';
+    var nut = the('button', { text: 'Lưu', onclick: function () {
+      if (!oTen.value.trim()) { oTen.focus(); return bao('Vui lòng nhập tiêu đề bài thi.', true); }
+      nut.disabled = true;
+      goi('gvSuaBaiThi', d.maDot, { baiThi: oTen.value.trim(), moTa: oMoTa.value.trim(), ngayThi: oNgay.value })
+        .then(function (dl) { $('hop').classList.add('an'); capNhat(dl); }).catch(function (e) { nut.disabled = false; baoLoi(e); });
+    } });
+    moHop('Sửa bài thi · ' + d.nhom + ' – Lần ' + d.lan, the('div', { class: 'form-sua-bai' }, [
+      the('label', { class: 'o' }, [the('span', {}, ['Tiêu đề ', the('span', { class: 'goi-y', text: soLan > 1 ? '(áp dụng cho cả ' + soLan + ' lần của bài này trong lớp)' : '' })]), oTen]),
+      the('label', { class: 'o' }, [the('span', {}, ['Mô tả ', the('span', { class: 'goi-y', text: '(dòng dưới tiêu đề trên phiếu)' })]), oMoTa]),
+      the('label', { class: 'o' }, ['Ngày thi', oNgay]),
+      the('p', { class: 'goi-y', style: 'margin:0', text: 'Phiếu của lần này cập nhật theo ngay, kể cả phiếu đã công bố. Tiêu đề phiếu đổi theo nếu đang lấy theo tên bài.' }),
+      the('div', { class: 'chan-hop' }, [the('button', { class: 'phu', text: 'Hủy', onclick: function () { $('hop').classList.add('an'); } }), nut])]));
+    setTimeout(function () { oTen.focus(); }, 50);
   }
   function doiCongBo(d, congBo, nut) {
     nut.disabled = true;

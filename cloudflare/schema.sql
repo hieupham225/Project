@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS lan_thi (
   bai_thi    TEXT NOT NULL,
   lan        INTEGER NOT NULL,
   ngay_thi   TEXT NOT NULL DEFAULT '',      -- dd/MM/yyyy
+  mo_ta      TEXT NOT NULL DEFAULT '',      -- dòng mô tả dưới tiêu đề phiếu
   thu_tu     INTEGER NOT NULL DEFAULT 0,    -- yyyyMMdd để sắp xếp
   cong_bo    INTEGER NOT NULL DEFAULT 0,
   ngay_tao   TEXT NOT NULL

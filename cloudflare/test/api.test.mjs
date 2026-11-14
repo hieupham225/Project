@@ -164,7 +164,16 @@ test('đổi tên bài thi: mọi lần trong lớp, tiêu đề phiếu mặc �
   assert.deepEqual(ds.map((d) => d.lan), [1, 2, 1]);
   await assert.rejects(A.rpc('gvDoiTenBaiThi', ds[0].maDot, 'ôn tập chương 2'), /đã có bài thi/);
   const dl = await A.rpc('gvDoiTenBaiThi', ds[1].maDot, 'Kiểm tra chương 1');
-  assert.match(dl.thongBao, /2 lần thi/);
+  assert.match(dl.thongBao, /Đã lưu/);
+  // sửa mô tả + ngày thi của Lần 1 -> phiếu Lần 1 đổi; bảng 'các lần làm' trên phiếu Lần 2 đổi ngày Lần 1
+  const dl2 = await A.rpc('gvSuaBaiThi', ds[0].maDot, { baiThi: 'Kiểm tra chương 1', moTa: 'Đề chung khối 11', ngayThi: '2026-10-05' });
+  const l1 = dl2.dot.find((d) => d.maDot === ds[0].maDot);
+  assert.equal(l1.moTa, 'Đề chung khối 11'); assert.equal(l1.ngayThi, '05/10/2026');
+  const p1 = (await A.rpc('gvXemPhieu', (await A.rpc('gvDsPhieuLan', ds[0].maDot))[0].maPhieu)).d;
+  assert.equal(p1.moTa, 'Đề chung khối 11'); assert.equal(p1.ngayThi, '05/10/2026');
+  const p2 = (await A.rpc('gvXemPhieu', (await A.rpc('gvDsPhieuLan', ds[1].maDot))[0].maPhieu)).d;
+  assert.equal(p2.lichSu[0].ngayThi, '05/10/2026');
+  await assert.rejects(A.rpc('gvSuaBaiThi', ds[0].maDot, { ngayThi: '35/13/2026' }), /không hợp lệ/);
   assert.deepEqual(dl.dot.filter((d) => d.nhom === 'Toán 1' && /chương 1/i.test(d.baiThi)).map((d) => [d.baiThi, d.lan]).sort(), [['Kiểm tra chương 1', 1], ['Kiểm tra chương 1', 2]]);
   const p = (await A.rpc('gvDsPhieuLan', ds[0].maDot))[0];
   assert.equal((await A.rpc('gvXemPhieu', p.maPhieu)).d.tieuDe, 'KIỂM TRA CHƯƠNG 1');
