@@ -62,7 +62,8 @@ Thử với bảng điểm thật của 117 học sinh: điểm tự tính khớ
 1. Mở `/gv` → **Đăng ký miễn phí**: nhập họ tên, tên hiển thị trên phiếu (trung tâm / lớp học), email và mật khẩu.
 2. **Lớp học** → **+ Lớp mới** → mở lớp → **+ Học sinh mới / nhập Excel**: dán danh sách họ tên. Mỗi em được cấp **Mã HS** và **mã tra cứu**.
    Trong trang lớp: xem sĩ số và các bài thi của lớp, **+ Thêm học sinh đã có** (em học thêm lớp/môn khác, vẫn 1 mã tra cứu), bỏ em khỏi lớp, đổi tên hoặc xóa lớp.
-   Tab **Học sinh** quản lý thông tin từng em (sửa, cấp lại mã, xóa) trên toàn bộ các lớp.
+   Tab **Học sinh** quản lý thông tin từng em (sửa, cấp lại mã, xóa) trên toàn bộ các lớp. Học sinh **không bắt buộc** thuộc lớp nào (lọc "Chưa có lớp").
+   Xóa lớp không xóa học sinh hay mã tra cứu; chỉ xóa các lần thi và phiếu điểm **của lớp đó**.
 3. **Tin nhắn gửi mã (cả lớp)**: sao chép và nhắn **riêng** cho từng phụ huynh. Mỗi phụ huynh chỉ cần nhận mã một lần.
 4. **Gửi kết quả thi**:
    1. Chọn lớp, rồi tải các file mẫu.

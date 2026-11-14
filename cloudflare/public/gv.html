@@ -118,6 +118,30 @@
   a:hover { text-decoration: underline; }
   .kg-chon { max-width: 200px; }
   .logo-xem { max-height: 60px; max-width: 180px; display: block; margin: 6px 0; }
+  /* Đầu trang: tiêu đề bên trái, cụm tìm kiếm / lọc / nút bên phải */
+  .dau-trang { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; margin: 4px 0 18px; }
+  .tieu-de-trang { min-width: 0; }
+  .tieu-de-trang h1 { margin: 0; font-size: 26px; line-height: 1.25; font-weight: 600; letter-spacing: -.015em; }
+  .tieu-de-trang p { margin: 4px 0 0; }
+  .tieu-de-trang p:empty { display: none; }
+  .duong-dan { display: inline-block; font-size: 13px; color: var(--phu); margin-bottom: 4px; }
+  .cum { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+  .cum:empty { display: none; }
+  .cum input[type=search] { width: 240px; }
+  .cum select { max-width: 220px; }
+  /* Hộp thoại form */
+  body.co-hop { overflow: hidden; }
+  .hop-form { width: min(600px, 94vw); }
+  .hop-hoi { width: min(460px, 94vw); }
+  .dau-hop { display: flex; align-items: center; gap: 12px; margin: -2px 0 14px; }
+  .dau-hop h2 { flex: 1; margin: 0; font-size: 18px; }
+  .dong-x { width: 32px; height: 32px; min-height: 32px; padding: 0; flex: none; font-size: 14px; }
+  .chan-hop { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+  .hop-form .luoi { grid-template-columns: 1fr 1fr; }
+  .hop-form .luoi label:first-child, .hop-form .luoi label:nth-child(2) { grid-column: 1 / -1; }
+  .phu-trang:not(.an) .hop { animation: hop-vao .2s var(--em); }
+  @keyframes sheet-vao { from { transform: translateY(100%); } }
+  @keyframes hop-vao { from { opacity: 0; transform: translateY(8px) scale(.98); } }
   /* Tab Lớp học */
   .luoi-lop { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
   .the-lop { background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); padding: 18px; box-shadow: var(--bong-thap); display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: box-shadow .125s var(--em), transform .125s var(--em); }
@@ -131,7 +155,6 @@
   .the-lop .nut-lop { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
   .the-lop.trong { cursor: default; align-items: flex-start; border-style: dashed; box-shadow: none; background: #FCFAF6; }
   .the-lop.trong:hover { transform: none; }
-  .dau-lop h1 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.01em; }
   .thong-ke { display: flex; flex-wrap: wrap; gap: 10px 28px; }
   .thong-ke div { display: flex; flex-direction: column; }
   .thong-ke b { font-size: 22px; line-height: 1.2; }
@@ -193,11 +216,24 @@
     /* Bảng tổng hợp nhiều cột: cuộn ngang trong khung */
     table.ds.th { font-size: 13px; }
     table.ds.th th, table.ds.th td { padding: 7px 8px; white-space: nowrap; }
+    /* Đầu trang: tiêu đề trên, cụm chức năng dưới, ô tìm kiếm chiếm cả dòng */
+    .dau-trang { flex-direction: column; align-items: stretch; margin-bottom: 14px; }
+    .tieu-de-trang h1 { font-size: 22px; }
+    .cum { justify-content: flex-start; }
+    .cum input[type=search] { flex: 1 1 100%; width: 100%; }
+    .cum select { flex: 1 1 auto; max-width: none; }
+    /* Sheet: trượt từ dưới lên, có thanh kéo */
+    .hop-form, .hop-hoi { width: 100vw !important; max-width: 100vw; }
+    .phu-trang:not(.an) .hop { animation: sheet-vao .25s var(--em); }
+    .hop::before { content: ""; display: block; width: 40px; height: 4px; border-radius: 2px; background: var(--vien-dam); margin: -8px auto 12px; }
+    .hop-form .luoi { grid-template-columns: 1fr !important; }
+    .chan-hop { position: sticky; bottom: calc(-18px - env(safe-area-inset-bottom)); background: var(--be-mat); margin: 14px -14px 0; padding: 12px 14px 0; border-top: 1px solid var(--vien); }
+    .chan-hop > button { flex: 1 1 0; }
     /* Hộp thoại dạng trượt từ dưới lên */
     .phu-trang { align-items: flex-end; padding: 0; }
     .hop { width: 100vw; max-width: 100vw; max-height: 92vh; border-radius: 18px 18px 0 0; padding: 18px 14px calc(18px + env(safe-area-inset-bottom)); }
     iframe.xem { height: 64vh; }
-    .thong-bao { left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); max-width: none; }
+    .thong-bao { left: 12px; right: 12px; top: calc(10px + env(safe-area-inset-top)); bottom: auto; max-width: none; }
     .dang-nhap { margin: 24px 12px; padding: 22px 18px; }
   }
 </style>
@@ -251,28 +287,29 @@
     <!-- ============ LỚP HỌC ============ -->
     <section id="tabLop" class="an">
       <div id="lopDs">
-        <div class="thanh">
-          <input id="timLop" type="search" placeholder="Tìm lớp…" style="width:260px">
-          <span id="demLop" class="goi-y"></span>
-          <span class="gian"></span>
+        <div class="dau-trang">
+        <div class="tieu-de-trang"><h1>Lớp học</h1><p class="goi-y" id="demLop"></p></div>
+        <div class="cum">
+          <input id="timLop" type="search" placeholder="Tìm lớp…">
           <button id="nutTaoLopMoi">+ Lớp mới</button>
         </div>
+      </div>
         <div id="luoiLop" class="luoi-lop"></div>
       </div>
 
       <div id="lopCt" class="an">
-        <div class="thanh">
-          <button id="nutVeDsLop" class="phu">← Tất cả lớp</button>
-          <span class="gian"></span>
-          <button id="nutGuiKqLop">📤 Gửi kết quả thi</button>
+        <div class="dau-trang">
+          <div class="tieu-de-trang">
+            <a id="nutVeDsLop" class="duong-dan" href="#lop">← Lớp học</a>
+            <h1 id="ctTenLop"></h1>
+          </div>
+          <div class="cum">
+            <button id="nutDoiTenLop" class="phu">Đổi tên</button>
+            <button id="nutXoaLop" class="nguy">Xóa lớp</button>
+            <button id="nutGuiKqLop">📤 Gửi kết quả thi</button>
+          </div>
         </div>
         <div class="the dau-lop">
-          <div class="thanh" style="margin-bottom:10px">
-            <h1 id="ctTenLop"></h1>
-            <span class="gian"></span>
-            <button id="nutDoiTenLop" class="phu nho">Đổi tên</button>
-            <button id="nutXoaLop" class="nguy nho">Xóa lớp</button>
-          </div>
           <div id="ctThongKe" class="thong-ke"></div>
         </div>
         <div class="the">
@@ -304,42 +341,44 @@
 
     <!-- ============ HỌC SINH ============ -->
     <section id="tabHs" class="an">
-      <div class="thanh">
-        <input id="timHs" type="search" placeholder="Tìm theo tên, mã HS, SĐT…" style="width:260px">
-        <select id="locLop"></select>
-        <span id="demHs" class="goi-y"></span>
-        <span class="gian"></span>
-        <button id="nutThemHs">+ Thêm học sinh</button>
-        <button id="nutThemNhieu" class="phu">Thêm nhiều / nhập Excel</button>
-        <button id="nutTinNhanTatCa" class="phu">Tin nhắn gửi mã (cả lớp)</button>
+      <div class="dau-trang">
+        <div class="tieu-de-trang"><h1>Học sinh</h1><p class="goi-y" id="demHs"></p></div>
+        <div class="cum">
+          <input id="timHs" type="search" placeholder="Tìm theo tên, mã HS, SĐT…">
+          <select id="locLop"></select>
+          <button id="nutTinNhanTatCa" class="phu">Tin nhắn gửi mã</button>
+          <button id="nutThemNhieu" class="phu">Nhập Excel</button>
+          <button id="nutThemHs">+ Thêm học sinh</button>
+        </div>
       </div>
 
-      <div id="formHs" class="the an">
-        <h2 id="formHsTieuDe">Thêm học sinh</h2>
+      <div id="formHs" class="phu-trang an"><div class="hop hop-form" role="dialog" aria-modal="true" aria-labelledby="formHsTieuDe">
+        <div class="dau-hop"><h2 id="formHsTieuDe">Thêm học sinh</h2><button type="button" class="dong-x phu" data-dong aria-label="Đóng">✕</button></div>
         <div class="luoi">
           <label class="o">Họ và tên *<input id="fTen" type="text"></label>
-          <label class="o">Nhóm / lớp (nhiều nhóm cách nhau bằng ;)<input id="fLop" type="text" list="dsLop" placeholder="VD: Toán 2; Tiếng Anh A1"></label>
+          <label class="o">Lớp (không bắt buộc; nhiều lớp cách nhau bằng ;)<input id="fLop" type="text" list="dsLop" placeholder="VD: Toán 2; Tiếng Anh A1 — để trống nếu chưa xếp lớp"></label>
           <label class="o">Ngày sinh<input id="fNgaySinh" type="text" placeholder="dd/mm/yyyy"></label>
           <label class="o">SĐT phụ huynh<input id="fSdt" type="text"></label>
           <label class="o">Ghi chú<input id="fGhiChu" type="text"></label>
         </div>
         <datalist id="dsLop"></datalist>
-        <div class="thanh" style="margin:12px 0 0"><button id="nutLuuHs">Lưu</button><button id="nutHuyHs" class="phu">Hủy</button></div>
-      </div>
+        <div class="chan-hop"><button id="nutHuyHs" class="phu">Hủy</button><button id="nutLuuHs">Lưu</button></div>
+      </div></div>
 
-      <div id="formNhieu" class="the an">
-        <h2 id="tieuDeNhieu">Thêm nhiều học sinh</h2>
+      <div id="formNhieu" class="phu-trang an"><div class="hop hop-form" role="dialog" aria-modal="true" aria-labelledby="tieuDeNhieu">
+        <div class="dau-hop"><h2 id="tieuDeNhieu">Thêm nhiều học sinh</h2><button type="button" class="dong-x phu" data-dong aria-label="Đóng">✕</button></div>
         <p class="goi-y">Cách 1: Sao chép các cột <b>Họ tên – Nhóm/lớp – SĐT phụ huynh</b> từ Excel và dán vào ô dưới (mỗi dòng 1 học sinh).<br>
           Cách 2: Chọn file Excel có dòng tiêu đề "Họ và tên", "Lớp", "SĐT phụ huynh"… (có thể dùng luôn file kết quả thi).<br>
           Mỗi em được tự cấp Mã HS và mã tra cứu. Em đã có trong nhóm sẽ được bỏ qua; em <b>trùng tên với học sinh ở nhóm khác</b>
           (vd học thêm môn mới) sẽ được hỏi lại để <b>gộp vào cùng 1 mã tra cứu</b> hoặc tạo học sinh mới.</p>
         <textarea id="danNhieu" placeholder="Nguyễn Văn An	Toán 2	0912345678&#10;Trần Thị Bình	Toán 2	0987654321"></textarea>
-        <div class="thanh" style="margin:10px 0 0">
+        <div class="chan-hop">
+          <label class="nut phu">📄 Chọn file Excel…<input id="fileHs" type="file" accept=".xlsx,.xls,.csv" class="an"></label>
+          <span class="gian"></span>
+          <button id="nutHuyNhieu" class="phu">Hủy</button>
           <button id="nutLuuNhieu">Thêm từ ô dán</button>
-          <label class="nut phu">Chọn file Excel…<input id="fileHs" type="file" accept=".xlsx,.xls,.csv" class="an"></label>
-          <button id="nutHuyNhieu" class="phu">Đóng</button>
         </div>
-      </div>
+      </div></div>
 
       <div id="thanhChon" class="thanh an">
         <b id="soChon"></b>
@@ -350,13 +389,18 @@
         <button id="nutBoChon" class="phu nho">Bỏ chọn</button>
       </div>
       <table class="ds">
-        <thead><tr><th><input id="chonTatCa" type="checkbox"></th><th>#</th><th>Mã HS</th><th>Họ tên</th><th>Nhóm / lớp</th><th>SĐT phụ huynh</th><th>Mã tra cứu</th><th style="width:300px"></th></tr></thead>
+        <thead><tr><th><input id="chonTatCa" type="checkbox"></th><th>#</th><th>Mã HS</th><th>Họ tên</th><th>Lớp</th><th>SĐT phụ huynh</th><th>Mã tra cứu</th><th style="width:300px"></th></tr></thead>
         <tbody id="bangHs"></tbody>
       </table>
     </section>
 
     <!-- ============ GỬI KẾT QUẢ (theo lớp) ============ -->
     <section id="tabGui" class="an">
+      <div class="dau-trang">
+        <div class="tieu-de-trang"><h1>Gửi kết quả thi</h1><p class="goi-y">Chọn lớp → tải lên bảng kết quả và bảng đáp án → kiểm tra bảng ghép → tạo phiếu → công bố.</p></div>
+        <div class="cum">
+        </div>
+      </div>
       <div class="the">
         <h2><span class="buoc">1</span>Chọn lớp / nhóm nhận kết quả</h2>
         <div class="thanh">
@@ -441,9 +485,11 @@
 
     <!-- ============ CÁC ĐỢT THI ============ -->
     <section id="tabDot" class="an">
-      <div class="thanh">
-        <select id="locNhomDot"></select>
-        <span class="goi-y">Phụ huynh chỉ xem được các lần thi đã <b>Công bố</b>. Xóa một lần thi sẽ xóa toàn bộ phiếu của lần đó.</span>
+      <div class="dau-trang">
+        <div class="tieu-de-trang"><h1>Bài thi</h1><p class="goi-y">Phụ huynh chỉ xem được các lần thi đã <b>Công bố</b>. Xóa một lần thi sẽ xóa toàn bộ phiếu của lần đó.</p></div>
+        <div class="cum">
+          <select id="locNhomDot"></select>
+        </div>
       </div>
       <table class="ds">
         <thead><tr><th>Bài thi</th><th>Lần</th><th>Ngày thi</th><th>Số phiếu</th><th>Công bố</th><th>Phiếu</th><th></th></tr></thead>
@@ -452,11 +498,12 @@
     </section>
 
     <section id="tabTongHop" class="an">
-      <div class="thanh">
-        <select id="locNhomTH"></select>
-        <span id="moTaTH" class="goi-y"></span>
-        <span class="gian"></span>
-        <button id="nutSaoChepTH" class="phu">Sao chép bảng (dán vào Excel)</button>
+      <div class="dau-trang">
+        <div class="tieu-de-trang"><h1>Tổng hợp</h1><p class="goi-y" id="moTaTH"></p></div>
+        <div class="cum">
+          <select id="locNhomTH"></select>
+          <button id="nutSaoChepTH" class="phu">Sao chép bảng (dán vào Excel)</button>
+        </div>
       </div>
       <div style="overflow:auto"><table class="ds th" id="bangTH"></table></div>
       <p class="goi-y">Ô xanh: ≥ 80% điểm tối đa · Ô đỏ: &lt; 50% · "Tiến bộ" = điểm lần gần nhất − điểm lần đầu (tính theo thang 10).</p>
@@ -464,18 +511,20 @@
 
     <!-- ============ TÀI KHOẢN GIÁO VIÊN (chỉ quản trị) ============ -->
     <section id="tabTaiKhoan" class="an">
+      <div class="dau-trang">
+        <div class="tieu-de-trang"><h1>Giáo viên</h1><p class="goi-y">Mời giáo viên khác và giao lớp phụ trách. Chủ không gian luôn có toàn quyền.</p></div>
+        <div class="cum">
+          <button id="nutThemTk">+ Thêm giáo viên</button>
+        </div>
+      </div>
       <div class="the">
-        <h2>Mời giáo viên cùng dùng</h2>
+        <h2>Cách mời giáo viên</h2>
         <p class="goi-y" style="margin-top:0">Thêm giáo viên bằng email và chọn lớp phụ trách. Hệ thống tạo mật khẩu tạm và soạn sẵn tin nhắn gửi cho giáo viên.
           Giáo viên mở link, đăng nhập, rồi chỉ thấy và gửi điểm cho các lớp mình phụ trách. Giáo viên đã có tài khoản thì chỉ cần nhập đúng email.</p>
         <div class="o-link"><span>Link trang giáo viên:</span><code id="tkLinkGv"></code><button class="phu nho" id="tkChepLink">Sao chép</button></div>
       </div>
-      <div class="thanh">
-        <button id="nutThemTk">+ Thêm giáo viên</button>
-        <span class="goi-y">Chủ không gian luôn có toàn quyền.</span>
-      </div>
-      <div id="formTk" class="the an">
-        <h2 id="formTkTieuDe">Thêm giáo viên</h2>
+      <div id="formTk" class="phu-trang an"><div class="hop hop-form" role="dialog" aria-modal="true" aria-labelledby="formTkTieuDe">
+        <div class="dau-hop"><h2 id="formTkTieuDe">Thêm giáo viên</h2><button type="button" class="dong-x phu" data-dong aria-label="Đóng">✕</button></div>
         <div class="luoi">
           <label class="o">Email *<input id="tkTen" type="email" placeholder="vd: lan.nguyen@gmail.com" autocapitalize="none" spellcheck="false"></label>
           <label class="o">Họ tên *<input id="tkHoTen" type="text" placeholder="vd: Nguyễn Thị Lan"></label>
@@ -486,8 +535,8 @@
           <label style="margin-left:12px;font-weight:500"><input id="tkTatCaLop" type="checkbox"> Tất cả lớp</label>
           <div id="tkDsLop" class="lop-chon"></div>
         </div>
-        <div class="thanh" style="margin:12px 0 0"><button id="nutLuuTk">Lưu</button><button id="nutHuyTk" class="phu">Hủy</button></div>
-      </div>
+        <div class="chan-hop"><button id="nutHuyTk" class="phu">Hủy</button><button id="nutLuuTk">Lưu</button></div>
+      </div></div>
       <table class="ds">
         <thead><tr><th>Email</th><th>Họ tên</th><th>Vai trò</th><th>Lớp phụ trách</th><th>Trạng thái</th><th style="width:260px"></th></tr></thead>
         <tbody id="bangTk"></tbody>
@@ -496,6 +545,12 @@
 
     <!-- ============ CÀI ĐẶT ============ -->
     <section id="tabCaiDat" class="an">
+      <div class="dau-trang">
+        <div class="tieu-de-trang"><h1>Cài đặt</h1><p class="goi-y">Thông tin in trên phiếu và link gửi cho phụ huynh, giáo viên.</p></div>
+        <div class="cum">
+          <button id="nutLuuCaiDat">Lưu cài đặt</button>
+        </div>
+      </div>
       <div class="the">
         <h2>Link sử dụng</h2>
         <div class="o-link"><span>Phụ huynh:</span><code id="cdLinkPh">(chưa có)</code></div>
@@ -513,12 +568,11 @@
           </div>
         </div>
       </div>
-      <button id="nutLuuCaiDat">Lưu cài đặt</button>
     </section>
   </div>
 
   <!-- Hộp thoại dùng chung -->
-  <div id="hop" class="phu-trang an">
+  <div id="hop" class="phu-trang an" style="z-index:20">
     <div class="hop">
       <div class="thanh"><h2 id="hopTieuDe" class="gian" style="margin:0"></h2><button id="nutDongHop" class="phu">Đóng</button></div>
       <div id="hopNoiDung"></div>
@@ -526,10 +580,11 @@
   </div>
   <!-- Hộp hỏi xác nhận / nhập chữ (thay confirm/prompt của trình duyệt) -->
   <div id="hopHoi" class="phu-trang an" style="z-index:30">
-    <div class="hop" style="width:min(520px,94vw)" role="dialog" aria-modal="true">
+    <div class="hop hop-hoi" role="dialog" aria-modal="true">
+      <div class="dau-hop an" id="hoiDau"><h2 id="hoiTieuDe"></h2></div>
       <p id="hoiNoiDung" style="white-space:pre-line;margin-top:0"></p>
-      <input id="hoiNhap" type="text" class="an" style="width:100%">
-      <div class="thanh" style="justify-content:flex-end;margin:14px 0 0">
+      <label class="o an" id="hoiNhanO"><span id="hoiNhan"></span><input id="hoiNhap" type="text" class="an" style="width:100%"></label>
+      <div class="chan-hop">
         <button id="hoiHuy" class="phu">Hủy</button>
         <button id="hoiDongY">Đồng ý</button>
       </div>
@@ -590,6 +645,9 @@
     var coNhap = tuyChon.nhap !== undefined;
     return new Promise(function (traVe) {
       $('hoiNoiDung').textContent = noiDung;
+      $('hoiNoiDung').classList.toggle('an', !noiDung);
+      $('hoiDau').classList.toggle('an', !tuyChon.tieuDe); $('hoiTieuDe').textContent = tuyChon.tieuDe || '';
+      $('hoiNhanO').classList.toggle('an', !coNhap); $('hoiNhan').textContent = tuyChon.nhan || '';
       $('hoiNhap').classList.toggle('an', !coNhap);
       $('hoiNhap').value = coNhap ? tuyChon.nhap : '';
       $('hoiNhap').placeholder = tuyChon.goiY || '';
@@ -728,7 +786,7 @@
   }
   $('timLop').oninput = veLop;
   $('nutTaoLopMoi').onclick = function () { taoLopMoi(function (ten) { if (ten) moLop(ten); }); };
-  $('nutVeDsLop').onclick = function () { lopMo = ''; veLop(); };
+  $('nutVeDsLop').onclick = function (e) { e.preventDefault(); lopMo = ''; veLop(); };
   $('nutGuiKqLop').onclick = function () { guiKqChoLop(lopMo); };
   $('nutTongHopLop').onclick = function () { chuyenTab('tabTongHop'); $('locNhomTH').value = lopMo; veTongHop(); };
   $('nutTinNhanLop').onclick = function () {
@@ -737,12 +795,11 @@
     hopTinNhan('Tin nhắn gửi mã — lớp ' + lopMo + ' (' + ds.length + ' học sinh)', ds.map(tinNhan).join('\n\n--------------------\n\n'));
   };
   $('nutThemMoiVaoLop').onclick = function () {
-    chuyenTab('tabHs'); $('locLop').value = lopMo; veHocSinh(); $('nutThemNhieu').click();
-    $('formNhieu').scrollIntoView({ block: 'start' });
+    $('locLop').value = lopMo; veHocSinh(); $('nutThemNhieu').click();
   };
   $('nutDoiTenLop').onclick = function () {
     var cu = lopMo;
-    hoi('Đổi tên lớp "' + cu + '" thành:', { nhap: cu, nut: 'Đổi tên' }).then(function (moi) {
+    hoi('', { tieuDe: 'Đổi tên lớp', nhan: 'Tên mới của lớp "' + cu + '"', nhap: cu, nut: 'Lưu' }).then(function (moi) {
       if (!moi || moi.trim() === cu) return;
       goi('gvDoiTenNhom', cu, moi.trim()).then(function (dl) { lopMo = moi.trim(); capNhat(dl); }).catch(baoLoi);
     });
@@ -783,6 +840,10 @@
   };
 
   /* =================== HỌC SINH =================== */
+  // Học sinh không bắt buộc thuộc lớp nào: bộ lọc có thêm mục "Chưa có lớp"
+  var CHUA_CO_LOP = '__chua_co_lop__';
+  function hopLoc(h, loc) { return !loc || (loc === CHUA_CO_LOP ? !h.nhom.length : h.nhom.indexOf(loc) >= 0); }
+  function lopLoc() { var v = $('locLop').value; return v === CHUA_CO_LOP ? '' : v; }
   function tinNhan(h) {
     return 'Kính gửi phụ huynh em ' + h.hoTen + ',\n' +
       'Quý phụ huynh xem kết quả học tập (tất cả các môn/nhóm) của con tại: ' + (DL.linkTraCuu || '[chưa có link — vào Cài đặt]') + '\n' +
@@ -802,14 +863,17 @@
   }
 
   function veHocSinh() {
+    var locCu = $('locLop').value;
     var tu = $('timHs').value.trim().toLowerCase();
     var dsLop = DL.nhom || [];
-    dienSelect($('locLop'), dsLop, 'Tất cả nhóm');
+    dienSelect($('locLop'), dsLop, 'Tất cả lớp');
+    var chuaCo = DL.hocSinh.filter(function (h) { return !h.nhom.length; }).length;
+    if (chuaCo) { $('locLop').appendChild(the('option', { value: CHUA_CO_LOP, text: 'Chưa có lớp (' + chuaCo + ')' })); if (locCu === CHUA_CO_LOP) $('locLop').value = CHUA_CO_LOP; }
     $('dsLop').textContent = '';
     dsLop.forEach(function (l) { $('dsLop').appendChild(the('option', { value: l })); });
 
     var ds = DL.hocSinh.filter(function (h) {
-      if ($('locLop').value && h.nhom.indexOf($('locLop').value) < 0) return false;
+      if (!hopLoc(h, $('locLop').value)) return false;
       if (!tu) return true;
       return [h.hoTen, h.maHs, h.sdt, h.lop].join(' ').toLowerCase().indexOf(tu) >= 0;
     });
@@ -853,7 +917,7 @@
     var bat = this.checked;
     var lop = $('locLop').value, tu = $('timHs').value.trim().toLowerCase();
     DL.hocSinh.forEach(function (h) {
-      var hien = (!lop || h.nhom.indexOf(lop) >= 0) && (!tu || [h.hoTen, h.maHs, h.sdt, h.lop].join(' ').toLowerCase().indexOf(tu) >= 0);
+      var hien = hopLoc(h, lop) && (!tu || [h.hoTen, h.maHs, h.sdt, h.lop].join(' ').toLowerCase().indexOf(tu) >= 0);
       if (!hien) return;
       if (bat) daChon[h.maHs] = true; else delete daChon[h.maHs];
     });
@@ -871,7 +935,7 @@
   function moFormHs(h) {
     dangSua = h ? h.maHs : null;
     $('formHsTieuDe').textContent = h ? 'Sửa thông tin: ' + h.hoTen + ' (' + h.maHs + ')' : 'Thêm học sinh';
-    $('fTen').value = h ? h.hoTen : ''; $('fLop').value = h ? h.nhom.join('; ') : ($('locLop').value || '');
+    $('fTen').value = h ? h.hoTen : ''; $('fLop').value = h ? h.nhom.join('; ') : (lopLoc() || '');
     $('fNgaySinh').value = h ? h.ngaySinh : ''; $('fSdt').value = h ? h.sdt : ''; $('fGhiChu').value = h ? h.ghiChu : '';
     $('formNhieu').classList.add('an'); $('formHs').classList.remove('an'); $('fTen').focus();
   }
@@ -888,13 +952,13 @@
   function luuHs(b) {
     b.disabled = true;
     goi('gvLuuHocSinh', { maHs: dangSua, hoTen: $('fTen').value, lop: $('fLop').value, ngaySinh: $('fNgaySinh').value, sdt: $('fSdt').value, ghiChu: $('fGhiChu').value })
-      .then(function (dl) { capNhat(dl); bao(dangSua ? 'Đã lưu thay đổi.' : 'Đã thêm học sinh và tạo mã tra cứu.'); if (dangSua) $('formHs').classList.add('an'); else moFormHs(null); })
+      .then(function (dl) { capNhat(dl); bao(dangSua ? 'Đã lưu thay đổi.' : 'Đã thêm học sinh và tạo mã tra cứu.'); $('formHs').classList.add('an'); })
       .catch(baoLoi).then(function () { b.disabled = false; });
   }
 
   $('nutThemNhieu').onclick = function () {
     $('formHs').classList.add('an'); $('formNhieu').classList.remove('an');
-    $('tieuDeNhieu').textContent = $('locLop').value ? 'Thêm nhiều học sinh vào lớp ' + $('locLop').value + ' (dòng không ghi lớp sẽ vào lớp này)' : 'Thêm nhiều học sinh';
+    $('tieuDeNhieu').textContent = lopLoc() ? 'Thêm học sinh vào lớp ' + lopLoc() : 'Thêm nhiều học sinh';
   };
   $('nutHuyNhieu').onclick = function () { $('formNhieu').classList.add('an'); };
   $('nutLuuNhieu').onclick = function () {
@@ -905,8 +969,8 @@
 
   /* Thêm nhiều; nếu có em trùng tên với học sinh ở nhóm khác -> hỏi giáo viên rồi gửi lại */
   function themNhieu(bang, quyetDinh) {
-    return goi('gvThemNhieuHocSinh', bang, quyetDinh, $('locLop').value).then(function (kq) {
-      if (!kq.canXacNhan) { capNhat(kq); $('hop').classList.add('an'); return true; }
+    return goi('gvThemNhieuHocSinh', bang, quyetDinh, lopLoc()).then(function (kq) {
+      if (!kq.canXacNhan) { capNhat(kq); $('hop').classList.add('an'); $('formNhieu').classList.add('an'); return true; }
       var bangXn = the('table', { class: 'ds xn' }, [the('thead', {}, [the('tr', {}, [the('th', { text: 'Dòng trong danh sách' }), the('th', { text: 'Đây là…' })])])]);
       var tb = the('tbody'); bangXn.appendChild(tb);
       var chon = {};
@@ -939,7 +1003,7 @@
     }).catch(baoLoi);
   };
   $('nutTinNhanTatCa').onclick = function () {
-    var ds = DL.hocSinh.filter(function (h) { return !$('locLop').value || h.nhom.indexOf($('locLop').value) >= 0; });
+    var ds = DL.hocSinh.filter(function (h) { return hopLoc(h, $('locLop').value); });
     if (!ds.length) return bao('Chưa có học sinh.', true);
     hopTinNhan('Tin nhắn gửi mã (' + ds.length + ' học sinh)', ds.map(tinNhan).join('\n\n--------------------\n\n'));
   };
@@ -976,7 +1040,7 @@
     if (soHienTai && lopDangChon()) taiXemTruoc(false);
   };
   function taoLopMoi(sauKhiTao) {
-    hoi('Tên lớp / nhóm mới:', { nhap: '', goiY: 'VD: Toán 2, Tiếng Anh A1', nut: 'Tạo lớp' }).then(function (ten) {
+    hoi('Học sinh có thể học nhiều lớp mà vẫn chỉ có 1 mã tra cứu.', { tieuDe: 'Tạo lớp mới', nhan: 'Tên lớp *', nhap: '', goiY: 'VD: Toán 2, Tiếng Anh A1', nut: 'Tạo lớp' }).then(function (ten) {
       if (!ten || !ten.trim()) return;
       goi('gvTaoNhom', ten.trim()).then(function (dl) { capNhat(dl); if (sauKhiTao) sauKhiTao(dl.nhomMoi); }).catch(baoLoi);
     });
@@ -1253,7 +1317,7 @@
 
   /* =================== BÀI THI (nhóm → bài thi → các lần) =================== */
   function veDot() {
-    dienSelect($('locNhomDot'), DL.nhom || [], 'Tất cả nhóm');
+    dienSelect($('locNhomDot'), DL.nhom || [], 'Tất cả lớp');
     var loc = $('locNhomDot').value;
     var ds = DL.dot.filter(function (d) { return !loc || d.nhom === loc; }).sort(function (a, b) {
       return a.nhom.localeCompare(b.nhom) || a.baiThi.localeCompare(b.baiThi) || a.lan - b.lan;
@@ -1589,6 +1653,23 @@
       .observe(document.body, { childList: true, subtree: true });
     ganNhan();
   })();
+
+  // Đưa các hộp thoại form ra ngoài tab để mở được từ mọi trang
+  ['formHs', 'formNhieu', 'formTk'].forEach(function (id) { document.body.insertBefore($(id), $('hop')); });
+  // Hộp thoại form: đóng bằng nút ✕, bấm ra ngoài, hoặc phím Esc
+  document.querySelectorAll('.phu-trang').forEach(function (nen) {
+    nen.addEventListener('mousedown', function (e) { if (e.target === nen && nen.id !== 'hopHoi') nen.classList.add('an'); });
+  });
+  document.querySelectorAll('[data-dong]').forEach(function (b) { b.onclick = function () { b.closest('.phu-trang').classList.add('an'); }; });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var mo = [].filter.call(document.querySelectorAll('.phu-trang'), function (x) { return !x.classList.contains('an') && x.id !== 'hopHoi'; });
+    if (mo.length && $('hopHoi').classList.contains('an')) mo[mo.length - 1].classList.add('an');
+  });
+  // Khóa cuộn trang nền khi có hộp thoại mở
+  new MutationObserver(function () {
+    document.body.classList.toggle('co-hop', [].some.call(document.querySelectorAll('.phu-trang'), function (x) { return !x.classList.contains('an'); }));
+  }).observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class'] });
 </script>
 </body>
 </html>
