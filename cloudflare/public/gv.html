@@ -1979,10 +1979,18 @@
 
   // iPhone: khi bàn phím mở, Safari dịch vùng hiển thị nhưng lớp phủ "fixed" vẫn tính theo vị trí cũ -> chạm nhầm.
   // Cho lớp phủ hộp thoại bám theo visualViewport (vùng đang thấy thật sự).
+  // Chỉ áp dụng khi BÀN PHÍM ĐANG MỞ (đang gõ trong hộp thoại và vùng hiển thị bị thu hẹp rõ);
+  // còn lại để lớp phủ phủ kín màn hình (Safari có lúc báo offsetTop khác 0 khi trang đã cuộn -> lớp phủ bị đẩy xuống).
   if (window.visualViewport) {
     var vv = window.visualViewport, goc = document.documentElement.style;
-    var canhVv = function () { goc.setProperty('--vv-cao', vv.height + 'px'); goc.setProperty('--vv-tren', vv.offsetTop + 'px'); };
-    vv.addEventListener('resize', canhVv); vv.addEventListener('scroll', canhVv); canhVv();
+    var canhVv = function () {
+      var a = document.activeElement;
+      var banPhim = a && /^(INPUT|TEXTAREA)$/.test(a.tagName) && !a.readOnly && a.closest('.phu-trang') && window.innerHeight - vv.height > 120;
+      if (banPhim) { goc.setProperty('--vv-cao', vv.height + 'px'); goc.setProperty('--vv-tren', Math.max(0, vv.offsetTop) + 'px'); }
+      else { goc.removeProperty('--vv-cao'); goc.removeProperty('--vv-tren'); }
+    };
+    vv.addEventListener('resize', canhVv); vv.addEventListener('scroll', canhVv);
+    document.addEventListener('focusin', canhVv); document.addEventListener('focusout', function () { setTimeout(canhVv, 50); });
   }
 </script>
 </body>
