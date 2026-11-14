@@ -274,7 +274,7 @@ window.__worker = index_default;
     var hd = document.getElementById('huongDan'), k = document.getElementById('maThu');
     k.textContent = '';
     if (vai === 'gv') {
-      hd.innerHTML = 'Giáo viên tự <b>đăng ký</b> tại trang <b>/gv</b>. Thử gửi kết quả: thẻ <b>Gửi kết quả thi</b> → <b>📄 Dùng 2 file mẫu</b> (gồm mọi lớp, hệ thống tự ghép theo cột Lớp) → kiểm tra bảng ghép (có 1 dòng gõ sai tên, 1 em vắng, 1 dòng quên ghi lớp) → <b>Tạo phiếu</b> → <b>Công bố</b>. Tài khoản có sẵn:';
+      hd.innerHTML = 'Giáo viên tự <b>đăng ký</b> tại trang <b>/gv</b>. Thử gửi kết quả: thẻ <b>Bài thi</b> → <b>📤 Gửi kết quả thi</b> → <b>📄 Dùng 2 file mẫu</b> (gồm mọi lớp, hệ thống tự ghép theo cột Lớp) → kiểm tra bảng ghép (có 1 dòng gõ sai tên, 1 em vắng, 1 dòng quên ghi lớp) → <b>Tạo phiếu</b> → <b>Công bố</b>. Tài khoản có sẵn:';
       TAI_KHOAN.forEach(function (t) {
         k.appendChild(nutChip(t.mo, t.email + ' / ' + t.matKhau, function () {
           var w = document.getElementById('khungGv').contentWindow, d = w.document;
@@ -306,7 +306,7 @@ window.__worker = index_default;
     var w = document.getElementById('khungGv').contentWindow;
     try {
       if (!w.document.getElementById('manDangNhap').classList.contains('an')) { w.document.getElementById('dnTen').focus(); return; }
-      w.document.querySelector('[data-tab=tabGui]').click();
+      w.moGuiKetQua();
       var lop = w.lopMauChon || ''; // '' = mẫu gồm tất cả lớp
       var thang = new Date().getMonth() + 1;
       taoHaiFile('gv', lop, 'Kiểm tra tháng ' + thang, new Intl.DateTimeFormat('en-GB').format(new Date()), true).then(function (so) {

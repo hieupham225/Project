@@ -66,13 +66,13 @@ Thử với bảng điểm thật của 117 học sinh: điểm tự tính khớ
    Tab **Học sinh** quản lý thông tin từng em (sửa, cấp lại mã, xóa) trên toàn bộ các lớp. Học sinh **không bắt buộc** thuộc lớp nào (lọc "Chưa có lớp").
    Xóa lớp không xóa học sinh hay mã tra cứu; chỉ xóa các lần thi và phiếu điểm **của lớp đó**.
 3. **Tin nhắn gửi mã (cả lớp)**: sao chép và nhắn **riêng** cho từng phụ huynh. Mỗi phụ huynh chỉ cần nhận mã một lần.
-4. **Gửi kết quả thi**:
+4. **Bài thi** → **📤 Gửi kết quả thi** (trang con của thẻ Bài thi):
    1. Tải file mẫu (mặc định gồm học sinh của tất cả lớp, mỗi dòng ghi sẵn lớp; có thể lọc 1 lớp). Xóa dòng của em không làm bài.
    2. Tải lên 2 file.
    3. Kiểm tra bảng ghép: tóm tắt theo từng lớp, mỗi dòng có lớp và học sinh được ghép. Dòng "cần chọn" (chưa rõ lớp, gõ sai tên, Mã HS lạ, tên không khớp Mã HS) thì chọn lớp / đúng em.
    4. Đặt tên bài thi và bấm **Tạo phiếu**: mỗi lớp trong file được 1 lần thi. Lớp đã làm bài này thì thành **Lần 2, Lần 3…** (tính riêng từng lớp).
-   5. Bấm **Xem các phiếu** để kiểm tra, rồi bấm **📢 Công bố**.
-5. **Bài thi**: công bố / ẩn / xóa từng lần. **Tổng hợp**: bảng điểm cả lớp qua các bài và các lần, kèm trung bình và tiến bộ.
+   5. Popup báo thành công: bấm **Xem phiếu** để kiểm tra, rồi **📢 Công bố**; **Xong** để về danh sách Bài thi.
+5. **Bài thi**: danh sách các lần thi theo lớp; Xem phiếu, Công bố / Ngừng công bố, xóa từng lần. **Tổng hợp**: bảng điểm cả lớp qua các bài và các lần, kèm trung bình và tiến bộ.
 6. **Giáo viên** (chủ / quản trị): mời giáo viên khác bằng email và giao lớp phụ trách.
 7. **Cài đặt**: tên trung tâm, khẩu hiệu, logo in trên phiếu.
 

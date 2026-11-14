@@ -365,7 +365,6 @@
     <div class="dai-tab" role="tablist">
       <button class="tab chon" data-tab="tabLop">🏫 Lớp học</button>
       <button class="tab" data-tab="tabHs">👩‍🎓 Học sinh</button>
-      <button class="tab" data-tab="tabGui">📤 Gửi kết quả thi</button>
       <button class="tab" data-tab="tabDot">🗂️ Bài thi</button>
       <button class="tab" data-tab="tabTongHop">📊 Tổng hợp</button>
       <button class="tab chi-quan-tri" data-tab="tabTaiKhoan">👥 Giáo viên</button>
@@ -510,6 +509,7 @@
     <!-- ============ GỬI KẾT QUẢ (theo lớp) ============ -->
     <section id="tabGui" class="an">
       <div class="dau-trang">
+        <a id="nutVeBaiThi" class="duong-dan" href="#bai-thi">← Bài thi</a>
         <div class="hang-tieu-de">
           <h1>Gửi kết quả<span class="chu-dai"> thi</span><button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Tải lên bảng kết quả (có cột <b>Lớp</b>) và bảng đáp án. Hệ thống tự đưa từng dòng vào đúng lớp, đúng học sinh — một file có thể gồm nhiều lớp.</span></button></h1>
           <div class="cum">
@@ -589,6 +589,9 @@
       <div class="dau-trang">
         <div class="hang-tieu-de">
           <h1>Bài thi<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Phụ huynh chỉ xem được các lần thi đã <b>Công bố</b>. Xóa một lần thi sẽ xóa toàn bộ phiếu của lần đó.</span></button></h1>
+          <div class="cum">
+            <button id="nutMoGui"><span>📤 Gửi kết quả<span class="chu-dai"> thi</span></span></button>
+          </div>
         </div>
         <div class="hang-loc">
           <select id="locNhomDot"></select>
@@ -903,7 +906,14 @@
   }
   function moLop(n) { lopMo = n; veLop(); window.scrollTo(0, 0); }
   function chuyenTab(id) { document.querySelector('[data-tab=' + id + ']').click(); }
-  function guiKqChoLop(n) { chuyenTab('tabGui'); lopMauChon = n; }
+  // Gửi kết quả thi là trang con của tab Bài thi
+  function moGuiKetQua() {
+    chuyenTab('tabDot');
+    $('tabDot').classList.add('an'); $('tabGui').classList.remove('an');
+    window.scrollTo(0, 0);
+  }
+  function veBaiThi() { chuyenTab('tabDot'); window.scrollTo(0, 0); }
+  function guiKqChoLop(n) { moGuiKetQua(); lopMauChon = n; }
 
   function veChiTietLop() {
     var n = lopMo, hs = hsCuaLop(n), dot = dotCuaLop(n);
@@ -941,6 +951,8 @@
   $('nutTaoLopMoi').onclick = function () { taoLopMoi(function (ten) { if (ten) moLop(ten); }); };
   $('nutVeDsLop').onclick = function (e) { e.preventDefault(); lopMo = ''; veLop(); };
   $('nutGuiKqLop').onclick = function () { guiKqChoLop(lopMo); };
+  $('nutMoGui').onclick = moGuiKetQua;
+  $('nutVeBaiThi').onclick = function (e) { e.preventDefault(); veBaiThi(); };
   $('nutTongHopLop').onclick = function () { chuyenTab('tabTongHop'); $('locNhomTH').value = lopMo; veTongHop(); };
   $('nutTinNhanLop').onclick = function () {
     var ds = hsCuaLop(lopMo);
@@ -1708,7 +1720,7 @@
       }).catch(function (e) { nutCB.disabled = false; baoLoi(e); });
     } });
     hopTao('✔ Đã tạo ' + tongPhieu + ' phiếu' + (ketQua.length > 1 ? ' cho ' + ketQua.length + ' lớp' : ''), [ul, khuLoi, trangThai],
-      [the('button', { class: 'phu', text: 'Xong', onclick: function () { dongHopTao(); datLaiGui(); } }), the('span', { class: 'gian' }), nutCB]);
+      [the('button', { class: 'phu', text: 'Xong', onclick: function () { dongHopTao(); datLaiGui(); veBaiThi(); } }), the('span', { class: 'gian' }), nutCB]);
   }
 
   /* =================== BÀI THI (nhóm → bài thi → các lần) =================== */
@@ -1719,7 +1731,7 @@
       return a.nhom.localeCompare(b.nhom) || a.baiThi.localeCompare(b.baiThi) || a.lan - b.lan;
     });
     var tb = $('bangDot'); tb.textContent = '';
-    if (!ds.length) tb.appendChild(the('tr', {}, [the('td', { colspan: 6, class: 'goi-y', text: 'Chưa có bài thi nào.' })]));
+    if (!ds.length) tb.appendChild(the('tr', {}, [the('td', { colspan: 6, class: 'goi-y', text: 'Chưa có bài thi nào. Bấm "📤 Gửi kết quả thi" để tải lên bảng kết quả và tạo phiếu.' })]));
     var nhomTruoc = null, baiTruoc = null;
     ds.forEach(function (d) {
       if (d.nhom !== nhomTruoc) {
