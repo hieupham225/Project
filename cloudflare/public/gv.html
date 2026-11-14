@@ -235,7 +235,10 @@
   .ten-hang { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: 1 1 0; min-width: 0; }
   .ten-hang .huy-hieu { flex: none; }
   .form-sua-bai { display: flex; flex-direction: column; gap: 14px; width: min(520px, 100%); }
-  .form-sua-bai input { width: 100%; }
+  .form-sua-bai input:not([type=checkbox]) { width: 100%; }
+  .o-tat-ca-lop { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: var(--nen); cursor: pointer; font-weight: 600; }
+  .o-tat-ca-lop input { width: 18px; height: 18px; margin: 2px 0 0; flex: none; }
+  .o-tat-ca-lop .goi-y { display: block; font-weight: 400; margin-top: 4px; }
   .huy-hieu.h1 { background: linear-gradient(135deg, #FFE27A, #F2B705); color: #5C3D00; box-shadow: inset 0 0 0 1px rgba(150,100,0,.25); }
   .huy-hieu.h2 { background: linear-gradient(135deg, #F1F3F5, #C3CAD2); color: #39434D; box-shadow: inset 0 0 0 1px rgba(60,70,80,.2); }
   .huy-hieu.h3 { background: linear-gradient(135deg, #F6C9A0, #CD8A4F); color: #5A2E0B; box-shadow: inset 0 0 0 1px rgba(110,60,20,.25); }
@@ -1868,16 +1871,23 @@
     var oMoTa = the('input', { type: 'text', maxlength: 300, placeholder: 'VD: Bài thi cuối khóa 1 – Lớp 11' }); oMoTa.value = d.moTa || '';
     var oNgay = the('input', { type: 'date' });
     var m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(d.ngayThi || ''); oNgay.value = m ? m[3] + '-' + m[2] + '-' + m[1] : '';
+    var lopKhac = {}; DL.dot.forEach(function (x) { if (x.nhom !== d.nhom && khoaTen(x.baiThi) === khoaTen(d.baiThi)) lopKhac[x.nhom] = 1; });
+    var dsLopKhac = Object.keys(lopKhac).sort(function (a, b) { return a.localeCompare(b, 'vi'); });
+    var oTatCa = the('input', { type: 'checkbox' });
+    var dongTatCa = dsLopKhac.length ? the('label', { class: 'o-tat-ca-lop' }, [oTatCa,
+      the('span', {}, ['Áp dụng cho tất cả các lớp có bài thi này (' + (dsLopKhac.length + 1) + ' lớp)',
+        the('span', { class: 'goi-y', text: 'Cùng sửa ở: ' + dsLopKhac.join(', ') + '. Mô tả và ngày thi đổi cho lần thi tương ứng của mỗi lớp (cùng ngày thi, không có thì cùng số lần).' })])]) : null;
     var nut = the('button', { text: 'Lưu', onclick: function () {
       if (!oTen.value.trim()) { oTen.focus(); return bao('Vui lòng nhập tiêu đề bài thi.', true); }
       nut.disabled = true;
-      goi('gvSuaBaiThi', d.maDot, { baiThi: oTen.value.trim(), moTa: oMoTa.value.trim(), ngayThi: oNgay.value })
+      goi('gvSuaBaiThi', d.maDot, { baiThi: oTen.value.trim(), moTa: oMoTa.value.trim(), ngayThi: oNgay.value, tatCaLop: oTatCa.checked })
         .then(function (dl) { $('hop').classList.add('an'); capNhat(dl); }).catch(function (e) { nut.disabled = false; baoLoi(e); });
     } });
     moHop('Sửa bài thi · ' + d.nhom + ' – Lần ' + d.lan, the('div', { class: 'form-sua-bai' }, [
       the('label', { class: 'o' }, [the('span', {}, ['Tiêu đề ', the('span', { class: 'goi-y', text: soLan > 1 ? '(áp dụng cho cả ' + soLan + ' lần của bài này trong lớp)' : '' })]), oTen]),
       the('label', { class: 'o' }, [the('span', {}, ['Mô tả ', the('span', { class: 'goi-y', text: '(dòng dưới tiêu đề trên phiếu)' })]), oMoTa]),
       the('label', { class: 'o' }, ['Ngày thi', oNgay]),
+      dongTatCa,
       the('p', { class: 'goi-y', style: 'margin:0', text: 'Phiếu của lần này cập nhật theo ngay, kể cả phiếu đã công bố. Tiêu đề phiếu đổi theo nếu đang lấy theo tên bài.' }),
       the('div', { class: 'chan-hop' }, [the('button', { class: 'phu', text: 'Hủy', onclick: function () { $('hop').classList.add('an'); } }), nut])]));
     setTimeout(function () { oTen.focus(); }, 50);

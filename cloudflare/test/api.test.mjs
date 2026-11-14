@@ -174,11 +174,23 @@ test('đổi tên bài thi: mọi lần trong lớp, tiêu đề phiếu mặc �
   const p2 = (await A.rpc('gvXemPhieu', (await A.rpc('gvDsPhieuLan', ds[1].maDot))[0].maPhieu)).d;
   assert.equal(p2.lichSu[0].ngayThi, '05/10/2026');
   await assert.rejects(A.rpc('gvSuaBaiThi', ds[0].maDot, { ngayThi: '35/13/2026' }), /không hợp lệ/);
+  // áp dụng cho tất cả các lớp có bài này: tạo cùng bài ở lớp Toán 2 (cùng ngày) rồi sửa từ Toán 1
+  await A.rpc('gvTaoNhom', 'Toán 2 tạm');
+  const r2 = td.map(() => ''); r2[2] = 'Em Lớp Khác'; r2[3] = 'Toán 2 tạm'; r2[5] = '105';
+  const so2 = { kq: { KetQua: [td, r2] }, da };
+  const bdK = (await A.rpc('gvBatDauDot', so2, { baiThi: 'Kiểm tra chương 1', ngayThi: '05/10/2026' })).dsDot[0];
+  await A.rpc('gvTaoPhieuLo', bdK.maDot, so2, bdK.canTao);
+  const dl3 = await A.rpc('gvSuaBaiThi', ds[0].maDot, { baiThi: 'KT chương 1', moTa: 'Đề chung', ngayThi: '06/10/2026', tatCaLop: true });
+  assert.match(dl3.thongBao, /ở 2 lớp/);
+  const k = dl3.dot.find((x) => x.maDot === bdK.maDot);
+  assert.deepEqual([k.baiThi, k.moTa, k.ngayThi], ['KT chương 1', 'Đề chung', '06/10/2026']);
+  assert.ok(dl3.dot.filter((x) => x.nhom === 'Toán 1' && /chương 1/i.test(x.baiThi)).every((x) => x.baiThi === 'KT chương 1'));
+  await A.rpc('gvXoaLop', 'Toán 2 tạm');
   assert.deepEqual(dl.dot.filter((d) => d.nhom === 'Toán 1' && /chương 1/i.test(d.baiThi)).map((d) => [d.baiThi, d.lan]).sort(), [['Kiểm tra chương 1', 1], ['Kiểm tra chương 1', 2]]);
   const p = (await A.rpc('gvDsPhieuLan', ds[0].maDot))[0];
-  assert.equal((await A.rpc('gvXemPhieu', p.maPhieu)).d.tieuDe, 'KIỂM TRA CHƯƠNG 1');
+  assert.equal((await A.rpc('gvXemPhieu', p.maPhieu)).d.tieuDe, 'KT CHƯƠNG 1');
   // gửi tiếp bài cùng tên mới -> thành Lần 3
-  const bd3 = await A.rpc('gvBatDauDot', so, { baiThi: 'kiểm tra chương 1' });
+  const bd3 = await A.rpc('gvBatDauDot', so, { baiThi: 'kt CHƯƠNG 1' });
   assert.equal(bd3.dsDot[0].lan, 3);
   for (const d of [...ds, bd3.dsDot[0]]) await A.rpc('gvXoaDot', d.maDot); // dọn để không ảnh hưởng test sau
 });
