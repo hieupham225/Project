@@ -150,6 +150,12 @@
   .o-lop span { color: var(--phu); font-size: 12px; }
   .lan-info ul, ul.ds-xong { margin: 4px 0 0; padding-left: 18px; }
   ul.ds-xong li { margin: 6px 0; }
+  /* Nút biểu tượng (sao chép mã, xem tin nhắn) */
+  .o-ma { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .o-ma .ma { margin-right: 4px; }
+  button.nut-icon { width: var(--cao-nho); height: var(--cao-nho); min-height: 0; padding: 0; flex: none; border-radius: var(--r-tron); background: var(--mau-nhat); color: var(--chu); }
+  button.nut-icon:hover:not(:disabled) { background: rgba(21,17,12,.14); }
+  button.nut-icon.da-chep, button.nut-icon.da-chep:hover:not(:disabled) { background: var(--xanh-nen); color: var(--xanh-chu); }
   /* Tab Lớp học */
   .luoi-lop { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
   .the-lop { background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); padding: 18px; box-shadow: var(--bong-thap); display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: box-shadow .125s var(--em), transform .125s var(--em); }
@@ -355,7 +361,6 @@
         <div class="cum">
           <input id="timHs" type="search" placeholder="Tìm theo tên, mã HS, SĐT…">
           <select id="locLop"></select>
-          <button id="nutTinNhanTatCa" class="phu">Tin nhắn gửi mã</button>
           <button id="nutThemNhieu" class="phu">Nhập Excel</button>
           <button id="nutThemHs">+ Thêm học sinh</button>
         </div>
@@ -703,6 +708,35 @@
     });
   }
 
+  /* Ô mã tra cứu: mã + nút biểu tượng "sao chép mã" + "xem tin nhắn gửi phụ huynh" */
+  var BIEU_TUONG = {
+    chep: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5"/></svg>',
+    xong: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+    tinNhan: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12.5a7.5 7.5 0 0 1-11.1 6.6L4 20.5l1.4-4.6A7.5 7.5 0 1 1 20 12.5z"/><path d="M8.5 11h7M8.5 14h4.5"/></svg>'
+  };
+  function nutIcon(icon, nhan, khiBam) {
+    var b = the('button', { type: 'button', class: 'nut-icon', title: nhan, 'aria-label': nhan, onclick: khiBam });
+    b.innerHTML = BIEU_TUONG[icon];
+    return b;
+  }
+  function saoChepVanBan(chu) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(chu);
+    var ta = the('textarea', { style: 'position:fixed;opacity:0' }); ta.value = chu; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } finally { ta.remove(); }
+    return Promise.resolve();
+  }
+  function oMaTraCuu(h) {
+    var nutChep = nutIcon('chep', 'Sao chép mã tra cứu', function () {
+      saoChepVanBan(h.maTraCuu).then(function () {
+        bao('Đã sao chép mã ' + h.maTraCuu + ' của ' + h.hoTen + '.');
+        nutChep.innerHTML = BIEU_TUONG.xong; nutChep.classList.add('da-chep');
+        setTimeout(function () { nutChep.innerHTML = BIEU_TUONG.chep; nutChep.classList.remove('da-chep'); }, 1500);
+      }, function () { bao('Không sao chép được — hãy chọn và sao chép mã thủ công.', true); });
+    });
+    return the('span', { class: 'o-ma' }, [the('span', { class: 'ma', text: h.maTraCuu }), nutChep,
+      nutIcon('tinNhan', 'Xem tin nhắn gửi phụ huynh', function () { hopTinNhan('Tin nhắn gửi phụ huynh em ' + h.hoTen, tinNhan(h)); })]);
+  }
+
   /* =================== LỚP HỌC =================== */
   var lopMo = '';            // lớp đang xem chi tiết ('' = danh sách lớp)
   function soNgay(s) { var m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s || ''); return m ? +m[3] * 1e4 + +m[2] * 100 + +m[1] : 0; }
@@ -764,9 +798,8 @@
       tb.appendChild(the('tr', {}, [
         the('td', { text: i + 1 }), the('td', { text: h.maHs }), the('td', {}, [the('b', { text: h.hoTen })]),
         the('td', {}, khac.map(function (x) { return the('span', { class: 'chip', text: x }); })),
-        the('td', { text: h.sdt || '' }), the('td', { class: 'ma', text: h.maTraCuu }),
+        the('td', { text: h.sdt || '' }), the('td', {}, [oMaTraCuu(h)]),
         the('td', {}, [
-          the('button', { class: 'phu nho', text: 'Tin nhắn', onclick: function () { hopTinNhan('Tin nhắn gửi phụ huynh em ' + h.hoTen, tinNhan(h)); } }), ' ',
           the('button', { class: 'nguy nho', text: 'Bỏ khỏi lớp', onclick: function () {
             hoi('Bỏ ' + h.hoTen + ' (' + h.maHs + ') khỏi lớp "' + n + '"?\nHọc sinh vẫn còn trong danh sách học sinh' + (khac.length ? ' và các lớp khác.' : '.') + ' Phiếu điểm đã có của lớp này vẫn giữ.', { nut: 'Bỏ khỏi lớp', nguyHiem: true }).then(function (ok) {
               if (ok) goi('gvCapNhatNhom', [h.maHs], n, 'bo').then(capNhat).catch(baoLoi);
@@ -885,10 +918,9 @@
       cb.onchange = function () { if (cb.checked) daChon[h.maHs] = true; else delete daChon[h.maHs]; capNhatChon(); };
       tb.appendChild(the('tr', {}, [
         the('td', {}, [cb]), the('td', { text: i + 1 }), the('td', { text: h.maHs }), the('td', {}, [the('b', { text: h.hoTen })]),
-        the('td', {}, h.nhom.map(function (n) { return the('span', { class: 'chip', text: n }); })), the('td', { text: h.sdt }), the('td', { class: 'ma', text: h.maTraCuu }),
+        the('td', {}, h.nhom.map(function (n) { return the('span', { class: 'chip', text: n }); })), the('td', { text: h.sdt }), the('td', {}, [oMaTraCuu(h)]),
         the('td', {}, [
           the('button', { class: 'phu nho', text: 'Sửa', onclick: function () { moFormHs(h); } }), ' ',
-          the('button', { class: 'phu nho', text: 'Tin nhắn', onclick: function () { hopTinNhan('Tin nhắn gửi phụ huynh em ' + h.hoTen, tinNhan(h)); } }), ' ',
           the('button', { class: 'phu nho', text: 'Cấp lại mã', onclick: function () {
             hoi('Cấp mã tra cứu mới cho ' + h.hoTen + '?\nMã cũ sẽ không dùng được nữa.', { nut: 'Cấp mã mới' }).then(function (ok) { if (!ok) return;
             goi('gvCapLaiMa', h.maHs).then(function (dl) { capNhat(dl); bao('Đã cấp mã mới cho ' + h.hoTen + '. Nhớ gửi lại cho phụ huynh.'); }).catch(baoLoi); });
@@ -1000,11 +1032,7 @@
       return themNhieu(so[ten], {});
     }).catch(baoLoi);
   };
-  $('nutTinNhanTatCa').onclick = function () {
-    var ds = DL.hocSinh.filter(function (h) { return hopLoc(h, $('locLop').value); });
-    if (!ds.length) return bao('Chưa có học sinh.', true);
-    hopTinNhan('Tin nhắn gửi mã (' + ds.length + ' học sinh)', ds.map(tinNhan).join('\n\n--------------------\n\n'));
-  };
+
 
   /* =================== GỬI KẾT QUẢ (không cần chọn lớp: cột "Lớp" trong file) =================== */
   var quyetDinhKq = {}, quyetDinhLop = {};
