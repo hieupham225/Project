@@ -247,17 +247,17 @@
     table.ds tbody tr:not(.nhom-dau):hover td:first-child { box-shadow: inset 3px 0 0 var(--mau); }
   }
   .the-lop h3 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
-  .the-lop .so-lieu { display: flex; gap: 16px; }
+  .the-lop .so-lieu { display: flex; gap: 22px; flex-wrap: wrap; }
   .the-lop .so-lieu div { display: flex; flex-direction: column; }
-  .the-lop .so-lieu b { font-size: 20px; line-height: 1.2; }
-  .the-lop .so-lieu span, .thong-ke span { color: var(--phu); font-size: 12px; }
+  .the-lop .so-lieu b { font-size: 28px; line-height: 1.15; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .the-lop .so-lieu span, .thong-ke span { color: var(--phu); font-size: 13px; }
   .the-lop .gan-nhat { color: var(--phu); font-size: 13px; min-height: 1.4em; }
   .the-lop .nut-lop { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
   .the-lop.trong { cursor: default; align-items: flex-start; border-style: dashed; box-shadow: none; background: #FCFAF6; }
   .the-lop.trong:hover { transform: none; }
-  .thong-ke { display: flex; flex-wrap: wrap; gap: 10px 28px; }
+  .thong-ke { display: flex; flex-wrap: wrap; gap: 12px 32px; }
   .thong-ke div { display: flex; flex-direction: column; }
-  .thong-ke b { font-size: 22px; line-height: 1.2; }
+  .thong-ke b { font-size: 34px; line-height: 1.1; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
   .ds-co-san { max-height: 50vh; overflow: auto; border: 1px solid var(--vien); border-radius: var(--r-phan-tu); margin: 10px 0; }
   .ds-co-san label { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--vien); cursor: pointer; }
   .ds-co-san label:last-child { border-bottom: 0; }
@@ -332,6 +332,8 @@
     .chan-hop { position: sticky; bottom: calc(-18px - env(safe-area-inset-bottom)); background: var(--be-mat); margin: 14px -14px 0; padding: 12px 14px 0; border-top: 1px solid var(--vien); }
     .chan-hop > button { flex: 1 1 0; }
     .chan-hop > .gian { display: none; }
+    .thong-ke { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 12px; }
+    .thong-ke b { font-size: 30px; }
     .tab-con { display: flex; } .tab-con button { flex: 1 1 0; }
     /* Thanh chọn nhiều: dính đáy màn hình; hàng 1 số dòng + ✕, hàng 2 thao tác, hàng 3 đổi lớp */
     .thanh-chon-ghep { top: auto; bottom: calc(10px + env(safe-area-inset-bottom)); gap: 8px 6px; padding: 10px; }
