@@ -31,8 +31,8 @@
     .the { background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); padding: 20px; margin-bottom: 16px; box-shadow: var(--bong-thap); }
     label { display: block; font-weight: 500; font-size: 14px; margin-bottom: 8px; }
     /* Ô mã tra cứu: cao hơn nút, bo góc = 1/2 chiều cao nút "Xem kết quả", chữ nằm giữa */
-    input { width: 100%; font: 600 24px/1 "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing: 4px; text-transform: uppercase; text-align: center; color: var(--chu); height: 64px; padding: 0 16px; border: 1px solid var(--vien-dam); border-radius: calc(var(--cao-nut) / 2); background: var(--be-mat); transition: border-color .125s, box-shadow .125s; }
-    input::placeholder { color: #A4B0BC; font-weight: 400; letter-spacing: 3px; text-align: center; }
+    input { width: 100%; font: 600 clamp(22px, 7.6vw, 30px)/1 "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing: clamp(2px, 1.2vw, 5px); text-transform: uppercase; text-align: center; color: var(--chu); height: 98px; padding: 0 16px; border: 1px solid var(--vien-dam); border-radius: calc(var(--cao-nut) / 2); background: var(--be-mat); transition: border-color .125s, box-shadow .125s; }
+    input::placeholder { color: #A4B0BC; font-weight: 400; font-size: clamp(16px, 5.4vw, 24px); letter-spacing: 2px; text-align: center; }
     input:focus { outline: none; border-color: var(--thuong-hieu); box-shadow: 0 0 0 3px rgba(34,91,255,.18); }
     button { width: 100%; margin-top: 14px; font: 600 16px/22px var(--font); min-height: var(--cao-nut); padding: 0 22px; border: 0; border-radius: var(--r-tron); background: var(--mau); color: var(--tren-mau); cursor: pointer; transition: background-color .125s var(--em), transform .1s; }
     button:hover:not(:disabled) { background: #2E2924; }
