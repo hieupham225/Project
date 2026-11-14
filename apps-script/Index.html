@@ -31,8 +31,14 @@
     .bai button { margin-top: 8px; padding: 10px 12px; font-size: 16px; }
     .chenh { font-size: 13px; font-weight: 700; margin-left: 6px; }
     .chenh.tang { color: #1e8e3e; } .chenh.giam { color: var(--loi); }
-    #bieuDo svg { width: 100%; height: auto; display: block; }
-    #bieuDo .chu-thich { color: var(--phu); font-size: 13px; margin-top: 6px; }
+    .bieu-do svg { width: 100%; height: auto; display: block; }
+    .bieu-do .chu-thich { color: var(--phu); font-size: 13px; margin-top: 6px; }
+    .bieu-do { margin: 4px 0 8px; }
+    .nhom-the h2 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .nhom-the h2 .so { font-size: 13px; color: var(--phu); font-weight: 500; }
+    .muc-con { font-size: 14px; font-weight: 700; color: var(--chu); margin: 14px 0 0; }
+    .tom-tat-nhom { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .tom-tat-nhom a { font-size: 13px; padding: 3px 10px; border-radius: 12px; background: #e8f0fe; color: #174ea6; text-decoration: none; font-weight: 600; }
     table { width: 100%; border-collapse: collapse; }
     td { padding: 9px 4px; border-top: 1px solid var(--vien); vertical-align: top; }
     tr:first-child td { border-top: 0; }
@@ -70,14 +76,7 @@
         <p id="tenHs" class="ten-hs"></p>
         <p id="lopHs" class="lop"></p>
       </div>
-      <div id="khungBieuDo" class="the an">
-        <h2>Tiến bộ qua các bài thi</h2>
-        <div id="bieuDo"></div>
-      </div>
-      <div id="khungPhieu" class="the ds-phieu">
-        <h2>Phiếu kết quả kiểm tra</h2>
-        <div id="dsPhieu"></div>
-      </div>
+      <div id="dsPhieu" class="ds-phieu"></div>
       <div id="dsBang"></div>
       <button id="nutLai" class="phu" type="button">Tra cứu mã khác</button>
     </div>
@@ -170,42 +169,66 @@
       $('nut').disabled = false;
       $('nut').textContent = 'Xem kết quả';
       $('tenHs').textContent = kq.hocSinh.hoTen || 'Học sinh';
-      $('lopHs').textContent = kq.hocSinh.lop ? 'Lớp ' + kq.hocSinh.lop : '';
+      $('lopHs').textContent = (kq.hocSinh.nhom || []).length ? 'Nhóm / lớp: ' + kq.hocSinh.nhom.join(' · ') : '';
 
-      // Nhóm phiếu theo bài thi; bài thi mới nhất lên đầu, trong mỗi bài các lần xếp tăng dần
+      // Mỗi nhóm/môn 1 khối (nhóm có bài thi gần nhất lên đầu); trong khối: biểu đồ tiến bộ + các bài thi + các lần làm
       var dsP = $('dsPhieu');
       dsP.textContent = '';
-      var phieu = kq.phieu || [], theoBai = {}, thuTuBai = [];
+      var phieu = kq.phieu || [], theoNhom = {}, thuTuNhom = [];
       phieu.forEach(function (p) {
-        var k = p.nhom + '|' + p.baiThi;
-        if (!theoBai[k]) { theoBai[k] = []; thuTuBai.push(k); }
-        theoBai[k].push(p);
+        var n = p.nhom || 'Khác';
+        if (!theoNhom[n]) { theoNhom[n] = []; }
+        theoNhom[n].push(p);
+        thuTuNhom = thuTuNhom.filter(function (x) { return x !== n; }).concat([n]);
       });
-      thuTuBai.reverse().forEach(function (k) {
-        var cac = theoBai[k].sort(function (a, b) { return a.lan - b.lan; });
-        var khoi = taoThe('div', 'bai');
-        khoi.appendChild(taoThe('h3', null, cac[0].baiThi));
-        khoi.appendChild(taoThe('p', 'phu-de', (cac[0].nhom ? 'Nhóm ' + cac[0].nhom + ' · ' : '') + (cac.length > 1 ? cac.length + ' lần làm' : '1 lần làm')));
-        cac.slice().reverse().forEach(function (p, i, arr) {
-          var b = taoThe('button', 'phu');
-          b.type = 'button';
-          var trai = taoThe('span', null, '📄 ' + (cac.length > 1 || p.lan > 1 ? 'Lần ' + p.lan : 'Xem phiếu') + (p.ngayThi ? ' · ' + p.ngayThi : ''));
-          b.appendChild(trai);
-          var phai = taoThe('span', 'ngay', p.tongDiem ? p.tongDiem + (p.diemToiDa ? '/' + p.diemToiDa : '') + ' điểm' : '');
-          var truoc = arr[i + 1];
-          if (truoc && p.tongDiem && truoc.tongDiem) {
-            var c = parseFloat(p.tongDiem) - parseFloat(truoc.tongDiem);
-            if (c) phai.appendChild(taoThe('span', 'chenh ' + (c > 0 ? 'tang' : 'giam'), (c > 0 ? '▲ +' : '▼ ') + c.toFixed(2)));
-          }
-          b.appendChild(phai);
-          b.addEventListener('click', function () { moPhieu(p); });
-          khoi.appendChild(b);
+      thuTuNhom.reverse();
+      if (thuTuNhom.length > 1) {
+        var tt = taoThe('div', 'tom-tat-nhom');
+        thuTuNhom.forEach(function (n, i) {
+          var a = taoThe('a', null, n + ' (' + theoNhom[n].length + ')');
+          a.href = '#nhom' + i;
+          a.addEventListener('click', function (e) { e.preventDefault(); $('nhom' + i).scrollIntoView({ behavior: 'smooth' }); });
+          tt.appendChild(a);
         });
-        dsP.appendChild(khoi);
+        $('lopHs').appendChild(tt);
+      }
+      thuTuNhom.forEach(function (n, iN) {
+        var the = taoThe('div', 'the nhom-the');
+        the.id = 'nhom' + iN;
+        var h2 = taoThe('h2', null, '📚 ' + n);
+        h2.appendChild(taoThe('span', 'so', theoNhom[n].length + ' phiếu'));
+        the.appendChild(h2);
+        var bd = veBieuDo(theoNhom[n]);
+        if (bd) { the.appendChild(taoThe('p', 'muc-con', 'Tiến bộ')); the.appendChild(bd); }
+        var theoBai = {}, thuTuBai = [];
+        theoNhom[n].forEach(function (p) {
+          if (!theoBai[p.baiThi]) { theoBai[p.baiThi] = []; thuTuBai.push(p.baiThi); }
+          theoBai[p.baiThi].push(p);
+        });
+        thuTuBai.reverse().forEach(function (b) {
+          var cac = theoBai[b].sort(function (a, c) { return a.lan - c.lan; });
+          var khoi = taoThe('div', 'bai');
+          khoi.appendChild(taoThe('h3', null, b));
+          khoi.appendChild(taoThe('p', 'phu-de', cac.length > 1 ? cac.length + ' lần làm' : '1 lần làm'));
+          cac.slice().reverse().forEach(function (p, i, arr) {
+            var nut = taoThe('button', 'phu');
+            nut.type = 'button';
+            nut.appendChild(taoThe('span', null, '📄 ' + (cac.length > 1 || p.lan > 1 ? 'Lần ' + p.lan : 'Xem phiếu') + (p.ngayThi ? ' · ' + p.ngayThi : '')));
+            var phai = taoThe('span', 'ngay', p.tongDiem ? p.tongDiem + (p.diemToiDa ? '/' + p.diemToiDa : '') + ' điểm' : '');
+            var truoc = arr[i + 1];
+            if (truoc && p.tongDiem && truoc.tongDiem) {
+              var c = parseFloat(p.tongDiem) - parseFloat(truoc.tongDiem);
+              if (c) phai.appendChild(taoThe('span', 'chenh ' + (c > 0 ? 'tang' : 'giam'), (c > 0 ? '▲ +' : '▼ ') + c.toFixed(2)));
+            }
+            nut.appendChild(phai);
+            nut.addEventListener('click', function () { moPhieu(p); });
+            khoi.appendChild(nut);
+          });
+          the.appendChild(khoi);
+        });
+        dsP.appendChild(the);
       });
-      veBieuDo(phieu);
       var coPhieu = phieu.length > 0;
-      $('khungPhieu').classList.toggle('an', !coPhieu);
 
       var ds = $('dsBang');
       ds.textContent = '';
@@ -215,13 +238,12 @@
 
     /* Biểu đồ đường: tổng điểm (quy về thang 10) theo thứ tự thời gian */
     function veBieuDo(phieu) {
-      var khung = $('bieuDo'); khung.textContent = '';
+      var khung = taoThe('div', 'bieu-do');
       var diem = phieu.filter(function (p) { return p.tongDiem !== ''; }).map(function (p) {
         var max = parseFloat(p.diemToiDa) || 10;
         return { v: parseFloat(p.tongDiem) / max * 10, nhan: p.baiThi + ' – Lần ' + p.lan + (p.ngayThi ? ' (' + p.ngayThi + ')' : ''), goc: p.tongDiem + '/' + (p.diemToiDa || 10) };
       });
-      $('khungBieuDo').classList.toggle('an', diem.length < 2);
-      if (diem.length < 2) return;
+      if (diem.length < 2) return null;
       var W = 520, H = 220, L = 34, Rr = 14, T = 16, B = 30;
       var ns = 'http://www.w3.org/2000/svg';
       var svg = document.createElementNS(ns, 'svg');
@@ -251,6 +273,7 @@
       var ct = taoThe('div', 'chu-thich');
       ct.textContent = 'Điểm quy về thang 10. ' + diem.map(function (d, i) { return (i + 1) + ': ' + d.nhan; }).join(' · ');
       khung.appendChild(ct);
+      return khung;
     }
 
     function moPhieu(p) {

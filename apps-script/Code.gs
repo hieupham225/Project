@@ -36,7 +36,8 @@ var CAU_HINH = {
   DIEM_PHAN_II_THEO_SO_Y_DUNG: [0, 0.1, 0.25, 0.5, 1] // 0,1,2,3,4 ý đúng
 };
 
-var COT_HS = ['Mã HS', 'Họ tên', 'Lớp', 'Ngày sinh', 'SĐT phụ huynh', 'Ghi chú', 'Mã tra cứu', 'Ngày tạo'];
+// Cột 3 'Nhóm / lớp': 1 học sinh có thể thuộc nhiều nhóm, viết cách nhau bằng dấu ;  (vd: Toán 2; Tiếng Anh A1)
+var COT_HS = ['Mã HS', 'Họ tên', 'Nhóm / lớp', 'Ngày sinh', 'SĐT phụ huynh', 'Ghi chú', 'Mã tra cứu', 'Ngày tạo'];
 // Mỗi dòng DotThi = 1 LẦN LÀM của 1 bài thi trong 1 nhóm (cùng bài thi có thể làm nhiều lần)
 var COT_DOT = ['Mã đợt', 'Bài thi', 'Lần', 'Nhóm', 'Ngày thi', 'Ngày tạo', 'Số phiếu', 'Công bố', 'Thư mục'];
 var COT_PHIEU = ['Mã phiếu', 'Mã đợt', 'Mã HS', 'Họ tên', 'Tổng điểm', 'Điểm tối đa', 'File ID', 'Thời gian'];
@@ -74,7 +75,7 @@ function traCuu(maNhap) {
   return chayVoiMa_(maNhap, function (ss, hs) {
     return {
       ok: true,
-      hocSinh: { hoTen: hs.hoTen, lop: hs.lop },
+      hocSinh: { hoTen: hs.hoTen, nhom: hs.nhom },
       phieu: phieuDaCongBo_(ss, hs.maHs).map(function (p) {
         return { maPhieu: p.maPhieu, baiThi: p.baiThi, lan: p.lan, nhom: p.nhom, ngayThi: p.ngayThi,
           tongDiem: p.tongDiem, diemToiDa: p.diemToiDa };
@@ -148,7 +149,7 @@ function gvTaiDuLieu() {
       soPhieu: demPhieu[d.maDot] || 0, congBo: d.congBo, thuMuc: d.thuMuc };
   });
   var nhom = {};
-  hocSinh.forEach(function (h) { if (h.lop) nhom[h.lop] = true; });
+  hocSinh.forEach(function (h) { h.nhom.forEach(function (n) { nhom[n] = true; }); });
   dot.forEach(function (d) { if (d.nhom) nhom[d.nhom] = true; });
   return {
     hocSinh: hocSinh,
@@ -186,9 +187,10 @@ function gvLuuHocSinh(hs) {
   if (!hoTen) throw new Error('Vui lòng nhập họ tên học sinh.');
   return voiKhoa_(function () {
     var ss = laySpreadsheet_();
+    khoiTao_(ss);
     var sh = ss.getSheetByName(CAU_HINH.SHEET_HOC_SINH);
     var ds = dsHocSinh_(ss);
-    var duLieu = [hoTen, chuoi_(hs.lop), chuoi_(hs.ngaySinh), chuoi_(hs.sdt), chuoi_(hs.ghiChu)];
+    var duLieu = [hoTen, noiNhom_(tachNhom_(hs.lop)), chuoi_(hs.ngaySinh), chuoi_(hs.sdt), chuoi_(hs.ghiChu)];
     if (hs.maHs) {
       var cu = ds.filter(function (h) { return h.maHs === hs.maHs; })[0];
       if (!cu) throw new Error('Không tìm thấy học sinh ' + hs.maHs + '.');
@@ -200,41 +202,71 @@ function gvLuuHocSinh(hs) {
   });
 }
 
-/** Thêm nhiều học sinh từ bảng 2 chiều (dán từ Excel hoặc đọc file Excel). Bỏ qua em đã có (trùng tên + lớp). */
-function gvThemNhieuHocSinh(bang) {
+/**
+ * Thêm nhiều học sinh từ bảng 2 chiều (dán từ Excel hoặc đọc file Excel).
+ * Một học sinh có thể học nhiều nhóm/môn, nên khi trùng họ tên với học sinh đã có:
+ *   - đã ở cùng nhóm               -> bỏ qua
+ *   - trùng SĐT phụ huynh (1 em)    -> coi là cùng một em, thêm nhóm mới cho em đó
+ *   - còn lại                       -> KHÔNG tự đoán: trả về danh sách cần giáo viên xác nhận
+ * quyetDinh = { số dòng: 'moi' | 'boqua' | Mã HS } là câu trả lời của giáo viên cho các dòng cần xác nhận.
+ */
+function gvThemNhieuHocSinh(bang, quyetDinh) {
   yeuCauGiaoVien_();
+  quyetDinh = quyetDinh || {};
   bang = (bang || []).map(function (r) { return (r || []).map(chuoi_); });
-  // Tìm dòng tiêu đề; nếu không có thì coi cột 1 = Họ tên, 2 = Lớp, 3 = SĐT phụ huynh, 4 = Ngày sinh
+  // Tìm dòng tiêu đề; nếu không có thì coi cột 1 = Họ tên, 2 = Nhóm/lớp, 3 = SĐT phụ huynh, 4 = Ngày sinh
   var c = { ten: 0, lop: 1, sdt: 2, ngaySinh: 3, ghiChu: -1 }, batDau = 0;
   for (var i = 0; i < Math.min(15, bang.length); i++) {
     var k = bang[i].map(khongDau_);
     var cTen = timChiSo_(k, ['hoten', 'hovaten', 'tenhocsinh', 'hotenhocsinh']);
     if (cTen >= 0) {
-      c = { ten: cTen, lop: timChiSo_(k, ['lop', 'loptoan', 'lophoc']), sdt: timChiSo_(k, ['sdtphuhuynh', 'sdt', 'sodienthoai', 'dienthoai', 'sdtph']),
+      c = { ten: cTen, lop: timChiSo_(k, ['nhomlop', 'nhom', 'lop', 'loptoan', 'lophoc']), sdt: timChiSo_(k, ['sdtphuhuynh', 'sdt', 'sodienthoai', 'dienthoai', 'sdtph']),
         ngaySinh: timChiSo_(k, ['ngaysinh']), ghiChu: timChiSo_(k, ['ghichu']) };
       batDau = i + 1;
       break;
     }
   }
+  var o = function (r, j) { return j >= 0 ? (r[j] || '').trim() : ''; };
   return voiKhoa_(function () {
     var ss = laySpreadsheet_();
+    khoiTao_(ss);
     var sh = ss.getSheetByName(CAU_HINH.SHEET_HOC_SINH);
     var ds = dsHocSinh_(ss);
-    var daCo = {};
-    ds.forEach(function (h) { daCo[khongDau_(h.hoTen) + '|' + khongDau_(h.lop)] = true; });
-    var them = [], boQua = 0;
-    bang.slice(batDau).forEach(function (r) {
-      var ten = (r[c.ten] || '').replace(/\s+/g, ' ').trim();
+    var them = [], gop = 0, boQua = 0, canXacNhan = [], capNhat = [];
+    bang.slice(batDau).forEach(function (r, j) {
+      var dong = batDau + j;
+      var ten = o(r, c.ten).replace(/\s+/g, ' ');
       if (!ten) return;
-      var lop = c.lop >= 0 ? r[c.lop] || '' : '';
-      var key = khongDau_(ten) + '|' + khongDau_(lop);
-      if (daCo[key]) { boQua++; return; }
-      daCo[key] = true;
-      them.push([ten, lop, c.ngaySinh >= 0 ? r[c.ngaySinh] || '' : '', c.sdt >= 0 ? r[c.sdt] || '' : '', c.ghiChu >= 0 ? r[c.ghiChu] || '' : '']);
+      var nhom = tachNhom_(o(r, c.lop)), sdt = o(r, c.sdt);
+      var moi = [ten, noiNhom_(nhom), o(r, c.ngaySinh), sdt, o(r, c.ghiChu)];
+      var cung = ds.filter(function (h) { return khongDau_(h.hoTen) === khongDau_(ten); })
+        .concat(them.filter(function (d) { return khongDau_(d[0]) === khongDau_(ten); }).map(function (d) { return { moiThem: d, hoTen: d[0], nhom: tachNhom_(d[1]), sdt: d[3] }; }));
+      var qd = quyetDinh[dong];
+      var chon = null;
+      if (qd === 'boqua') { boQua++; return; }
+      if (qd === 'moi' || !cung.length) { them.push(moi); return; }
+      if (qd) chon = ds.filter(function (h) { return h.maHs === qd; })[0];
+      if (!chon && nhom.length && cung.some(function (h) { return nhom.every(function (n) { return thuocNhom_(h, n); }); })) { boQua++; return; }
+      if (!chon && sdt) {
+        var theoSdt = cung.filter(function (h) { return chuanHoaSdt_(h.sdt) && chuanHoaSdt_(h.sdt) === chuanHoaSdt_(sdt); });
+        if (theoSdt.length === 1) chon = theoSdt[0];
+      }
+      if (!chon) {
+        canXacNhan.push({ dong: dong, hoTen: ten, nhom: noiNhom_(nhom), sdt: sdt,
+          ungVien: cung.filter(function (h) { return h.maHs; }).map(function (h) { return { maHs: h.maHs, hoTen: h.hoTen, nhom: noiNhom_(h.nhom), sdt: h.sdt }; }) });
+        return;
+      }
+      // cùng một em -> thêm nhóm mới cho em đó
+      if (chon.moiThem) { chon.moiThem[1] = noiNhom_(tachNhom_(chon.moiThem[1]).concat(nhom)); gop++; return; }
+      capNhat.push({ hs: chon, nhom: nhom });
+      gop++;
     });
+    if (canXacNhan.length) return { canXacNhan: canXacNhan };
+    capNhat.forEach(function (x) { x.nhom.forEach(function (n) { themNhomChoHs_(sh, x.hs, n); }); });
     themHocSinhVaoSheet_(sh, ds, them);
     var kq = gvTaiDuLieu();
-    kq.thongBao = 'Đã thêm ' + them.length + ' học sinh' + (boQua ? ', bỏ qua ' + boQua + ' em đã có trong danh sách' : '') + '.';
+    kq.thongBao = 'Đã thêm ' + them.length + ' học sinh mới' + (gop ? ', thêm nhóm cho ' + gop + ' em đã có' : '') +
+      (boQua ? ', bỏ qua ' + boQua + ' em đã có trong nhóm' : '') + '.';
     return kq;
   });
 }
@@ -263,8 +295,11 @@ function gvCapLaiMa(maHs) {
   });
 }
 
-/** Chuyển nhiều học sinh sang 1 nhóm. */
-function gvChuyenNhom(dsMaHs, nhom) {
+/**
+ * Cập nhật nhóm cho nhiều học sinh.
+ * hanhDong: 'them' (thêm vào nhóm, giữ nhóm cũ) | 'bo' (bỏ khỏi nhóm) | 'chuyen' (chỉ còn nhóm này)
+ */
+function gvCapNhatNhom(dsMaHs, nhom, hanhDong) {
   yeuCauGiaoVien_();
   nhom = chuoi_(nhom);
   if (!nhom) throw new Error('Vui lòng nhập tên nhóm.');
@@ -274,9 +309,16 @@ function gvChuyenNhom(dsMaHs, nhom) {
     var can = {};
     (dsMaHs || []).forEach(function (m) { can[m] = true; });
     var so = 0;
-    dsHocSinh_(ss).forEach(function (h) { if (can[h.maHs]) { sh.getRange(h.dong, 3).setValue(nhom); so++; } });
+    dsHocSinh_(ss).forEach(function (h) {
+      if (!can[h.maHs]) return;
+      var ds = hanhDong === 'chuyen' ? [nhom]
+        : hanhDong === 'bo' ? h.nhom.filter(function (n) { return khongDau_(n) !== khongDau_(nhom); })
+        : h.nhom.concat([nhom]);
+      sh.getRange(h.dong, 3).setValue(noiNhom_(ds));
+      so++;
+    });
     var kq = gvTaiDuLieu();
-    kq.thongBao = 'Đã chuyển ' + so + ' học sinh sang nhóm "' + nhom + '".';
+    kq.thongBao = (hanhDong === 'bo' ? 'Đã bỏ ' + so + ' học sinh khỏi' : hanhDong === 'chuyen' ? 'Đã chuyển ' + so + ' học sinh sang' : 'Đã thêm ' + so + ' học sinh vào') + ' nhóm "' + nhom + '".';
     return kq;
   });
 }
@@ -289,12 +331,21 @@ function gvDoiTenNhom(cu, moi) {
   return voiKhoa_(function () {
     var ss = laySpreadsheet_();
     var shHs = ss.getSheetByName(CAU_HINH.SHEET_HOC_SINH), shDot = ss.getSheetByName(CAU_HINH.SHEET_DOT);
-    dsHocSinh_(ss).forEach(function (h) { if (h.lop === cu) shHs.getRange(h.dong, 3).setValue(moi); });
+    dsHocSinh_(ss).forEach(function (h) {
+      if (thuocNhom_(h, cu)) shHs.getRange(h.dong, 3).setValue(noiNhom_(h.nhom.map(function (n) { return khongDau_(n) === khongDau_(cu) ? moi : n; })));
+    });
     dsDot_(ss).forEach(function (d) { if (d.nhom === cu) shDot.getRange(d.dong, CD.NHOM).setValue(moi); });
     var kq = gvTaiDuLieu();
     kq.thongBao = 'Đã đổi tên nhóm "' + cu + '" thành "' + moi + '".';
     return kq;
   });
+}
+
+function themNhomChoHs_(sh, hs, nhom) {
+  if (!nhom || thuocNhom_(hs, nhom)) return;
+  hs.nhom = hs.nhom.concat([nhom]);
+  hs.lop = noiNhom_(hs.nhom);
+  sh.getRange(hs.dong, 3).setValue(hs.lop);
 }
 
 /** Ghi các dòng [hoTen, lop, ngaySinh, sdt, ghiChu] vào tab HocSinh, tự sinh Mã HS + mã tra cứu. Trả về Mã HS mới. */
@@ -333,43 +384,53 @@ function gvDocLinkSheet(url) {
   return so;
 }
 
-/** Bước 1: đọc + chấm thử, ghép với danh sách học sinh, kèm HTML xem trước phiếu đầu tiên. */
-function gvXemTruoc(so) {
+/**
+ * Bước 1: đọc + chấm thử, ghép với danh sách học sinh (theo nhóm đang chọn), kèm HTML xem trước phiếu đầu tiên.
+ * Trạng thái mỗi dòng: co (đã có) | moi (học sinh mới) | xacNhan (trùng tên với em ở nhóm khác, cần giáo viên chọn) | loi
+ */
+function gvXemTruoc(so, nhom, quyetDinh) {
   yeuCauGiaoVien_();
   var ss = laySpreadsheet_();
   khoiTao_(ss);
   var kq = phanTichFile_(so);
   if (!kq.ok) return kq;
-  var ghep = ghepDanhSach_(kq.hocSinh, dsHocSinh_(ss));
-  var dauTien = null, demLop = {};
+  var dsHs = dsHocSinh_(ss);
+  var demLop = {};
+  kq.hocSinh.forEach(function (h) { if (h.lop) demLop[h.lop] = (demLop[h.lop] || 0) + 1; });
+  var nhomGoiY = Object.keys(demLop).sort(function (a, b) { return demLop[b] - demLop[a]; })[0] || '';
+  nhom = chuoi_(nhom) || nhomGoiY;
+  var ghep = ghepDanhSach_(kq.hocSinh, dsHs, nhom, quyetDinh);
+  var dauTien = null;
   var dsXem = kq.hocSinh.map(function (h, i) {
     var g = ghep[i];
     var cham = chamBai_(kq, h);
-    if (!dauTien && !g.loi) dauTien = { h: h, cham: cham, hs: g.hs || { hoTen: h.hoTen, lop: h.lop } };
-    var lop = h.lop || (g.hs && g.hs.lop) || '';
-    if (lop) demLop[lop] = (demLop[lop] || 0) + 1;
-    return { stt: h.stt, hoTen: h.hoTen, lop: h.lop, maDe: h.maDe, tongDiem: cham.diem.tong, maxTong: cham.diem.maxTong,
-      trangThai: g.loi ? 'loi' : (g.hs ? 'co' : 'moi'), loi: g.loi || '', maHs: g.hs ? g.hs.maHs : '' };
+    if (!dauTien && !g.loi) dauTien = { h: h, cham: cham, hs: g.hs || { hoTen: h.hoTen } };
+    return { chiSo: i, stt: h.stt, hoTen: h.hoTen, lop: h.lop, maDe: h.maDe, tongDiem: cham.diem.tong, maxTong: cham.diem.maxTong,
+      trangThai: g.loi ? 'loi' : g.ungVien ? 'xacNhan' : (g.hs ? 'co' : 'moi'), loi: g.loi || '',
+      maHs: g.hs ? g.hs.maHs : '', nhomHienTai: g.hs ? noiNhom_(g.hs.nhom) : '',
+      ungVien: (g.ungVien || []).map(function (x) { return { maHs: x.maHs, hoTen: x.hoTen, nhom: noiNhom_(x.nhom), sdt: x.sdt }; }) };
   });
-  var nhomGoiY = Object.keys(demLop).sort(function (a, b) { return demLop[b] - demLop[a]; })[0] || '';
   return {
     ok: true,
     tieuDe: kq.thongTin.tieuDe,
     ngayThi: kq.thongTin.ngayThi,
+    nhom: nhom,
     nhomGoiY: nhomGoiY,
     soCau: { I: kq.cauHoi.I.length, II: kq.cauHoi.II.length, III: kq.cauHoi.III.length },
     canhBao: kq.canhBao,
     hocSinh: dsXem,
     htmlXemTruoc: dauTien ? taoHtmlPhieu_(kq, dauTien.h, dauTien.cham, dauTien.hs, '(xem trước)', layLogo_(),
-      { lan: 1, ngayThi: kq.thongTin.ngayThi, lichSu: [] }) : ''
+      { lan: 1, ngayThi: kq.thongTin.ngayThi, lichSu: [], nhom: nhom }) : ''
   };
 }
 
 /**
  * Bước 2: tạo 1 lần thi.
- * tuyChon = { baiThi, nhom, ngayThi (dd/MM/yyyy), themHsMoi, ghiDe }
+ * tuyChon = { baiThi, nhom, ngayThi (dd/MM/yyyy), themHsMoi, ghiDe, quyetDinh: { chỉ số dòng: 'moi' | Mã HS } }
  *   - Bài thi chưa có trong nhóm -> Lần 1.
  *   - Đã có -> Lần tiếp theo (giữ nguyên các lần trước), hoặc ghi đè lần gần nhất nếu ghiDe = true.
+ *   - Học sinh có phiếu được tự thêm vào nhóm (1 em có thể thuộc nhiều nhóm).
+ * Trả về canTao = [{ i: chỉ số dòng, maHs }] để tạo phiếu theo lô.
  */
 function gvBatDauDot(so, tuyChon) {
   yeuCauGiaoVien_();
@@ -384,6 +445,11 @@ function gvBatDauDot(so, tuyChon) {
   return voiKhoa_(function () {
     var ss = laySpreadsheet_();
     khoiTao_(ss);
+    var shHs = ss.getSheetByName(CAU_HINH.SHEET_HOC_SINH);
+    var ghep = ghepDanhSach_(kq.hocSinh, dsHocSinh_(ss), nhom, tuyChon.quyetDinh);
+    var conXacNhan = ghep.filter(function (g) { return g.ungVien; }).length;
+    if (conXacNhan) return { ok: false, loi: 'Còn ' + conXacNhan + ' học sinh trùng tên cần xác nhận (cùng một em hay học sinh khác).' };
+
     var cacLan = dsDot_(ss).filter(function (d) { return khongDau_(d.nhom) === khongDau_(nhom) && khongDau_(d.baiThi) === khongDau_(baiThi); });
     var lan = 1;
     if (cacLan.length) {
@@ -393,21 +459,19 @@ function gvBatDauDot(so, tuyChon) {
       else lan = ganNhat.lan + 1;
     }
 
-    // Thêm học sinh mới (vào nhóm đã chọn)
-    var shHs = ss.getSheetByName(CAU_HINH.SHEET_HOC_SINH);
-    var ghep = ghepDanhSach_(kq.hocSinh, dsHocSinh_(ss));
-    if (tuyChon.themHsMoi) {
-      var moi = [];
-      kq.hocSinh.forEach(function (h, i) {
-        if (!ghep[i].loi && !ghep[i].hs) {
-          var d = [h.hoTen, nhom, '', '', ''];
-          if (h.maHs) d.maHs = h.maHs;
-          moi.push(d);
-        }
-      });
-      themHocSinhVaoSheet_(shHs, dsHocSinh_(ss), moi);
-      ghep = ghepDanhSach_(kq.hocSinh, dsHocSinh_(ss));
-    }
+    // Học sinh mới -> tạo (thuộc nhóm này); học sinh đã có -> thêm nhóm này nếu chưa có
+    var maTheoDong = {};
+    var dongMoi = [], chiSoMoi = [];
+    kq.hocSinh.forEach(function (h, i) {
+      var g = ghep[i];
+      if (g.hs) { themNhomChoHs_(shHs, g.hs, nhom); maTheoDong[i] = g.hs.maHs; }
+      else if (!g.loi && tuyChon.themHsMoi) {
+        var d = [h.hoTen, nhom, '', h.sdt || '', ''];
+        if (h.maHs) d.maHs = h.maHs;
+        dongMoi.push(d); chiSoMoi.push(i);
+      }
+    });
+    themHocSinhVaoSheet_(shHs, dsHocSinh_(ss), dongMoi).forEach(function (ma, j) { maTheoDong[chiSoMoi[j]] = ma; });
 
     var maDot = 'D' + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyMMddHHmmss') + taoMaNgauNhien_().slice(0, 3);
     var thuMuc = layThuMucGoc_().createFolder(nhom + ' - ' + baiThi + ' - Lần ' + lan + ' (' + maDot + ')');
@@ -417,7 +481,7 @@ function gvBatDauDot(so, tuyChon) {
 
     var canTao = [], boQua = [];
     kq.hocSinh.forEach(function (h, i) {
-      if (ghep[i].hs) canTao.push(i);
+      if (maTheoDong[i]) canTao.push({ i: i, maHs: maTheoDong[i] });
       else boQua.push((h.hoTen || h.maHs) + ': ' + (ghep[i].loi || 'chưa có trong danh sách học sinh'));
     });
     return { ok: true, maDot: maDot, baiThi: baiThi, lan: lan, nhom: nhom, canTao: canTao, boQua: boQua, thuMuc: thuMuc.getUrl() };
@@ -425,7 +489,7 @@ function gvBatDauDot(so, tuyChon) {
 }
 
 /** Bước 3: tạo phiếu PDF cho 1 lô học sinh (gọi nhiều lần để tránh giới hạn 6 phút). */
-function gvTaoPhieuLo(maDot, so, dsChiSo) {
+function gvTaoPhieuLo(maDot, so, dsGhep) {
   yeuCauGiaoVien_();
   var ss = laySpreadsheet_();
   var dsD = dsDot_(ss);
@@ -433,7 +497,8 @@ function gvTaoPhieuLo(maDot, so, dsChiSo) {
   if (!dot) throw new Error('Không tìm thấy lần thi.');
   var kq = phanTichFile_(so);
   if (!kq.ok) throw new Error(kq.loi);
-  var ghep = ghepDanhSach_(kq.hocSinh, dsHocSinh_(ss));
+  var theoMa = {};
+  dsHocSinh_(ss).forEach(function (x) { theoMa[x.maHs] = x; });
   var thuMuc = DriveApp.getFolderById(layIdTuLink_(dot.thuMuc));
   var logo = layLogo_();
 
@@ -445,16 +510,16 @@ function gvTaoPhieuLo(maDot, so, dsChiSo) {
   var phieuTruoc = dsPhieu_(ss).filter(function (p) { return lanTruoc[p.maDot]; });
 
   var dongMoi = [], loi = [];
-  (dsChiSo || []).forEach(function (i) {
-    var h = kq.hocSinh[i], g = ghep[i];
-    if (!h || !g || !g.hs) { loi.push((h && h.hoTen) + ': chưa có trong danh sách học sinh'); return; }
+  (dsGhep || []).forEach(function (x) {
+    var h = kq.hocSinh[x.i], g = { hs: theoMa[x.maHs] };
+    if (!h || !g.hs) { loi.push((h && h.hoTen) + ': chưa có trong danh sách học sinh'); return; }
     try {
       var cham = chamBai_(kq, h);
       var maPhieu = maDot + '-' + g.hs.maHs;
       var lichSu = phieuTruoc.filter(function (p) { return p.maHs === g.hs.maHs; })
         .map(function (p) { return { lan: lanTruoc[p.maDot].lan, ngayThi: lanTruoc[p.maDot].ngayThi, tong: p.tongDiem }; })
         .sort(function (a, b) { return a.lan - b.lan; });
-      var html = taoHtmlPhieu_(kq, h, cham, g.hs, maPhieu, logo, { lan: dot.lan, ngayThi: dot.ngayThi, lichSu: lichSu });
+      var html = taoHtmlPhieu_(kq, h, cham, g.hs, maPhieu, logo, { lan: dot.lan, ngayThi: dot.ngayThi, lichSu: lichSu, nhom: dot.nhom });
       var ten = dot.baiThi + ' - Lần ' + dot.lan + ' - ' + g.hs.hoTen + ' - ' + g.hs.maHs;
       var pdf = thuMuc.createFile(Utilities.newBlob(html, MimeType.HTML, ten + '.html').getAs(MimeType.PDF).setName(ten + '.pdf'));
       dongMoi.push([maPhieu, maDot, g.hs.maHs, g.hs.hoTen, cham.diem.tong, cham.diem.maxTong, pdf.getId(), new Date()]);
@@ -595,6 +660,7 @@ function phanTichFile_(so) {
     lop: timChiSo_(hk, ['lop', 'loptoan', 'lophoc']), maDe: timChiSo_(hk, ['made', 'madethi']),
     p1: timChiSo_(hk, ['diemphani', 'diemphan1', 'diemp1']), p2: timChiSo_(hk, ['diemphanii', 'diemphan2', 'diemp2']),
     p3: timChiSo_(hk, ['diemphaniii', 'diemphan3', 'diemp3']), tong: timChiSo_(hk, ['tongdiem', 'diemtong']),
+    sdt: timChiSo_(hk, ['sdtphuhuynh', 'sdt', 'sodienthoai', 'sdtph']),
     uu: timChiSo_(hk, ['uudiem']), nhuoc: timChiSo_(hk, ['nhuocdiem']),
     khacPhuc: timChiSo_(hk, ['huongkhacphuc', 'khacphuc']), loiKhuyen: timChiSo_(hk, ['loikhuyen'])
   };
@@ -620,7 +686,7 @@ function phanTichFile_(so) {
     var traLoi = {};
     cotCau.forEach(function (x) { traLoi[x.phan + '.' + x.cau] = lay(r, x.j); });
     hocSinh.push({
-      chiSo: hocSinh.length, stt: lay(r, ck.stt), maHs: maHs, hoTen: ten, lop: lay(r, ck.lop), maDe: lay(r, ck.maDe),
+      chiSo: hocSinh.length, stt: lay(r, ck.stt), maHs: maHs, hoTen: ten, lop: lay(r, ck.lop), maDe: lay(r, ck.maDe), sdt: lay(r, ck.sdt),
       traLoi: traLoi,
       diemNhap: { p1: lay(r, ck.p1), p2: lay(r, ck.p2), p3: lay(r, ck.p3), tong: lay(r, ck.tong) },
       nhanXet: { uu: lay(r, ck.uu), nhuoc: lay(r, ck.nhuoc), khacPhuc: lay(r, ck.khacPhuc), loiKhuyen: lay(r, ck.loiKhuyen) }
@@ -691,7 +757,7 @@ function taoHtmlPhieu_(kq, h, cham, hs, maPhieu, logo, lanThi) {
     trungTam: cd.tenTrungTam || '', khauHieu: cd.khauHieu || '', logo: logo || '',
     tieuDe: kq.thongTin.tieuDe, moTa: kq.thongTin.moTa, nhanLop: kq.thongTin.nhanLop,
     tenPhan: kq.thongTin.tenPhan, moTaPhan: kq.thongTin.moTaPhan,
-    stt: h.stt, hoTen: hs.hoTen || h.hoTen, lop: h.lop || hs.lop || '', maDe: h.maDe,
+    stt: h.stt, hoTen: hs.hoTen || h.hoTen, lop: lanThi.nhom || h.lop || '', maDe: h.maDe,
     cham: cham, nhanXet: h.nhanXet, maPhieu: maPhieu,
     lan: lanThi.lan, ngayThi: lanThi.ngayThi, lichSu: lanThi.lichSu,
     chenhLech: truoc ? (chenhLech > 0 ? '+' : '') + dinhDangDiem_(chenhLech) : '',
@@ -701,27 +767,42 @@ function taoHtmlPhieu_(kq, h, cham, hs, maPhieu, logo, lanThi) {
   return t.evaluate().getContent();
 }
 
-/** Ghép từng dòng kết quả với danh sách học sinh. Trả về [{hs} | {loi} | {} (học sinh mới)]. */
-function ghepDanhSach_(dsKq, dsHs) {
+/**
+ * Ghép từng dòng kết quả với danh sách học sinh. Trả về mỗi dòng 1 trong:
+ *   {hs}        đã xác định học sinh
+ *   {}          học sinh mới
+ *   {ungVien}   trùng họ tên với học sinh NGOÀI nhóm -> cần giáo viên xác nhận (tránh ghép nhầm 2 em khác nhau)
+ *   {loi}
+ * Thứ tự: quyết định của giáo viên > Mã HS > trùng tên trong nhóm > trùng tên + SĐT phụ huynh.
+ */
+function ghepDanhSach_(dsKq, dsHs, nhom, quyetDinh) {
+  quyetDinh = quyetDinh || {};
   var daGap = {};
-  return dsKq.map(function (h) {
-    var r = {};
+  var ghepMot = function (h, i) {
+    var qd = quyetDinh[i];
+    if (qd === 'moi') return {};
+    if (qd) { var x = dsHs.filter(function (hs) { return hs.maHs === qd; })[0]; if (x) return { hs: x }; }
     if (h.maHs) {
-      var theoMa = dsHs.filter(function (x) { return x.maHs === h.maHs; });
-      if (theoMa.length) r.hs = theoMa[0];
+      var theoMa = dsHs.filter(function (hs) { return hs.maHs === h.maHs; });
+      return theoMa.length ? { hs: theoMa[0] } : {};
     }
-    if (!r.hs && h.hoTen) {
-      var ten = khongDau_(h.hoTen);
-      var theoTen = dsHs.filter(function (x) { return khongDau_(x.hoTen) === ten; });
-      if (theoTen.length > 1 && h.lop) {
-        theoTen = theoTen.filter(function (x) { return khongDau_(x.lop) === khongDau_(h.lop); });
-      }
-      if (theoTen.length === 1) r.hs = theoTen[0];
-      else if (theoTen.length > 1) r.loi = 'Trùng họ tên với học sinh khác, hãy điền cột "Mã HS"';
+    var ten = khongDau_(h.hoTen);
+    var cung = dsHs.filter(function (hs) { return khongDau_(hs.hoTen) === ten; });
+    if (!cung.length) return {};
+    var trongNhom = nhom ? cung.filter(function (hs) { return thuocNhom_(hs, nhom); }) : [];
+    if (trongNhom.length === 1) return { hs: trongNhom[0] };
+    if (trongNhom.length > 1) return { loi: 'Nhóm có ' + trongNhom.length + ' học sinh trùng họ tên, hãy điền cột "Mã HS"' };
+    if (h.sdt) {
+      var theoSdt = cung.filter(function (hs) { return chuanHoaSdt_(hs.sdt) && chuanHoaSdt_(hs.sdt) === chuanHoaSdt_(h.sdt); });
+      if (theoSdt.length === 1) return { hs: theoSdt[0] };
     }
-    var khoa = r.hs ? 'ma:' + r.hs.maHs : 'ten:' + khongDau_(h.hoTen) + '|' + khongDau_(h.lop);
-    if (!r.loi && daGap[khoa]) r = { loi: 'Học sinh xuất hiện 2 lần trong file' };
-    daGap[khoa] = true;
+    return { ungVien: cung };
+  };
+  return dsKq.map(function (h, i) {
+    var r = ghepMot(h, i);
+    var khoa = r.hs ? 'ma:' + r.hs.maHs : null;
+    if (khoa && daGap[khoa]) r = { loi: 'Học sinh xuất hiện 2 lần trong file' };
+    if (khoa) daGap[khoa] = true;
     return r;
   });
 }
@@ -758,7 +839,7 @@ function dsHocSinh_(ss) {
   var sh = ss.getSheetByName(CAU_HINH.SHEET_HOC_SINH);
   if (!sh || sh.getLastRow() < 2) return [];
   return sh.getRange(2, 1, sh.getLastRow() - 1, COT_HS.length).getDisplayValues().map(function (r, i) {
-    return { dong: i + 2, maHs: r[0].trim(), hoTen: r[1].trim(), lop: r[2].trim(), ngaySinh: r[3].trim(), sdt: r[4].trim(),
+    return { dong: i + 2, maHs: r[0].trim(), hoTen: r[1].trim(), lop: r[2].trim(), nhom: tachNhom_(r[2]), ngaySinh: r[3].trim(), sdt: r[4].trim(),
       ghiChu: r[5].trim(), maTraCuu: r[6].trim(), ngayTao: r[7].trim() };
   }).filter(function (h) { return h.maHs; });
 }
@@ -813,6 +894,25 @@ function voiKhoa_(fn) {
  * ===================================================================== */
 
 function chuoi_(x) { return x == null ? '' : String(x).trim(); }
+
+/** "Toán 2; Tiếng Anh A1" -> ['Toán 2', 'Tiếng Anh A1'] (bỏ trùng, chấp nhận ; hoặc ,) */
+function tachNhom_(s) {
+  var daCo = {}, ds = [];
+  String(s == null ? '' : s).split(/[;,\n]/).forEach(function (x) {
+    x = x.replace(/\s+/g, ' ').trim();
+    if (x && !daCo[khongDau_(x)]) { daCo[khongDau_(x)] = true; ds.push(x); }
+  });
+  return ds;
+}
+
+function noiNhom_(ds) { return tachNhom_((ds || []).join(';')).join('; '); }
+
+function thuocNhom_(hs, nhom) {
+  var k = khongDau_(nhom);
+  return (hs.nhom || tachNhom_(hs.lop)).some(function (n) { return khongDau_(n) === k; });
+}
+
+function chuanHoaSdt_(s) { return String(s || '').replace(/\D/g, '').replace(/^84/, '0'); }
 
 /** Bỏ dấu, chữ thường, bỏ ký tự không phải chữ/số — để so tên cột, tên tab, họ tên. */
 function khongDau_(s) {

@@ -1,6 +1,7 @@
 # Hệ thống phiếu kết quả học tập — tra cứu riêng cho từng phụ huynh
 
-Giáo viên **quản lý học sinh theo nhóm** và **gửi file Excel kết quả thi**. Một nhóm có thể làm **nhiều bài thi**, và mỗi bài thi có thể **làm nhiều lần**. Hệ thống tự đọc kết quả, chấm và tính điểm,
+Giáo viên **quản lý học sinh theo nhóm/lớp** và **gửi file Excel kết quả thi**. Một nhóm có thể làm **nhiều bài thi**, và mỗi bài thi có thể **làm nhiều lần**.
+Một học sinh có thể học **nhiều nhóm/môn**, nhưng **chỉ có một mã tra cứu**: phụ huynh nhập một mã là xem được điểm của mọi môn. Hệ thống tự đọc kết quả, chấm và tính điểm,
 xuất **một phiếu PDF cho mỗi học sinh** (có gắn mã phiếu). Phụ huynh nhập **mã tra cứu riêng** và **chỉ xem được phiếu của con mình**.
 
 ```
@@ -14,6 +15,8 @@ Thẻ Tổng hợp: bảng điểm cả nhóm qua mọi bài thi / lần làm, t
 
 Cách tổ chức dữ liệu:
 ```
+Học sinh Nguyễn Văn An ── 1 mã tra cứu ── thuộc nhóm: Toán 2 · Tiếng Anh A1 · Hóa 2
+
 Nhóm (vd "Toán 2")
  ├─ Bài thi "Phân tích bài thi tháng 9"
  │    ├─ Lần 1 (28/09) ── phiếu PDF của từng học sinh
@@ -85,13 +88,28 @@ Nhóm (vd "Toán 2")
 |---|---|
 | Thêm 1 học sinh | **+ Thêm học sinh**, nhập họ tên, lớp, SĐT phụ huynh… Mã HS và mã tra cứu được tự cấp. |
 | Thêm cả nhóm | **Thêm nhiều / nhập Excel**: dán các cột *Họ tên – Nhóm/lớp – SĐT phụ huynh* từ Excel, hoặc chọn file Excel danh sách lớp. |
-| Chuyển học sinh sang nhóm khác | Tích chọn các em → nhập tên nhóm → **Chuyển sang nhóm**. |
+| Học sinh học nhiều nhóm/môn | Ô "Nhóm / lớp" ghi nhiều nhóm, cách nhau bằng dấu `;` (vd `Toán 2; Tiếng Anh A1`). Mỗi em vẫn chỉ có **một** mã tra cứu. |
+| Thêm / bỏ / chuyển nhóm hàng loạt | Tích chọn các em → nhập tên nhóm → **Thêm vào nhóm** (giữ các nhóm cũ), **Bỏ khỏi nhóm**, hoặc **Chuyển hẳn sang nhóm**. |
 | Đổi tên nhóm | Chọn nhóm ở bộ lọc → **Đổi tên nhóm**. Các bài thi của nhóm được đổi theo. |
 | Gửi mã cho phụ huynh | **Tin nhắn** (từng em) hoặc **Tin nhắn gửi mã (cả lớp)**, rồi **Sao chép** và nhắn **riêng 1-1** qua Zalo. |
 | Phụ huynh làm lộ mã hoặc quên mã | **Cấp lại mã**: mã cũ hết hiệu lực ngay. Nhớ gửi mã mới cho phụ huynh. |
 | Sửa / xóa | Nút **Sửa** / **Xóa** trên từng dòng. Tìm nhanh bằng ô tìm kiếm và bộ lọc lớp. |
 
 Không nhập danh sách trước cũng được: lần đầu gửi kết quả thi, hệ thống sẽ tự thêm học sinh mới vào danh sách.
+
+### Học sinh trùng tên — chống ghép nhầm
+Khi thêm học sinh hoặc gửi kết quả của **nhóm/môn khác**, hệ thống phải biết "Nguyễn Văn An" trong file là em đã có hay là một em khác.
+Nếu ghép nhầm hai em khác nhau, phụ huynh này sẽ thấy điểm của con người khác. Vì vậy hệ thống **chỉ tự ghép khi chắc chắn**:
+
+| Trường hợp | Hệ thống làm gì |
+|---|---|
+| File có cột **Mã HS** | Ghép đúng em có mã đó |
+| Trùng tên với một em **đã ở trong nhóm này** | Tự ghép |
+| Trùng tên và trùng **SĐT phụ huynh** | Tự ghép và thêm nhóm mới cho em đó |
+| Trùng tên với em ở **nhóm khác**, không có gì khác để đối chiếu | **Hỏi giáo viên**: "Cùng một em" (dùng chung mã tra cứu) hay "Học sinh khác" (tạo mã riêng) |
+| Trong cùng một nhóm có hai em trùng họ tên | Báo lỗi, cần điền cột Mã HS |
+
+Mẹo: thêm cột `Mã HS` hoặc `SĐT phụ huynh` vào file kết quả để hệ thống tự ghép, không phải xác nhận.
 
 ---
 
@@ -102,7 +120,7 @@ Dùng file mẫu [`mau/Mau_ket_qua_thi.xlsx`](mau/Mau_ket_qua_thi.xlsx), hoặc 
 
 | Tab | Nội dung |
 |---|---|
-| **KetQua** | Mỗi học sinh một dòng: `STT`, `Mã HS` (nên có), `Họ và tên`, `Lớp`, `Mã đề`, đáp án học sinh chọn `I.1…I.12`, `II.1…II.4` (vd `Đ,S,Đ,S`), `III.1…III.6`, các cột điểm, `Ưu điểm`, `Nhược điểm`, `Hướng khắc phục`, `Lời khuyên`. |
+| **KetQua** | Mỗi học sinh một dòng: `STT`, `Mã HS` (nên có), `Họ và tên`, `Lớp`, `SĐT phụ huynh` (tùy chọn, giúp nhận đúng học sinh), `Mã đề`, đáp án học sinh chọn `I.1…I.12`, `II.1…II.4` (vd `Đ,S,Đ,S`), `III.1…III.6`, các cột điểm, `Ưu điểm`, `Nhược điểm`, `Hướng khắc phục`, `Lời khuyên`. |
 | **DeThi** | Mỗi câu một dòng: `Phần` (I/II/III), `Câu`, `Chủ đề kiến thức`, `Mức độ`, `Nội dung phân tích cụ thể`, `Đáp án đúng`. Nhiều mã đề thì thêm cột `Đáp án mã 106`, `Đáp án mã 107`… |
 | **ThongTin** | Tiêu đề phiếu (cũng là tên bài thi mặc định), mô tả, **ngày thi**, nhãn lớp, thang điểm, mô tả từng phần. |
 | HuongDan | Hướng dẫn điền, hệ thống không đọc tab này. |
@@ -118,7 +136,8 @@ Muốn thêm hoặc bớt câu: thêm/xóa cột trong KetQua (vd `I.13`) và d�
 
 ### C2. Các bước
 1. **Chọn file Excel** (hoặc dán link Google Sheet). Hệ thống đọc và hiện bảng kiểm tra cho từng học sinh: tổng điểm và trạng thái
-   *✔ đã có trong danh sách* / *Mới — sẽ thêm* / *Lỗi* (ví dụ trùng tên mà không có Mã HS).
+   *✔ đã có* / *Mới — sẽ thêm vào nhóm* / *⚠ Trùng tên — chọn…* (xem mục "Học sinh trùng tên" ở trên) / *Lỗi*.
+   Học sinh đã có nhưng chưa thuộc nhóm này sẽ được tự thêm vào nhóm.
 2. Bấm **👁 Xem thử phiếu** để xem phiếu của học sinh đầu tiên.
 3. Chọn **Nhóm**, **Tên bài thi** và **Ngày thi**. Hệ thống báo ngay kết quả này sẽ là lần làm thứ mấy:
    - 🆕 **Bài thi mới** của nhóm: ghi thành **Lần 1**.
@@ -143,7 +162,7 @@ Chọn nhóm để xem bảng **học sinh × (bài thi, lần làm)** theo th�
 ## D. Phụ huynh tra cứu
 1. Mở link trang tra cứu (link chung của lớp).
 2. Nhập mã tra cứu đã nhận riêng, ví dụ `K7X9-2QMP`.
-3. Trang hiện **biểu đồ tiến bộ** và danh sách phiếu, xếp theo từng bài thi. Mỗi bài có các lần làm, kèm điểm và mức tăng/giảm so với lần trước.
+3. Trang hiện kết quả **theo từng nhóm/môn** mà con đang học. Mỗi nhóm có **biểu đồ tiến bộ riêng** và danh sách phiếu, xếp theo từng bài thi. Mỗi bài có các lần làm, kèm điểm và mức tăng/giảm so với lần trước.
    Chỉ hiện các lần **đã công bố**. Bấm vào một phiếu để xem ngay trên điện thoại, hoặc bấm **Tải PDF**.
 
 ---
@@ -175,4 +194,4 @@ tools/
 docs/                    Ảnh minh họa
 ```
 
-Dữ liệu được lưu trong các tab của Google Sheet: `HocSinh` (cột "Lớp" là nhóm), `DotThi` (mỗi dòng là một lần làm của một bài thi), `PhieuKetQua`. Nên thao tác qua bảng điều khiển; sửa trực tiếp trên tab sẽ có cảnh báo.
+Dữ liệu được lưu trong các tab của Google Sheet: `HocSinh` (cột "Nhóm / lớp" ghi các nhóm, cách nhau bằng `;`), `DotThi` (mỗi dòng là một lần làm của một bài thi), `PhieuKetQua`. Nên thao tác qua bảng điều khiển; sửa trực tiếp trên tab sẽ có cảnh báo.
