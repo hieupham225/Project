@@ -156,6 +156,10 @@
   button.nut-icon { width: var(--cao-nho); height: var(--cao-nho); min-height: 0; padding: 0; flex: none; border-radius: var(--r-tron); background: var(--mau-nhat); color: var(--chu); }
   button.nut-icon:hover:not(:disabled) { background: rgba(21,17,12,.14); }
   button.nut-icon.da-chep, button.nut-icon.da-chep:hover:not(:disabled) { background: var(--xanh-nen); color: var(--xanh-chu); }
+  /* Thao tác trên dòng học sinh: Cấp lại mã bên trái, Sửa · Xóa bên phải */
+  .cum-thao-tac { display: flex; align-items: center; gap: 6px; width: 100%; }
+  .cum-thao-tac .gian { flex: 1; min-width: 12px; }
+  td > .cum-thao-tac { flex: 1 1 100%; }
   /* Tab Lớp học */
   .luoi-lop { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
   .the-lop { background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); padding: 18px; box-shadow: var(--bong-thap); display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: box-shadow .125s var(--em), transform .125s var(--em); }
@@ -919,17 +923,18 @@
       tb.appendChild(the('tr', {}, [
         the('td', {}, [cb]), the('td', { text: i + 1 }), the('td', { text: h.maHs }), the('td', {}, [the('b', { text: h.hoTen })]),
         the('td', {}, h.nhom.map(function (n) { return the('span', { class: 'chip', text: n }); })), the('td', { text: h.sdt }), the('td', {}, [oMaTraCuu(h)]),
-        the('td', {}, [
-          the('button', { class: 'phu nho', text: 'Sửa', onclick: function () { moFormHs(h); } }), ' ',
+        the('td', {}, [the('div', { class: 'cum-thao-tac' }, [
           the('button', { class: 'phu nho', text: 'Cấp lại mã', onclick: function () {
             hoi('Cấp mã tra cứu mới cho ' + h.hoTen + '?\nMã cũ sẽ không dùng được nữa.', { nut: 'Cấp mã mới' }).then(function (ok) { if (!ok) return;
             goi('gvCapLaiMa', h.maHs).then(function (dl) { capNhat(dl); bao('Đã cấp mã mới cho ' + h.hoTen + '. Nhớ gửi lại cho phụ huynh.'); }).catch(baoLoi); });
-          } }), ' ',
+          } }),
+          the('span', { class: 'gian' }),
+          the('button', { class: 'phu nho', text: 'Sửa', onclick: function () { moFormHs(h); } }),
           the('button', { class: 'nguy nho', text: 'Xóa', onclick: function () {
             hoi('Xóa học sinh ' + h.hoTen + ' (' + h.maHs + ')?\nPhụ huynh sẽ không tra cứu được nữa.', { nut: 'Xóa', nguyHiem: true }).then(function (ok) { if (!ok) return;
             goi('gvXoaHocSinh', h.maHs).then(function (dl) { capNhat(dl); bao('Đã xóa ' + h.hoTen + '.'); }).catch(baoLoi); });
           } })
-        ])
+        ])])
       ]));
     });
   }
