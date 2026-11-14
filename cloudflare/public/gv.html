@@ -1716,26 +1716,23 @@
         tb.appendChild(the('tr', { class: 'nhom-dau' }, [the('td', { colspan: 7, text: '👥 Lớp: ' + (d.nhom || '(chưa đặt)') })]));
         nhomTruoc = d.nhom; baiTruoc = null;
       }
-      var cb = the('input', { type: 'checkbox' }); cb.checked = d.congBo;
-      cb.onchange = function () {
-        if (!cb.checked && !cb.dataset.daHoi) { // bỏ tích = ẩn khỏi phụ huynh -> hỏi trước
-          cb.checked = true;
-          return hoi('Ẩn ' + tenLanThi(d) + ' (lớp ' + d.nhom + ') khỏi phụ huynh?\nPhụ huynh sẽ không xem được ' + d.soPhieu + ' phiếu của lần này cho tới khi công bố lại.', { nut: 'Ẩn khỏi phụ huynh', nguyHiem: true })
-            .then(function (ok) { if (ok) { cb.dataset.daHoi = '1'; cb.checked = false; cb.onchange(); } });
-        }
-        delete cb.dataset.daHoi;
-        goi('gvCongBo', d.maDot, cb.checked).then(function (dl) { capNhat(dl); bao((cb.checked ? 'Đã công bố ' : 'Đã ẩn ') + tenLanThi(d) + '.'); })
-          .catch(function (e) { cb.checked = !cb.checked; baoLoi(e); });
-      };
+      var nutCongBo = d.congBo
+        ? the('button', { class: 'phu nho', text: 'Ngừng công bố', onclick: function () {
+            hoi('Ngừng công bố ' + tenLanThi(d) + ' (lớp ' + d.nhom + ')?\nPhụ huynh sẽ không xem được ' + d.soPhieu + ' phiếu của lần này cho tới khi công bố lại.', { nut: 'Ngừng công bố', nguyHiem: true })
+              .then(function (ok) { if (ok) doiCongBo(d, false, nutCongBo); });
+          } })
+        : the('button', { class: 'nho', text: 'Công bố', disabled: d.soPhieu ? null : '', title: d.soPhieu ? '' : 'Lần này chưa có phiếu', onclick: function () { doiCongBo(d, true, nutCongBo); } });
+      if (d.soPhieu) nutCongBo.removeAttribute('disabled');
       tb.appendChild(the('tr', {}, [
         the('td', {}, [d.baiThi !== baiTruoc ? the('b', { text: d.baiThi }) : the('span', { class: 'goi-y', text: '〃' })]),
         the('td', { text: 'Lần ' + d.lan }), the('td', { text: d.ngayThi }), the('td', { text: d.soPhieu }),
-        the('td', {}, [the('label', {}, [cb, d.congBo ? ' Đã công bố' : ' Chưa công bố'])]),
+        the('td', {}, [the('span', { class: 'nhan ' + (d.congBo ? 'co' : 'moi'), text: d.congBo ? 'Đã công bố' : 'Chưa công bố' })]),
         the('td', {}, [d.soPhieu ? the('button', { class: 'phu nho', text: 'Xem phiếu', onclick: function () { hopDsPhieu(d); } }) : '']),
-        the('td', {}, [the('button', { class: 'nguy nho', text: 'Xóa lần này', onclick: function () {
-          hoi('Xóa ' + tenLanThi(d) + ' (lớp ' + d.nhom + ') và ' + d.soPhieu + ' phiếu?', { nut: 'Xóa', nguyHiem: true }).then(function (ok) { if (!ok) return;
-          goi('gvXoaDot', d.maDot).then(function (dl) { capNhat(dl); bao('Đã xóa.'); }).catch(baoLoi); });
-        } })])
+        the('td', {}, [the('div', { class: 'cum-thao-tac' }, [nutCongBo, the('span', { class: 'gian' }),
+          the('button', { class: 'nguy nho', text: 'Xóa lần này', onclick: function () {
+            hoi('Xóa ' + tenLanThi(d) + ' (lớp ' + d.nhom + ') và ' + d.soPhieu + ' phiếu?', { nut: 'Xóa', nguyHiem: true }).then(function (ok) { if (!ok) return;
+            goi('gvXoaDot', d.maDot).then(function (dl) { capNhat(dl); bao('Đã xóa.'); }).catch(baoLoi); });
+          } })])])
       ]));
       baiTruoc = d.baiThi;
     });
@@ -1759,6 +1756,13 @@
       moHop(tenLanThi(d) + ' · lớp ' + d.nhom + ' (' + ds.length + ' phiếu)', the('table', { class: 'ds' }, [
         the('thead', {}, [the('tr', {}, [the('th', { text: 'Học sinh' }), the('th', { text: 'Mã HS' }), the('th', { text: 'Tổng điểm' }), the('th', {})])]), tb]));
     }).catch(baoLoi);
+  }
+
+  function doiCongBo(d, congBo, nut) {
+    nut.disabled = true;
+    goi('gvCongBo', d.maDot, congBo).then(function (dl) {
+      capNhat(dl); bao((congBo ? 'Đã công bố ' : 'Đã ngừng công bố ') + tenLanThi(d) + ' · lớp ' + d.nhom + '.');
+    }).catch(function (e) { nut.disabled = false; baoLoi(e); });
   }
 
   /* =================== TỔNG HỢP: học sinh × (bài thi, lần) =================== */
