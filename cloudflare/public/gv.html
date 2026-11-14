@@ -191,7 +191,16 @@
   .muc-lop.tao-moi .o-tick { border-color: var(--thuong-hieu); }
   .muc-lop.trong { cursor: default; }
   /* "Chọn tất cả" ẩn cho tới khi chọn ít nhất 1 học sinh */
-  table.ds:not(.co-chon) #chonTatCa { visibility: hidden; }
+  table.ds:not(.co-chon) .chon-tat-ca { visibility: hidden; }
+  /* Bảng ghép: chọn nhiều dòng */
+  .thanh-chon-ghep { position: sticky; top: 56px; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 10px; padding: 10px 12px; border-radius: var(--r-phan-tu); background: #0A1317; color: #fff; box-shadow: var(--bong-cao); }
+  .thanh-chon-ghep button.phu { background: rgba(255,255,255,.14); color: #fff; }
+  .thanh-chon-ghep button.phu:hover:not(:disabled) { background: rgba(255,255,255,.24); }
+  .thanh-chon-ghep button:not(.phu) { background: #fff; color: #0A1317; }
+  .thanh-chon-ghep .doi-lop { display: inline-flex; gap: 6px; align-items: center; }
+  .thanh-chon-ghep select.qd { width: auto; max-width: 180px; height: var(--cao-nho); }
+  tr.dang-chon td { background: var(--xanh-duong-nen) !important; }
+  .chu-ngan { display: none; }
   /* Tab Lớp học */
   .luoi-lop { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
   .the-lop { background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); padding: 18px; box-shadow: var(--bong-thap); display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: box-shadow .125s var(--em), transform .125s var(--em); }
@@ -244,7 +253,7 @@
     table.ds:not(.th) { display: block; background: none; }
     table.ds:not(.th) tbody { display: block; }
     table.ds:not(.th) thead { display: block; }
-    table.ds:not(.th) thead:not(:has(input)), table.ds:not(.co-chon) thead:has(#chonTatCa) { display: none; }
+    table.ds:not(.th) thead:not(:has(input)), table.ds:not(.co-chon) thead:has(.chon-tat-ca) { display: none; }
     table.ds:not(.th) thead tr { display: flex; }
     table.ds:not(.th) thead th { display: none; }
     table.ds:not(.th) thead th:has(input) { display: flex; align-items: center; gap: 8px; position: static; background: none; padding: 0 4px 10px; border: 0; }
@@ -270,6 +279,7 @@
     /* Đầu trang: tiêu đề và nút cùng hàng (nút rút gọn chữ); tìm kiếm + lọc cùng hàng bên dưới */
     .hang-tieu-de h1 { font-size: 22px; }
     .chu-dai { display: none; }
+    .chu-ngan { display: inline; }
     .hang-loc { margin-top: 12px; }
     .hang-loc input[type=search] { flex: 1 1 auto; }
     .hang-loc select { flex: 0 1 44%; }
@@ -281,6 +291,19 @@
     .chan-hop { position: sticky; bottom: calc(-18px - env(safe-area-inset-bottom)); background: var(--be-mat); margin: 14px -14px 0; padding: 12px 14px 0; border-top: 1px solid var(--vien); }
     .chan-hop > button { flex: 1 1 0; }
     .chan-hop > .gian { display: none; }
+    /* Thanh chọn nhiều: dính đáy màn hình; hàng 1 số dòng + ✕, hàng 2 thao tác, hàng 3 đổi lớp */
+    .thanh-chon-ghep { top: auto; bottom: calc(10px + env(safe-area-inset-bottom)); gap: 8px 6px; padding: 10px; }
+    .thanh-chon-ghep #soChonGhep { flex: 1 1 calc(100% - 60px); order: 0; }
+    .thanh-chon-ghep button { white-space: nowrap; }
+    .thanh-chon-ghep [data-hd=bochon] { order: 1; }
+    .thanh-chon-ghep [data-hd=moi], .thanh-chon-ghep [data-hd=goiy], .thanh-chon-ghep [data-hd=boqua] { order: 2; flex: 1 1 0; padding: 0 8px; }
+    .thanh-chon-ghep .doi-lop { order: 3; flex: 1 1 100%; }
+    .thanh-chon-ghep .doi-lop select.qd { flex: 1 1 auto; max-width: none; }
+    #bangGhep td:first-child { display: inline-flex; border: 0; padding: 8px 10px 4px 0; }
+    #bangGhep td:first-child + td { display: inline-flex; border: 0; padding: 8px 0 4px; color: var(--phu); font-weight: 600; }
+    #bangGhep td:first-child + td::before { content: "#"; flex: none; max-width: none; font-size: inherit; color: inherit; }
+    .thanh-chon-ghep .gian { display: none; }
+    table.ds:not(.th) tr.dang-chon { background: var(--xanh-duong-nen); }
     /* Ô tải file: nút "Chọn file Excel" 1 hàng; link Google Sheet + Đọc (+ Bỏ file) chung hàng dưới */
     .file-o .thanh > label.nut { flex: 1 1 100%; }
     /* Gửi kết quả: 2 nút tải mẫu dàn đều hết chiều ngang */
@@ -462,7 +485,7 @@
         <button id="nutBoChon" class="phu nho">Bỏ chọn</button>
       </div>
       <table class="ds">
-        <thead><tr><th><input id="chonTatCa" type="checkbox"></th><th>#</th><th>Mã HS</th><th>Họ tên</th><th>Lớp</th><th>SĐT phụ huynh</th><th>Mã tra cứu</th><th style="width:300px"></th></tr></thead>
+        <thead><tr><th><input id="chonTatCa" class="chon-tat-ca" type="checkbox"></th><th>#</th><th>Mã HS</th><th>Họ tên</th><th>Lớp</th><th>SĐT phụ huynh</th><th>Mã tra cứu</th><th style="width:300px"></th></tr></thead>
         <tbody id="bangHs"></tbody>
       </table>
     </section>
@@ -510,8 +533,17 @@
           <div id="tomTat"></div>
           <div id="tomTatLop" class="tom-tat-lop"></div>
           <ul id="canhBao" class="canh-bao"></ul>
-          <table class="ds">
-            <thead><tr><th>STT</th><th>Họ tên trong file</th><th>Mã HS trong file</th><th>Lớp</th><th>Mã đề</th><th>Tổng điểm</th><th>Là học sinh nào?</th></tr></thead>
+          <div id="thanhChonGhep" class="thanh-chon-ghep an">
+            <b id="soChonGhep"></b>
+            <button class="nho" data-hd="moi">🆕 Học sinh mới</button>
+            <button class="phu nho" data-hd="goiy">Đồng ý gợi ý</button>
+            <button class="phu nho" data-hd="boqua">Bỏ qua</button>
+            <span class="doi-lop"><select id="lopChoGhep" class="qd"></select><button class="phu nho" data-hd="lop">Đổi lớp</button></span>
+            <span class="gian"></span>
+            <button class="phu nho" data-hd="bochon" aria-label="Bỏ chọn"><span class="chu-dai">Bỏ chọn</span><span class="chu-ngan">✕</span></button>
+          </div>
+          <table class="ds" id="bangGhep">
+            <thead><tr><th><input id="chonTatCaGhep" class="chon-tat-ca" type="checkbox" aria-label="Chọn tất cả dòng"></th><th>STT</th><th>Họ tên trong file</th><th>Mã HS trong file</th><th>Lớp</th><th>Mã đề</th><th>Tổng điểm</th><th>Là học sinh nào?</th></tr></thead>
             <tbody id="bangXemTruoc"></tbody>
           </table>
           <div id="khuVang" style="margin-top:10px"></div>
@@ -1228,7 +1260,7 @@
     if (!soHienTai.kq) { trangFile(id, '✔ ' + tenNguon + ' — giờ chọn bảng kết quả học sinh.', 'ok'); return Promise.resolve(); }
     trangFile(id, 'Đang đọc ' + tenNguon + '…');
     var lanDau = loai === 'kq';
-    if (lanDau) { xemTruoc = null; quyetDinhKq = {}; quyetDinhLop = {}; $('khuXong').classList.add('an'); $('khuTienDo').classList.add('an'); }
+    if (lanDau) { xemTruoc = null; quyetDinhKq = {}; quyetDinhLop = {}; chonGhep = {}; $('khuXong').classList.add('an'); $('khuTienDo').classList.add('an'); }
     return taiXemTruoc(lanDau).then(function (ok) {
       trangFile(id, ok ? '✔ ' + tenNguon : '✖ ' + tenNguon + ' — xem thông báo lỗi', ok ? 'ok' : 'loi');
       if (ok && loai === 'kq' && !soHienTai.da) trangFile('tenFileDa', xemTruoc && xemTruoc.maDe.length ? 'Chưa chọn — đang dùng đáp án chép trong bảng kết quả (' + xemTruoc.maDe.length + ' mã đề).' : 'Chưa chọn file đáp án.', '');
@@ -1280,7 +1312,12 @@
       var mot = kq.hocSinh.filter(function (h) { return h.trangThai === 'canChon' && h.canChon !== 'canLop' && h.ungVien.length === 1; });
       var khong = kq.hocSinh.filter(function (h) { return h.canChon === 'khongCo' || h.canChon === 'maLa'; });
       var lopGoiY = canLop.filter(function (h) { return h.goiYLop.length; });
-      tt.appendChild(the('p', { class: 'goi-y' }, ['Dòng "cần chọn": hãy chọn ở cột Lớp / cột cuối. ',
+      var canChonDs = kq.hocSinh.filter(function (h) { return h.trangThai === 'canChon'; });
+      tt.appendChild(the('p', { class: 'goi-y' }, ['Dòng "cần chọn": hãy chọn ở cột Lớp / cột cuối, hoặc ',
+        the('button', { class: 'phu nho', text: '☑ Chọn ' + canChonDs.length + ' dòng cần chọn', onclick: function () {
+          chonGhep = {}; canChonDs.forEach(function (h) { chonGhep[h.chiSo] = 1; }); veXemTruoc(xemTruoc);
+          $('thanhChonGhep').scrollIntoView({ block: 'nearest' });
+        } }), ' để xử lý một lần. ',
         mot.length ? the('button', { class: 'phu nho', text: 'Đồng ý gợi ý cho ' + mot.length + ' dòng chỉ có 1 gợi ý', onclick: function () {
           mot.forEach(function (h) { quyetDinhKq[h.chiSo] = h.ungVien[0].maHs; }); taiXemTruoc(false);
         } }) : null, ' ',
@@ -1345,7 +1382,10 @@
           : the('span', { class: 'nhan xacnhan', text: h.lyDo });
         o = the('div', { style: 'display:flex;gap:6px;align-items:center;flex-wrap:wrap' }, [sel, nhan]);
       }
-      tb.appendChild(the('tr', {}, [the('td', { text: h.stt }), the('td', {}, [the('b', { text: h.hoTen })]), the('td', { text: h.maHsFile || '—' }),
+      var cb = the('input', { type: 'checkbox', 'aria-label': 'Chọn dòng ' + h.stt });
+      cb.checked = !!chonGhep[h.chiSo];
+      cb.onchange = function () { if (cb.checked) chonGhep[h.chiSo] = 1; else delete chonGhep[h.chiSo]; capNhatChonGhep(); };
+      tb.appendChild(the('tr', { class: chonGhep[h.chiSo] ? 'dang-chon' : '' }, [the('td', {}, [cb]), the('td', { text: h.stt }), the('td', {}, [the('b', { text: h.hoTen })]), the('td', { text: h.maHsFile || '—' }),
         the('td', {}, [oLop]), the('td', { text: h.maDe || '—' }), the('td', { text: h.tongDiem + ' / ' + h.maxTong }), the('td', {}, [o])]));
     });
 
@@ -1355,9 +1395,55 @@
       kv.appendChild(the('p', { class: 'goi-y', text: '⚠ Lớp ' + x.nhom + ': ' + x.vang.length + ' học sinh KHÔNG có kết quả trong file (vắng thi?) — sẽ không có phiếu:' }));
       var c = the('div'); x.vang.forEach(function (v) { c.appendChild(the('span', { class: 'chip', text: v.hoTen + ' · ' + v.maHs })); }); kv.appendChild(c);
     });
+    capNhatChonGhep();
     capNhatLanInfo();
     $('khuXemTruoc').classList.remove('an');
   }
+
+  /* Chọn nhiều dòng trong bảng ghép -> xử lý một lần */
+  var chonGhep = {};
+  function capNhatChonGhep() {
+    var ds = Object.keys(chonGhep), n = ds.length, tong = xemTruoc ? xemTruoc.hocSinh.length : 0;
+    $('thanhChonGhep').classList.toggle('an', !n);
+    $('soChonGhep').textContent = 'Đã chọn ' + n + ' dòng:';
+    $('bangGhep').classList.toggle('co-chon', n > 0);
+    $('chonTatCaGhep').checked = n > 0 && n === tong;
+    [].forEach.call($('bangXemTruoc').querySelectorAll('tr'), function (tr) {
+      var c = tr.querySelector('input[type=checkbox]'); if (c) tr.classList.toggle('dang-chon', c.checked);
+    });
+    var sel = $('lopChoGhep'), cu = sel.value; sel.textContent = '';
+    sel.appendChild(the('option', { value: '', text: 'Chọn lớp…' }));
+    (DL.nhom || []).forEach(function (l) { sel.appendChild(the('option', { value: l, text: l })); });
+    if (xemTruoc) xemTruoc.nhom.forEach(function (x) { if (x.lopMoi) sel.appendChild(the('option', { value: x.nhom, text: x.nhom + ' (lớp mới)' })); });
+    sel.value = cu;
+  }
+  $('chonTatCaGhep').onchange = function () {
+    chonGhep = {};
+    if (this.checked && xemTruoc) xemTruoc.hocSinh.forEach(function (h) { chonGhep[h.chiSo] = 1; });
+    veXemTruoc(xemTruoc);
+  };
+  [].forEach.call($('thanhChonGhep').querySelectorAll('button[data-hd]'), function (nut) {
+    nut.onclick = function () {
+      var hd = nut.dataset.hd;
+      if (hd === 'bochon') { chonGhep = {}; veXemTruoc(xemTruoc); return; }
+      var ds = xemTruoc.hocSinh.filter(function (h) { return chonGhep[h.chiSo]; }), bo = 0, lam = 0;
+      if (hd === 'lop') {
+        var l = $('lopChoGhep').value;
+        if (!l) return bao('Chọn lớp cần đổi sang.', true);
+        ds.forEach(function (h) { quyetDinhLop[h.chiSo] = l; delete quyetDinhKq[h.chiSo]; lam++; });
+      } else ds.forEach(function (h) {
+        if (h.trangThai === 'loi') { bo++; return; }
+        if (hd === 'boqua') { quyetDinhKq[h.chiSo] = 'boqua'; lam++; }
+        else if (hd === 'moi') { if (h.nhom) { quyetDinhKq[h.chiSo] = 'moi'; lam++; } else bo++; }       // chưa rõ lớp -> phải chọn lớp trước
+        else if (hd === 'goiy') { if (h.trangThai === 'canChon' && h.ungVien.length === 1) { quyetDinhKq[h.chiSo] = h.ungVien[0].maHs; lam++; } else bo++; }
+      });
+      chonGhep = {};
+      taiXemTruoc(false).then(function () {
+        var ten = { moi: 'Đặt ' + lam + ' dòng là học sinh mới', goiy: 'Đồng ý gợi ý cho ' + lam + ' dòng', boqua: 'Bỏ qua ' + lam + ' dòng', lop: 'Đổi lớp cho ' + lam + ' dòng' }[hd];
+        bao(ten + (bo ? ' · ' + bo + ' dòng không áp dụng được' + (hd === 'moi' ? ' (chưa rõ lớp hoặc lỗi)' : hd === 'goiy' ? ' (không có đúng 1 gợi ý)' : '') : '') + '.');
+      });
+    };
+  });
 
   function chonFile(loai) {
     return function () {
