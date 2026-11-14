@@ -221,6 +221,15 @@
   .tab-con button.chon, .tab-con button.chon:hover:not(:disabled) { background: var(--be-mat); color: var(--chu); font-weight: 600; box-shadow: var(--bong-thap); }
   button.nut-icon.lon { width: var(--cao); height: var(--cao); }
   #nutThemCoSan, #nutTongHopLop { margin-left: auto; } /* nút ở góc phải tiêu đề thẻ, kể cả trên điện thoại */
+  /* Nút ⋯ và menu thao tác khác */
+  .menu-them { position: relative; }
+  .menu-them .nut-icon { font-size: 20px; line-height: 1; letter-spacing: 1px; }
+  .menu-ds { position: absolute; right: 0; top: calc(100% + 6px); z-index: 8; min-width: 180px; padding: 6px; background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-phan-tu); box-shadow: var(--bong-cao); display: flex; flex-direction: column; }
+  .menu-ds.an { display: none; }
+  .menu-ds button { justify-content: flex-start; width: 100%; min-height: 40px; padding: 0 12px; border-radius: var(--r-trong); background: none; color: var(--chu); font-weight: 500; }
+  .menu-ds button:hover:not(:disabled) { background: var(--phu-hover); }
+  .menu-ds button.do { color: var(--do); }
+  .menu-ds button.an { display: none; }
   /* Tab Lớp học */
   .luoi-lop { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
   .the-lop { background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); padding: 18px; box-shadow: var(--bong-thap); display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: box-shadow .125s var(--em), transform .125s var(--em); }
@@ -414,8 +423,13 @@
           <div class="hang-tieu-de">
             <h1 id="ctTenLop"></h1>
             <div class="cum">
-              <button id="nutDoiTenLop" class="phu">Đổi tên</button>
-              <button id="nutXoaLop" class="nguy">Xóa</button>
+              <div class="menu-them">
+                <button id="nutThemTacVu" type="button" class="nut-icon lon" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác khác" title="Thao tác khác">⋯</button>
+                <div id="menuLop" class="menu-ds an" role="menu">
+                  <button id="nutDoiTenLop" type="button" role="menuitem">Đổi tên lớp</button>
+                  <button id="nutXoaLop" type="button" role="menuitem" class="do">Xóa lớp</button>
+                </div>
+              </div>
               <button id="nutGuiKqLop">📤 Gửi kết quả</button>
             </div>
           </div>
@@ -446,7 +460,7 @@
             <button id="nutTongHopLop" class="phu nho">📊 Xem tổng hợp</button>
           </div>
           <table class="ds">
-            <thead><tr><th>Bài thi</th><th>Lần</th><th>Ngày thi</th><th>Số phiếu</th><th>Trạng thái</th></tr></thead>
+            <thead><tr><th>Bài thi</th><th>Lần</th><th>Ngày thi</th><th>Số phiếu</th><th>Điểm TB</th><th>Trạng thái</th></tr></thead>
             <tbody id="bangDotLop"></tbody>
           </table>
         </div>
@@ -882,6 +896,14 @@
       .sort(function (a, b) { return soNgay(b.ngayThi) - soNgay(a.ngayThi) || (b.thuTu || 0) - (a.thuTu || 0) || b.lan - a.lan; });
   }
   function soBai(ds) { var s = {}; ds.forEach(function (d) { s[d.baiThi] = 1; }); return Object.keys(s).length; }
+  // Điểm trung bình thang 10 của các phiếu thuộc 1 hoặc nhiều lần thi; '—' nếu chưa có phiếu
+  function diemTB(dsMaDot) {
+    var co = {}; dsMaDot.forEach(function (m) { co[m] = 1; });
+    var tong = 0, n = 0;
+    (DL.diem || []).forEach(function (x) { var a = parseFloat(x[2]), b = parseFloat(x[3]); if (co[x[0]] && b > 0 && !isNaN(a)) { tong += a / b * 10; n++; } });
+    return n ? (tong / n).toFixed(2) : '—';
+  }
+  function maDot(ds) { return ds.map(function (d) { return d.maDot; }); }
   function oSo(so, nhan) { return the('div', {}, [the('b', { text: so }), the('span', { text: nhan })]); }
 
   function veLop() {
@@ -897,7 +919,7 @@
       var hs = hsCuaLop(n), dot = dotCuaLop(n), moi = dot[0];
       var the1 = the('div', { class: 'the-lop', tabindex: 0, role: 'button' }, [
         the('h3', { text: n }),
-        the('div', { class: 'so-lieu' }, [oSo(hs.length, 'học sinh'), oSo(soBai(dot), 'bài thi'), oSo(dot.length, 'lần thi')]),
+        the('div', { class: 'so-lieu' }, [oSo(hs.length, 'học sinh'), oSo(soBai(dot), 'bài thi'), oSo(dot.length, 'lần thi'), oSo(diemTB(maDot(dot)), 'điểm TB')]),
         the('div', { class: 'gan-nhat', text: moi ? 'Gần nhất: ' + tenLanThi(moi) + (moi.ngayThi ? ' · ' + moi.ngayThi : '') + (moi.congBo ? '' : ' (chưa công bố)') : 'Chưa có bài thi' }),
         the('div', { class: 'nut-lop' }, [
           the('button', { class: 'nho', text: 'Mở lớp' }),
@@ -939,7 +961,7 @@
     $('ctTenLop').textContent = n;
     var daCB = dot.filter(function (d) { return d.congBo; }).length;
     var tk = $('ctThongKe'); tk.textContent = '';
-    [oSo(hs.length, 'học sinh'), oSo(soBai(dot), 'bài thi'), oSo(dot.length, 'lần thi'), oSo(daCB + '/' + dot.length, 'đã công bố')].forEach(function (x) { tk.appendChild(x); });
+    [oSo(hs.length, 'học sinh'), oSo(diemTB(maDot(dot)), 'điểm TB lớp'), oSo(soBai(dot), 'bài thi'), oSo(dot.length, 'lần thi'), oSo(daCB + '/' + dot.length, 'đã công bố')].forEach(function (x) { tk.appendChild(x); });
     $('nutXoaLop').classList.toggle('an', !!dot.length && !(DL.toi && DL.toi.quanTri));
     $('ctTieuDeHs').textContent = 'Học sinh trong lớp';
     $('ctTabHs').textContent = 'Học sinh (' + hs.length + ')'; $('ctTabBt').textContent = 'Bài thi (' + dot.length + ')';
@@ -962,10 +984,10 @@
       ]));
     });
     var tbd = $('bangDotLop'); tbd.textContent = '';
-    if (!dot.length) tbd.appendChild(the('tr', {}, [the('td', { colspan: 5, class: 'goi-y', text: 'Chưa có bài thi. Bấm "📤 Gửi kết quả thi" để tạo phiếu cho lớp.' })]));
+    if (!dot.length) tbd.appendChild(the('tr', {}, [the('td', { colspan: 6, class: 'goi-y', text: 'Chưa có bài thi. Bấm "📤 Gửi kết quả" để tạo phiếu cho lớp.' })]));
     dot.forEach(function (d) {
       tbd.appendChild(the('tr', {}, [the('td', {}, [the('b', { text: d.baiThi })]), the('td', { text: 'Lần ' + d.lan }), the('td', { text: d.ngayThi || '' }),
-        the('td', { text: d.soPhieu }), the('td', {}, [the('span', { class: 'nhan ' + (d.congBo ? 'co' : 'moi'), text: d.congBo ? 'Đã công bố' : 'Chưa công bố' })])]));
+        the('td', { text: d.soPhieu }), the('td', {}, [the('b', { text: diemTB([d.maDot]) })]), the('td', {}, [the('span', { class: 'nhan ' + (d.congBo ? 'co' : 'moi'), text: d.congBo ? 'Đã công bố' : 'Chưa công bố' })])]));
     });
   }
   $('timLop').oninput = veLop;
@@ -979,6 +1001,15 @@
   $('nutThemMoiVaoLop').onclick = function () {
     $('locLop').value = lopMo; veHocSinh(); $('nutThemNhieu').click();
   };
+  function dongMenuLop() { $('menuLop').classList.add('an'); $('nutThemTacVu').setAttribute('aria-expanded', 'false'); }
+  $('nutThemTacVu').onclick = function (e) {
+    e.stopPropagation();
+    var mo = $('menuLop').classList.toggle('an') === false;
+    $('nutThemTacVu').setAttribute('aria-expanded', mo ? 'true' : 'false');
+  };
+  document.addEventListener('click', function (e) { if (!e.target.closest || !e.target.closest('.menu-them')) dongMenuLop(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') dongMenuLop(); });
+  $('menuLop').addEventListener('click', dongMenuLop);
   $('nutDoiTenLop').onclick = function () {
     var cu = lopMo;
     hoi('', { tieuDe: 'Đổi tên lớp', nhan: 'Tên mới của lớp "' + cu + '"', nhap: cu, nut: 'Lưu' }).then(function (moi) {
