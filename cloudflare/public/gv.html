@@ -1095,7 +1095,7 @@
     if (!window.XLSX) return bao('Không tải được thư viện Excel. Kiểm tra kết nối mạng.', true);
     goi('gvLayMau', n).then(function (mau) {
       luuXlsx(mau.ketQua, tenFileKhongDau(tenMau(n)) + '.xlsx');
-      bao('Đã tải bảng kết quả mẫu (' + (n ? 'lớp ' + n : 'tất cả lớp') + ', ' + (mau.ketQua.KetQua.length - 1) + ' dòng).');
+      // Không báo "đã tải": trình duyệt (nhất là Safari) còn hỏi "Tải về?" và trang không biết người dùng có đồng ý không
     }).catch(baoLoi);
   }
   function chepMauKq(n) {
@@ -1126,7 +1126,7 @@
   };
   $('nutTaiMauDapAn').onclick = function () {
     if (!window.XLSX) return bao('Không tải được thư viện Excel. Kiểm tra kết nối mạng.', true);
-    goi('gvLayMau', '').then(function (mau) { luuXlsx(mau.dapAn, 'Dap_an_theo_ma_de.xlsx'); bao('Đã tải bảng đáp án mẫu.'); }).catch(baoLoi);
+    goi('gvLayMau', '').then(function (mau) { luuXlsx(mau.dapAn, 'Dap_an_theo_ma_de.xlsx'); }).catch(baoLoi);
   };
 
   function trangFile(id, chu, kieu) { var el = $(id); el.textContent = chu; el.className = 'trang' + (kieu ? ' ' + kieu : ''); }
