@@ -697,7 +697,7 @@
     <section id="tabTongHop" class="an">
       <div class="dau-trang">
         <div class="hang-tieu-de">
-          <h1>Tổng hợp<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Ô xanh: ≥ 80% điểm tối đa · Ô đỏ: &lt; 50%. "Tiến bộ" = điểm lần gần nhất − điểm lần đầu (tính theo thang 10).</span></button></h1>
+          <h1>Tổng hợp<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Ô xanh: ≥ 80% điểm tối đa · Ô đỏ: &lt; 50%. "Trung bình" và "Tiến bộ" tính theo thang 10; Tiến bộ = điểm lần gần nhất − điểm lần đầu. Huy hiệu #1–#3 cạnh tên: hạng trong lớp theo điểm trung bình.</span></button></h1>
           <div class="cum">
             <button id="nutSaoChepTH" class="phu" title="Sao chép bảng để dán vào Excel">Sao chép bảng</button>
           </div>
@@ -1974,11 +1974,11 @@
     var thang10 = function (v) { return v[1] ? v[0] / v[1] * 10 : v[0]; };
 
     var tr = the('tr', {}, [the('th', { text: '#' }), the('th', { text: 'Họ tên' })]);
-    var tsv = [['Họ tên'].concat(cot.map(function (d) { return d.baiThi + ' - Lần ' + d.lan + (d.ngayThi ? ' (' + d.ngayThi + ')' : ''); }), ['Trung bình (thang 10)', 'Tiến bộ'])];
+    var tsv = [['Họ tên'].concat(cot.map(function (d) { return d.baiThi + ' - Lần ' + d.lan + (d.ngayThi ? ' (' + d.ngayThi + ')' : ''); }), ['Trung bình', 'Tiến bộ'])];
     cot.forEach(function (d) {
       tr.appendChild(the('th', { class: 'cot-bai' }, [the('div', { text: d.baiThi }), the('div', { text: 'Lần ' + d.lan + (d.congBo ? '' : ' · chưa công bố') }), the('div', { class: 'goi-y', text: d.ngayThi })]));
     });
-    tr.appendChild(the('th', { class: 'cot-bai', text: 'Trung bình (thang 10)' }));
+    tr.appendChild(the('th', { class: 'cot-bai', text: 'Trung bình' }));
     tr.appendChild(the('th', { class: 'cot-bai', text: 'Tiến bộ' }));
     bang.appendChild(the('thead', {}, [tr]));
     var tbody = the('tbody');
@@ -1989,9 +1989,6 @@
       cap.forEach(function (x, i) { kq[x[0]] = i && Math.abs(x[1] - cap[i - 1][1]) < 1e-9 ? kq[cap[i - 1][0]] : i + 1; });
       return kq;
     };
-    var hangCot = cot.map(function (d) {
-      return hangTheo(hs.filter(function (h) { return diem[h.maHs] && diem[h.maHs][d.maDot]; }).map(function (h) { return [h.maHs, thang10(diem[h.maHs][d.maDot])]; }));
-    });
     var hangTb = hangTheo(hs.filter(function (h) { return diem[h.maHs]; }).map(function (h) {
       var ds = cot.map(function (d) { return diem[h.maHs][d.maDot]; }).filter(Boolean).map(thang10);
       return [h.maHs, ds.reduce(function (a, b) { return a + b; }, 0) / ds.length];
@@ -2005,7 +2002,7 @@
         if (!v) { r.appendChild(the('td', { class: 'diem goi-y', text: '—' })); dong.push(''); return; }
         var t10 = thang10(v); ds10.push(t10);
         tongCot[j][0] += t10; tongCot[j][1]++;
-        r.appendChild(the('td', { class: 'diem ' + (t10 >= 8 ? 'cao' : t10 < 5 ? 'thap' : '') }, [v[0].toFixed(2), huyHieu(hangCot[j][h.maHs])]));
+        r.appendChild(the('td', { class: 'diem ' + (t10 >= 8 ? 'cao' : t10 < 5 ? 'thap' : '') }, [v[0].toFixed(2)]));
         dong.push(v[0].toFixed(2));
       });
       var tb = ds10.length ? ds10.reduce(function (a, b) { return a + b; }, 0) / ds10.length : null;
@@ -2015,8 +2012,8 @@
       dong.push(tb == null ? '' : tb.toFixed(2), tienBo == null ? '' : tienBo.toFixed(2));
       tsv.push(dong); tbody.appendChild(r);
     });
-    var rTb = the('tr', { class: 'tb' }, [the('td', {}), the('td', { text: 'Trung bình lớp (thang 10)' })]);
-    var dongTb = ['Trung bình lớp (thang 10)'];
+    var rTb = the('tr', { class: 'tb' }, [the('td', {}), the('td', { text: 'Trung bình lớp' })]);
+    var dongTb = ['Trung bình lớp'];
     tongCot.forEach(function (x) { var v = x[1] ? (x[0] / x[1]).toFixed(2) : '—'; rTb.appendChild(the('td', { class: 'diem', text: v })); dongTb.push(x[1] ? v : ''); });
     rTb.appendChild(the('td', {})); rTb.appendChild(the('td', {}));
     tbody.appendChild(rTb); tsv.push(dongTb);
@@ -2025,7 +2022,7 @@
     var tbLop = tongCot.map(function (x) { return x[1] ? x[0] / x[1] : null; });
     var cu = duLieuTH && duLieuTH.nhom === nhom ? duLieuTH.chon : null;
     var dauBang = Object.keys(hangTb).sort(function (a, b) { return hangTb[a] - hangTb[b]; })[0] || '';
-    duLieuTH = { nhom: nhom, cot: cot, hs: hs.filter(function (h) { return diem[h.maHs]; }), diem: diem, thang10: thang10, hangCot: hangCot, hangTb: hangTb, tbLop: tbLop,
+    duLieuTH = { nhom: nhom, cot: cot, hs: hs.filter(function (h) { return diem[h.maHs]; }), diem: diem, thang10: thang10, hangTb: hangTb, tbLop: tbLop,
       chon: cu && diem[cu] ? cu : dauBang };
     var sel = $('bdHocSinh'); sel.textContent = '';
     duLieuTH.hs.slice().sort(function (a, b) { return a.hoTen.localeCompare(b.hoTen, 'vi'); }).forEach(function (h) {
@@ -2129,7 +2126,7 @@
       tip.textContent = '';
       tip.appendChild(the('div', { class: 'tde', text: d.baiThi + ' – Lần ' + d.lan + (d.ngayThi ? ' · ' + d.ngayThi : '') }));
       var dong = function (mau, v, ten, kieu) { tip.appendChild(the('div', { class: 'dong' }, [the('i', { style: 'border-top-color:' + mau + ';border-top-style:' + (kieu || 'solid') }), the('b', { text: v == null ? '—' : v.toFixed(2) }), the('span', { text: ten })])); };
-      if (D.chon) dong(MAU_HS, dsChon[i], tenChon + (D.hangCot[i][D.chon] ? ' (hạng ' + D.hangCot[i][D.chon] + ')' : ''));
+      if (D.chon) dong(MAU_HS, dsChon[i], tenChon);
       dong(MAU_TB, D.tbLop[i], 'TB lớp', 'dashed');
       tip.classList.remove('an');
       var px = X(i) * r.width / W, tw = tip.offsetWidth;
