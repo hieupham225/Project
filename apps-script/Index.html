@@ -7,7 +7,8 @@
     :root { --mau: #1a73e8; --nen: #f4f6fb; --chu: #1f2937; --phu: #6b7280; --vien: #e5e7eb; --loi: #c62828; }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background: var(--nen); color: var(--chu); }
-    .khung { max-width: 560px; margin: 0 auto; padding: 24px 16px 48px; }
+    .khung { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; }
+    .hep { max-width: 560px; margin: 0 auto; }
     h1 { font-size: 22px; margin: 8px 0 4px; }
     .mo-ta { color: var(--phu); margin: 0 0 20px; font-size: 15px; }
     .the { background: #fff; border: 1px solid var(--vien); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
@@ -21,69 +22,79 @@
     .ten-hs { font-size: 20px; font-weight: 700; margin: 0; }
     .lop { color: var(--phu); margin: 4px 0 0; }
     h2 { font-size: 17px; margin: 0 0 10px; color: var(--mau); }
+    .ds-phieu button { text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .ds-phieu .ngay { font-weight: 400; font-size: 14px; opacity: .85; }
     table { width: 100%; border-collapse: collapse; }
     td { padding: 9px 4px; border-top: 1px solid var(--vien); vertical-align: top; }
     tr:first-child td { border-top: 0; }
     td.ten { color: var(--phu); width: 45%; }
     td.gt { font-weight: 600; white-space: pre-wrap; word-break: break-word; }
-    .an { display: none; }
+    .thanh { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+    .thanh button { width: auto; margin: 0; padding: 10px 14px; font-size: 15px; }
+    .thanh .tieu-de { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #trangPdf canvas { display: block; width: 100%; height: auto; background: #fff; margin: 0 auto 12px; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+    .dang-tai { text-align: center; color: var(--phu); padding: 24px; }
+    .an { display: none !important; }
     .ghi-chu { color: var(--phu); font-size: 13px; text-align: center; margin-top: 24px; }
   </style>
 </head>
 <body>
   <div class="khung">
-    <h1><?= tieuDe ?></h1>
-    <p class="mo-ta">Nhập mã tra cứu giáo viên đã gửi riêng cho quý phụ huynh.</p>
+    <div class="hep">
+      <h1><?= tieuDe ?></h1>
+      <p class="mo-ta">Nhập mã tra cứu giáo viên đã gửi riêng cho quý phụ huynh.</p>
+    </div>
 
-    <div id="manNhap" class="the">
+    <!-- Màn 1: nhập mã -->
+    <div id="manNhap" class="the hep">
       <form id="form">
         <label for="ma">Mã tra cứu</label>
         <input id="ma" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="VD: K7X9-2QMP" maxlength="20" required>
-        <button id="nut" type="submit">Xem điểm</button>
+        <button id="nut" type="submit">Xem kết quả</button>
         <div id="loi" class="loi" role="alert"></div>
       </form>
     </div>
 
-    <div id="manKetQua" class="an">
+    <!-- Màn 2: danh sách phiếu + bảng điểm -->
+    <div id="manKetQua" class="an hep">
       <div class="the">
         <p id="tenHs" class="ten-hs"></p>
         <p id="lopHs" class="lop"></p>
+      </div>
+      <div id="khungPhieu" class="the ds-phieu">
+        <h2>Phiếu kết quả kiểm tra</h2>
+        <div id="dsPhieu"></div>
       </div>
       <div id="dsBang"></div>
       <button id="nutLai" class="phu" type="button">Tra cứu mã khác</button>
     </div>
 
+    <!-- Màn 3: xem phiếu PDF -->
+    <div id="manPhieu" class="an">
+      <div class="thanh">
+        <button id="nutQuayLai" class="phu" type="button">← Quay lại</button>
+        <span id="tenPhieu" class="tieu-de"></span>
+        <button id="nutTai" type="button">Tải PDF</button>
+      </div>
+      <div id="trangPdf"></div>
+    </div>
+
     <p class="ghi-chu">Vui lòng không chia sẻ mã tra cứu cho người khác.</p>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
     var $ = function (id) { return document.getElementById(id); };
+    var maDangDung = '';
+    var pdfHienTai = null; // { ten, bytes }
 
-    $('form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      var ma = $('ma').value.trim();
-      if (!ma) return;
-      $('nut').disabled = true;
-      $('nut').textContent = 'Đang tra cứu...';
-      $('loi').textContent = '';
-      google.script.run
-        .withSuccessHandler(hienKetQua)
-        .withFailureHandler(function () { baoLoi('Không kết nối được. Vui lòng thử lại.'); })
-        .traCuu(ma);
-    });
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
 
-    $('nutLai').addEventListener('click', function () {
-      $('ma').value = '';
-      $('dsBang').textContent = '';
-      $('manKetQua').classList.add('an');
-      $('manNhap').classList.remove('an');
-      $('ma').focus();
-    });
-
-    function baoLoi(msg) {
-      $('nut').disabled = false;
-      $('nut').textContent = 'Xem điểm';
-      $('loi').textContent = msg;
+    function hien(id) {
+      ['manNhap', 'manKetQua', 'manPhieu'].forEach(function (m) { $(m).classList.toggle('an', m !== id); });
+      window.scrollTo(0, 0);
     }
 
     // Dùng textContent (không dùng innerHTML) để nội dung trong Sheet không thể chèn mã độc.
@@ -94,19 +105,78 @@
       return el;
     }
 
-    function hienKetQua(kq) {
-      if (!kq || !kq.ok) { baoLoi((kq && kq.loi) || 'Có lỗi xảy ra.'); return; }
+    $('form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var ma = $('ma').value.trim();
+      if (!ma) return;
+      $('nut').disabled = true;
+      $('nut').textContent = 'Đang tra cứu...';
+      $('loi').textContent = '';
+      google.script.run
+        .withSuccessHandler(function (kq) { hienKetQua(kq, ma); })
+        .withFailureHandler(function () { baoLoi('Không kết nối được. Vui lòng thử lại.'); })
+        .traCuu(ma);
+    });
+
+    $('nutLai').addEventListener('click', function () {
+      maDangDung = '';
+      $('ma').value = '';
+      $('dsBang').textContent = '';
+      $('dsPhieu').textContent = '';
+      hien('manNhap');
+      $('ma').focus();
+    });
+
+    $('nutQuayLai').addEventListener('click', function () {
+      $('trangPdf').textContent = '';
+      pdfHienTai = null;
+      hien('manKetQua');
+    });
+
+    $('nutTai').addEventListener('click', function () {
+      if (!pdfHienTai) return;
+      var url = URL.createObjectURL(new Blob([pdfHienTai.bytes], { type: 'application/pdf' }));
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = pdfHienTai.ten;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+    });
+
+    function baoLoi(msg) {
       $('nut').disabled = false;
-      $('nut').textContent = 'Xem điểm';
+      $('nut').textContent = 'Xem kết quả';
+      $('loi').textContent = msg;
+    }
+
+    function hienKetQua(kq, ma) {
+      if (!kq || !kq.ok) { baoLoi((kq && kq.loi) || 'Có lỗi xảy ra.'); return; }
+      maDangDung = ma;
+      $('nut').disabled = false;
+      $('nut').textContent = 'Xem kết quả';
       $('tenHs').textContent = kq.hocSinh.hoTen || 'Học sinh';
       $('lopHs').textContent = kq.hocSinh.lop ? 'Lớp ' + kq.hocSinh.lop : '';
 
+      // Danh sách phiếu
+      var dsP = $('dsPhieu');
+      dsP.textContent = '';
+      (kq.phieu || []).forEach(function (p) {
+        var b = taoThe('button', 'phu');
+        b.type = 'button';
+        b.appendChild(taoThe('span', null, '📄 ' + p.dot));
+        if (p.thoiGian) b.appendChild(taoThe('span', 'ngay', p.thoiGian));
+        b.addEventListener('click', function () { moPhieu(p.dot); });
+        dsP.appendChild(b);
+      });
+      var coPhieu = (kq.phieu || []).length > 0;
+      $('khungPhieu').classList.toggle('an', !coPhieu);
+
+      // Bảng điểm (nếu giáo viên dùng tab "Điểm ...")
       var ds = $('dsBang');
       ds.textContent = '';
-      if (!kq.bangDiem.length) {
-        ds.appendChild(taoThe('div', 'the', 'Chưa có điểm được cập nhật.'));
-      }
-      kq.bangDiem.forEach(function (bang) {
+      (kq.bangDiem || []).forEach(function (bang) {
         var the = taoThe('div', 'the');
         the.appendChild(taoThe('h2', null, bang.tenBang));
         var tb = document.createElement('table');
@@ -119,10 +189,60 @@
         the.appendChild(tb);
         ds.appendChild(the);
       });
+      if (!coPhieu && !(kq.bangDiem || []).length) {
+        ds.appendChild(taoThe('div', 'the', 'Chưa có kết quả nào được công bố.'));
+      }
+      hien('manKetQua');
+    }
 
-      $('manNhap').classList.add('an');
-      $('manKetQua').classList.remove('an');
-      window.scrollTo(0, 0);
+    function moPhieu(dot) {
+      $('tenPhieu').textContent = dot;
+      var khung = $('trangPdf');
+      khung.textContent = '';
+      khung.appendChild(taoThe('div', 'dang-tai', 'Đang tải phiếu...'));
+      $('nutTai').disabled = true;
+      hien('manPhieu');
+      google.script.run
+        .withSuccessHandler(function (kq) {
+          if (!kq || !kq.ok) { khung.textContent = ''; khung.appendChild(taoThe('div', 'the loi', (kq && kq.loi) || 'Không tải được phiếu.')); return; }
+          var bin = atob(kq.pdf), bytes = new Uint8Array(bin.length);
+          for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+          pdfHienTai = { ten: kq.tenFile, bytes: bytes };
+          $('nutTai').disabled = false;
+          veTrangPdf(bytes.slice(0), khung);
+        })
+        .withFailureHandler(function () { khung.textContent = ''; khung.appendChild(taoThe('div', 'the loi', 'Không kết nối được. Vui lòng thử lại.')); })
+        .layPhieu(maDangDung, dot);
+    }
+
+    function veTrangPdf(bytes, khung) {
+      if (!window.pdfjsLib) {
+        khung.textContent = '';
+        khung.appendChild(taoThe('div', 'the', 'Không hiển thị được phiếu trên trình duyệt này. Vui lòng bấm "Tải PDF".'));
+        return;
+      }
+      pdfjsLib.getDocument({ data: bytes }).promise.then(function (pdf) {
+        khung.textContent = '';
+        var tiLe = Math.min(window.devicePixelRatio || 1, 2);
+        var chain = Promise.resolve();
+        for (var n = 1; n <= pdf.numPages; n++) {
+          (function (so) {
+            chain = chain.then(function () { return pdf.getPage(so); }).then(function (page) {
+              var rong = Math.min(khung.clientWidth || 800, 860);
+              var vp0 = page.getViewport({ scale: 1 });
+              var vp = page.getViewport({ scale: (rong / vp0.width) * tiLe });
+              var canvas = document.createElement('canvas');
+              canvas.width = vp.width; canvas.height = vp.height;
+              khung.appendChild(canvas);
+              return page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+            });
+          })(n);
+        }
+        return chain;
+      }).catch(function () {
+        khung.textContent = '';
+        khung.appendChild(taoThe('div', 'the', 'Không hiển thị được phiếu. Vui lòng bấm "Tải PDF".'));
+      });
     }
   </script>
 </body>
