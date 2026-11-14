@@ -2041,8 +2041,8 @@
     cheTH = che; try { localStorage.setItem('cheTH', che); } catch (e) {}
     [].forEach.call(document.querySelectorAll('.phan-doan button'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.che === che)); });
     $('khungBangTH').classList.toggle('an', che !== 'bang'); $('khungBieuDoTH').classList.toggle('an', che === 'bang');
-    $('nutSaoChepTH').textContent = che === 'bang' ? 'Sao chép bảng' : 'Sao chép biểu đồ';
-    $('nutSaoChepTH').title = che === 'bang' ? 'Sao chép bảng để dán vào Excel' : 'Sao chép ảnh biểu đồ để dán vào Zalo, Word…';
+    $('nutSaoChepTH').textContent = che === 'bang' ? 'Sao chép bảng' : 'Chụp ảnh biểu đồ';
+    $('nutSaoChepTH').title = che === 'bang' ? 'Sao chép bảng để dán vào Excel' : 'Chụp ảnh biểu đồ vào clipboard để dán vào Zalo, Word…';
     if (che === 'bieu-do') veBieuDoTH();
   }
   [].forEach.call(document.querySelectorAll('.phan-doan button'), function (b) { b.onclick = function () { datCheTH(b.dataset.che); }; });
@@ -2179,7 +2179,7 @@
     try {
       // Safari cần tạo ClipboardItem ngay trong lúc bấm, truyền Promise ảnh vào
       navigator.clipboard.write([new ClipboardItem({ 'image/png': anh })])
-        .then(function () { bao('Đã sao chép ảnh biểu đồ. Dán (Ctrl/⌘ + V) vào Zalo, Word, email…'); }, taiVe);
+        .then(function () { bao('Đã chụp ảnh biểu đồ vào clipboard. Dán (Ctrl/⌘ + V) vào Zalo, Word, email…'); }, taiVe);
     } catch (e) { taiVe(); }
   }
   $('nutSaoChepTH').onclick = function () {
