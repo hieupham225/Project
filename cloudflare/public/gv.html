@@ -190,6 +190,8 @@
   .muc-lop.tao-moi { color: var(--thuong-hieu); }
   .muc-lop.tao-moi .o-tick { border-color: var(--thuong-hieu); }
   .muc-lop.trong { cursor: default; }
+  /* "Chọn tất cả" ẩn cho tới khi chọn ít nhất 1 học sinh */
+  table.ds:not(.co-chon) #chonTatCa { visibility: hidden; }
   /* Tab Lớp học */
   .luoi-lop { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
   .the-lop { background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); padding: 18px; box-shadow: var(--bong-thap); display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: box-shadow .125s var(--em), transform .125s var(--em); }
@@ -242,7 +244,7 @@
     table.ds:not(.th) { display: block; background: none; }
     table.ds:not(.th) tbody { display: block; }
     table.ds:not(.th) thead { display: block; }
-    table.ds:not(.th) thead:not(:has(input)) { display: none; }
+    table.ds:not(.th) thead:not(:has(input)), table.ds:not(.co-chon) thead:has(#chonTatCa) { display: none; }
     table.ds:not(.th) thead tr { display: flex; }
     table.ds:not(.th) thead th { display: none; }
     table.ds:not(.th) thead th:has(input) { display: flex; align-items: center; gap: 8px; position: static; background: none; padding: 0 4px 10px; border: 0; }
@@ -453,10 +455,10 @@
 
       <div id="thanhChon" class="thanh an">
         <b id="soChon"></b>
-        <input id="nhomChuyen" type="text" list="dsLop" placeholder="Tên nhóm" style="width:180px">
-        <button class="phu nut-nhom" data-hd="them">Thêm vào nhóm</button>
-        <button class="phu nut-nhom" data-hd="bo">Bỏ khỏi nhóm</button>
-        <button class="phu nut-nhom" data-hd="chuyen">Chuyển hẳn sang nhóm</button>
+        <input id="nhomChuyen" type="text" list="dsLop" placeholder="Tên lớp" style="width:180px">
+        <button class="phu nut-nhom" data-hd="them">Thêm vào lớp</button>
+        <button class="phu nut-nhom" data-hd="bo">Bỏ khỏi lớp</button>
+        <button class="phu nut-nhom" data-hd="chuyen">Chuyển hẳn sang lớp</button>
         <button id="nutBoChon" class="phu nho">Bỏ chọn</button>
       </div>
       <table class="ds">
@@ -936,7 +938,7 @@
   function lopLoc() { var v = $('locLop').value; return v === CHUA_CO_LOP ? '' : v; }
   function tinNhan(h) {
     return 'Kính gửi phụ huynh em ' + h.hoTen + ',\n' +
-      'Quý phụ huynh xem kết quả học tập (tất cả các môn/nhóm) của con tại: ' + (DL.linkTraCuu || '[chưa có link — vào Cài đặt]') + '\n' +
+      'Quý phụ huynh xem kết quả học tập (tất cả các môn/lớp) của con tại: ' + (DL.linkTraCuu || '[chưa có link — vào Cài đặt]') + '\n' +
       'Mã tra cứu: ' + h.maTraCuu + '\n' +
       'Vui lòng KHÔNG chia sẻ mã này cho người khác. Mã dùng được cho cả năm học.';
   }
@@ -1001,6 +1003,8 @@
     var n = Object.keys(daChon).length;
     $('thanhChon').classList.toggle('an', !n);
     $('soChon').textContent = 'Đã chọn ' + n + ' học sinh:';
+    // "Chọn tất cả" chỉ hiện khi đã chọn ít nhất 1 học sinh
+    $('chonTatCa').closest('table').classList.toggle('co-chon', n > 0);
   }
   $('chonTatCa').onchange = function () {
     var bat = this.checked;
@@ -1016,7 +1020,7 @@
   document.querySelectorAll('.nut-nhom').forEach(function (nut) {
     nut.onclick = function () {
       var nhom = $('nhomChuyen').value.trim();
-      if (!nhom) return bao('Nhập tên nhóm.', true);
+      if (!nhom) return bao('Nhập tên lớp.', true);
       goi('gvCapNhatNhom', Object.keys(daChon), nhom, nut.dataset.hd).then(function (dl) { daChon = {}; $('chonTatCa').checked = false; capNhat(dl); capNhatChon(); }).catch(baoLoi);
     };
   });
@@ -1119,7 +1123,7 @@
       var chon = {};
       kq.canXacNhan.forEach(function (x) {
         var sel = the('select', { class: 'qd' }, [the('option', { value: '', text: '— Chọn —' })]);
-        x.ungVien.forEach(function (u) { sel.appendChild(the('option', { value: u.maHs, text: 'Cùng một em: ' + u.maHs + ' · ' + u.hoTen + ' (' + (u.nhom || 'chưa có nhóm') + ')' + (u.sdt ? ' · ' + u.sdt : '') })); });
+        x.ungVien.forEach(function (u) { sel.appendChild(the('option', { value: u.maHs, text: 'Cùng một em: ' + u.maHs + ' · ' + u.hoTen + ' (' + (u.nhom || 'chưa có lớp') + ')' + (u.sdt ? ' · ' + u.sdt : '') })); });
         sel.appendChild(the('option', { value: 'moi', text: 'Học sinh KHÁC → tạo mới (mã tra cứu riêng)' }));
         sel.appendChild(the('option', { value: 'boqua', text: 'Bỏ qua dòng này' }));
         sel.onchange = function () { chon[x.dong] = sel.value; };
@@ -1132,7 +1136,7 @@
         themNhieu(bang, qd);
       } });
       moHop('Có ' + kq.canXacNhan.length + ' học sinh trùng tên với học sinh đã có', the('div', {}, [
-        the('p', { class: 'goi-y', text: 'Nếu là cùng một em học thêm nhóm/môn khác, chọn "Cùng một em" để phụ huynh xem tất cả điểm bằng 1 mã tra cứu. Nếu là hai em khác nhau, chọn "Học sinh KHÁC".' }),
+        the('p', { class: 'goi-y', text: 'Nếu là cùng một em học thêm lớp/môn khác, chọn "Cùng một em" để phụ huynh xem tất cả điểm bằng 1 mã tra cứu. Nếu là hai em khác nhau, chọn "Học sinh KHÁC".' }),
         bangXn, the('div', { class: 'thanh', style: 'margin-top:12px' }, [nut])]));
       return false;
     }).catch(function (e) { baoLoi(e); return false; });
@@ -1558,7 +1562,7 @@
     dienSelect($('locNhomTH'), DL.nhom || [], null);
     var nhom = $('locNhomTH').value, bang = $('bangTH');
     bang.textContent = ''; bangTHText = '';
-    if (!nhom) { $('moTaTH').textContent = 'Chưa có nhóm nào.'; return; }
+    if (!nhom) { $('moTaTH').textContent = 'Chưa có lớp nào.'; return; }
     var cot = DL.dot.filter(function (d) { return d.nhom === nhom; })
       .sort(function (a, b) { return (a.thuTu - b.thuTu) || a.baiThi.localeCompare(b.baiThi) || a.lan - b.lan; });
     var trongCot = {}; cot.forEach(function (d) { trongCot[d.maDot] = true; });
@@ -1599,8 +1603,8 @@
       dong.push(tb == null ? '' : tb.toFixed(2), tienBo == null ? '' : tienBo.toFixed(2));
       tsv.push(dong); tbody.appendChild(r);
     });
-    var rTb = the('tr', { class: 'tb' }, [the('td', {}), the('td', { text: 'Trung bình nhóm (thang 10)' })]);
-    var dongTb = ['Trung bình nhóm (thang 10)'];
+    var rTb = the('tr', { class: 'tb' }, [the('td', {}), the('td', { text: 'Trung bình lớp (thang 10)' })]);
+    var dongTb = ['Trung bình lớp (thang 10)'];
     tongCot.forEach(function (x) { var v = x[1] ? (x[0] / x[1]).toFixed(2) : '—'; rTb.appendChild(the('td', { class: 'diem', text: v })); dongTb.push(x[1] ? v : ''); });
     rTb.appendChild(the('td', {})); rTb.appendChild(the('td', {}));
     tbody.appendChild(rTb); tsv.push(dongTb);
