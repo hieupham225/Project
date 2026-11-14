@@ -78,7 +78,8 @@
   .tien-do { height: 8px; background: var(--mau-nhat); border-radius: var(--r-tron); overflow: hidden; margin: 12px 0; }
   .tien-do div { height: 100%; width: 0; background: var(--mau); border-radius: var(--r-tron); transition: width .3s var(--em); }
   /* Dialog */
-  .phu-trang { position: fixed; inset: 0; background: rgba(1,18,40,.4); display: flex; align-items: center; justify-content: center; z-index: 15; padding: 12px; }
+  .phu-trang { position: fixed; inset: 0; height: var(--vv-cao, 100%); top: var(--vv-tren, 0px); bottom: auto; background: rgba(1,18,40,.4); display: flex; align-items: center; justify-content: center; z-index: 15; padding: 12px; }
+  textarea.o-tin-nhan { min-height: 200px; height: 42vh; max-height: 360px; background: #FCFAF6; cursor: text; }
   .hop { background: var(--be-mat); border-radius: var(--r-khung); padding: 22px; width: min(820px, 94vw); max-height: 90vh; overflow: auto; box-shadow: var(--bong-cao); }
   iframe.xem { width: 100%; height: 520px; border: 1px solid var(--vien); border-radius: var(--r-phan-tu); background: #fff; }
   .buoc { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--mau); color: var(--tren-mau); font-size: 12px; font-weight: 600; margin-right: 8px; vertical-align: 1px; }
@@ -264,7 +265,7 @@
     .file-o .thanh > input { flex: 1 1 0 !important; width: auto !important; }
     /* Hộp thoại dạng trượt từ dưới lên */
     .phu-trang { align-items: flex-end; padding: 0; }
-    .hop { width: 100vw; max-width: 100vw; max-height: 92vh; border-radius: 18px 18px 0 0; padding: 18px 14px calc(18px + env(safe-area-inset-bottom)); }
+    .hop { width: 100vw; max-width: 100vw; max-height: 92%; border-radius: 18px 18px 0 0; padding: 18px 14px calc(18px + env(safe-area-inset-bottom)); }
     iframe.xem { height: 64vh; }
     .thong-bao { left: 12px; right: 12px; top: calc(10px + env(safe-area-inset-top)); bottom: auto; max-width: none; }
     .dang-nhap { margin: 24px 12px; padding: 22px 18px; }
@@ -909,12 +910,11 @@
       'Vui lòng KHÔNG chia sẻ mã này cho người khác. Mã dùng được cho cả năm học.';
   }
   function hopTinNhan(tieuDe, noiDung) {
-    var ta = the('textarea', { style: 'min-height:320px' }); ta.value = noiDung;
+    // Chỉ xem + sao chép (readonly): không bật bàn phím điện thoại -> tránh lỗi Safari chạm nhầm khi bàn phím đang mở
+    var ta = the('textarea', { class: 'o-tin-nhan', readonly: '' }); ta.value = noiDung;
     var nut = the('button', { text: 'Sao chép', onclick: function () {
-      ta.select();
-      var xong = function () { bao('Đã sao chép. Dán vào Zalo và gửi RIÊNG cho phụ huynh.'); };
-      if (navigator.clipboard) navigator.clipboard.writeText(ta.value).then(xong, function () { document.execCommand('copy'); xong(); });
-      else { document.execCommand('copy'); xong(); }
+      saoChepVanBan(ta.value).then(function () { bao('Đã sao chép. Dán vào Zalo và gửi RIÊNG cho phụ huynh.'); },
+        function () { ta.select(); bao('Không sao chép tự động được — chữ đã được chọn, hãy bấm Sao chép của điện thoại.', true); });
     } });
     moHop(tieuDe, the('div', {}, [ta, the('div', { class: 'thanh', style: 'margin-top:10px' }, [nut,
       the('span', { class: 'goi-y', text: 'Gửi qua tin nhắn riêng (1-1), không gửi vào nhóm.' })])]));
@@ -1801,6 +1801,14 @@
     window.addEventListener('resize', dong);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') dong(); });
   })();
+
+  // iPhone: khi bàn phím mở, Safari dịch vùng hiển thị nhưng lớp phủ "fixed" vẫn tính theo vị trí cũ -> chạm nhầm.
+  // Cho lớp phủ hộp thoại bám theo visualViewport (vùng đang thấy thật sự).
+  if (window.visualViewport) {
+    var vv = window.visualViewport, goc = document.documentElement.style;
+    var canhVv = function () { goc.setProperty('--vv-cao', vv.height + 'px'); goc.setProperty('--vv-tren', vv.offsetTop + 'px'); };
+    vv.addEventListener('resize', canhVv); vv.addEventListener('scroll', canhVv); canhVv();
+  }
 </script>
 </body>
 </html>
