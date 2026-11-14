@@ -256,6 +256,27 @@
   .o-tat-ca-lop input { width: 18px; height: 18px; margin: 2px 0 0; flex: none; }
   .o-tat-ca-lop .goi-y { display: block; font-weight: 400; margin-top: 4px; }
   table.th td.ten-th { white-space: nowrap; }
+  .phan-doan { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--r-tron); background: var(--phu-hover); border: 1px solid var(--vien); margin-left: auto; flex: none; }
+  .phan-doan button { min-height: 30px; width: 40px; padding: 0; background: none; color: var(--phu); border-radius: var(--r-tron); }
+  .phan-doan button[aria-pressed=true] { background: var(--be-mat); color: var(--chu); box-shadow: var(--bong-thap); }
+  @media (hover: hover) { .phan-doan button[aria-pressed=false]:hover { color: var(--chu); background: var(--phu-nhan); } }
+  .bieu-do { padding: 16px; }
+  .bd-dau { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 8px; }
+  .bd-chu-giai { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--phu); }
+  .bd-chu-giai span { display: inline-flex; align-items: center; gap: 6px; }
+  .bd-chu-giai i { display: inline-block; width: 16px; height: 0; border-top: 2px solid; }
+  .bd-chon { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--phu); font-weight: 500; min-width: 0; }
+  .bd-chon select { max-width: 220px; min-width: 0; }
+  .bd-ve { position: relative; touch-action: pan-y; }
+  .bd-ve svg { display: block; width: 100%; overflow: visible; font-family: var(--font); }
+  .bd-ve .hs-duong { cursor: pointer; }
+  .bd-tip { position: absolute; top: 0; pointer-events: none; background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-phan-tu); box-shadow: var(--bong-cao); padding: 8px 10px; font-size: 12px; min-width: 150px; max-width: 240px; z-index: 2; }
+  .bd-tip .tde { color: var(--phu); margin-bottom: 4px; }
+  .bd-tip .dong { display: flex; align-items: baseline; gap: 8px; margin-top: 3px; }
+  .bd-tip .dong i { width: 12px; border-top: 2px solid; flex: none; align-self: center; }
+  .bd-tip .dong b { font-variant-numeric: tabular-nums; }
+  .bd-tip .dong span { color: var(--phu); }
+  @media (max-width: 640px) { .bd-chon { width: 100%; } .bd-chon select { flex: 1; max-width: none; } .bieu-do { padding: 12px 10px; } }
   .huy-hieu.nho { min-width: 0; height: 18px; padding: 0 6px; font-size: 10.5px; margin-left: 6px; vertical-align: 1px; }
   .huy-hieu.h1 { background: linear-gradient(135deg, #FFE27A, #F2B705); color: #5C3D00; box-shadow: inset 0 0 0 1px rgba(150,100,0,.25); }
   .huy-hieu.h2 { background: linear-gradient(135deg, #F1F3F5, #C3CAD2); color: #39434D; box-shadow: inset 0 0 0 1px rgba(60,70,80,.2); }
@@ -684,9 +705,21 @@
         <p class="goi-y mo-ta-trang" id="moTaTH"></p>
         <div class="hang-loc">
           <select id="locNhomTH"></select>
+          <div class="phan-doan" role="group" aria-label="Kiểu xem">
+            <button type="button" data-che="bang" title="Xem dạng bảng" aria-label="Xem dạng bảng" aria-pressed="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></svg></button>
+            <button type="button" data-che="bieu-do" title="Xem dạng biểu đồ đường" aria-label="Xem dạng biểu đồ đường" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-5 4 3 5-7"/></svg></button>
+          </div>
         </div>
       </div>
-      <div style="overflow:auto"><table class="ds th" id="bangTH"></table></div>
+      <div id="khungBangTH" style="overflow:auto"><table class="ds th" id="bangTH"></table></div>
+      <div id="khungBieuDoTH" class="the bieu-do an">
+        <div class="bd-dau">
+          <div class="bd-chu-giai" id="bdChuGiai"></div>
+          <label class="bd-chon">Học sinh <select id="bdHocSinh"></select></label>
+        </div>
+        <div class="bd-ve" id="bdVe"></div>
+        <p class="goi-y" id="bdGoiY" style="margin:8px 0 0"></p>
+      </div>
     </section>
 
     <!-- ============ TÀI KHOẢN GIÁO VIÊN (chỉ quản trị) ============ -->
@@ -1989,8 +2022,124 @@
     tbody.appendChild(rTb); tsv.push(dongTb);
     bang.appendChild(tbody);
     bangTHText = tsv.map(function (r) { return r.join('\t'); }).join('\n');
+    var tbLop = tongCot.map(function (x) { return x[1] ? x[0] / x[1] : null; });
+    var cu = duLieuTH && duLieuTH.nhom === nhom ? duLieuTH.chon : null;
+    var dauBang = Object.keys(hangTb).sort(function (a, b) { return hangTb[a] - hangTb[b]; })[0] || '';
+    duLieuTH = { nhom: nhom, cot: cot, hs: hs.filter(function (h) { return diem[h.maHs]; }), diem: diem, thang10: thang10, hangCot: hangCot, hangTb: hangTb, tbLop: tbLop,
+      chon: cu && diem[cu] ? cu : dauBang };
+    var sel = $('bdHocSinh'); sel.textContent = '';
+    duLieuTH.hs.slice().sort(function (a, b) { return a.hoTen.localeCompare(b.hoTen, 'vi'); }).forEach(function (h) {
+      sel.appendChild(the('option', { value: h.maHs, text: h.hoTen + (hangTb[h.maHs] <= 3 ? ' (#' + hangTb[h.maHs] + ')' : '') }));
+    });
+    sel.value = duLieuTH.chon;
+    if (cheTH === 'bieu-do') veBieuDoTH();
+  }
+
+  /* ---- Tổng hợp dạng biểu đồ đường: mỗi học sinh 1 đường xám, TB lớp + học sinh đang chọn nổi bật ---- */
+  var duLieuTH = null, cheTH = 'bang';
+  try { cheTH = localStorage.getItem('cheTH') === 'bieu-do' ? 'bieu-do' : 'bang'; } catch (e) {}
+  var MAU_TB = '#225BFF', MAU_HS = '#E8590C';
+  function datCheTH(che) {
+    cheTH = che; try { localStorage.setItem('cheTH', che); } catch (e) {}
+    [].forEach.call(document.querySelectorAll('.phan-doan button'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.che === che)); });
+    $('khungBangTH').classList.toggle('an', che !== 'bang'); $('khungBieuDoTH').classList.toggle('an', che === 'bang');
+    $('nutSaoChepTH').classList.toggle('an', che !== 'bang');
+    if (che === 'bieu-do') veBieuDoTH();
+  }
+  [].forEach.call(document.querySelectorAll('.phan-doan button'), function (b) { b.onclick = function () { datCheTH(b.dataset.che); }; });
+  $('bdHocSinh').onchange = function () { if (duLieuTH) { duLieuTH.chon = this.value; veBieuDoTH(); } };
+  var hoanVeBD; window.addEventListener('resize', function () { clearTimeout(hoanVeBD); hoanVeBD = setTimeout(function () { if (cheTH === 'bieu-do' && !$('tabTongHop').classList.contains('an')) veBieuDoTH(); }, 150); });
+  function veBieuDoTH() {
+    var k = $('bdVe'), D = duLieuTH; k.textContent = '';
+    var cg = $('bdChuGiai'); cg.textContent = '';
+    if (!D || !D.cot.length || !D.hs.length) { k.appendChild(the('p', { class: 'goi-y', text: 'Lớp này chưa có lần thi nào để vẽ biểu đồ.' })); $('bdGoiY').textContent = ''; return; }
+    var NS = 'http://www.w3.org/2000/svg';
+    var sv = function (tag, tt, cha) { var e = document.createElementNS(NS, tag); Object.keys(tt || {}).forEach(function (x) { e.setAttribute(x, tt[x]); }); if (cha) cha.appendChild(e); return e; };
+    var W = Math.max(280, k.clientWidth || 600), hep = W < 560, H = hep ? 260 : 340;
+    var n = D.cot.length, T = { l: 34, r: hep ? 16 : 110, t: 14, b: 46 };
+    var w = W - T.l - T.r, h = H - T.t - T.b;
+    var X = function (i) { return T.l + (n === 1 ? w / 2 : i * w / (n - 1)); };
+    var Y = function (v) { return T.t + h - v / 10 * h; };
+    var svg = sv('svg', { viewBox: '0 0 ' + W + ' ' + H, height: H, role: 'img', 'aria-label': 'Biểu đồ điểm (thang 10) theo các lần thi' }, k);
+    // lưới + trục
+    for (var g = 0; g <= 10; g += 2) {
+      sv('line', { x1: T.l, x2: T.l + w, y1: Y(g), y2: Y(g), stroke: g ? 'rgba(5,54,89,.08)' : 'rgba(5,54,89,.25)', 'stroke-width': 1 }, svg);
+      sv('text', { x: T.l - 8, y: Y(g) + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#4E606F' }, svg).textContent = g;
+    }
+    var buoc = Math.max(1, Math.ceil(n / Math.max(1, Math.floor(w / (hep ? 64 : 96)))));
+    D.cot.forEach(function (d, i) {
+      if (i % buoc && i !== n - 1) return;
+      var ten = d.baiThi.length > (hep ? 10 : 16) ? d.baiThi.slice(0, hep ? 9 : 15) + '…' : d.baiThi;
+      var tx = sv('text', { x: X(i), y: T.t + h + 18, 'text-anchor': n === 1 ? 'middle' : i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle', 'font-size': 11, fill: '#4E606F' }, svg);
+      tx.textContent = ten; sv('title', {}, tx).textContent = d.baiThi + ' – Lần ' + d.lan;
+      sv('text', { x: X(i), y: T.t + h + 33, 'text-anchor': tx.getAttribute('text-anchor'), 'font-size': 10.5, fill: '#A4B0BC' }, svg).textContent = 'L' + d.lan + (d.ngayThi ? ' · ' + d.ngayThi.slice(0, 5) : '');
+    });
+    var diemHs = function (maHs) { return D.cot.map(function (d) { var v = D.diem[maHs] && D.diem[maHs][d.maDot]; return v ? D.thang10(v) : null; }); };
+    var duongD = function (ds) { // bỏ qua lần vắng: nối các điểm có thật
+      var s = ''; ds.forEach(function (v, i) { if (v == null) return; s += (s ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1); }); return s;
+    };
+    var lopXam = sv('g', {}, svg), lopNoi = sv('g', {}, svg);
+    var veDuong = function (ds, mau, day, lop, tt) {
+      var p = sv('path', Object.assign({ d: duongD(ds), fill: 'none', stroke: mau, 'stroke-width': day, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, tt || {}), lop);
+      if (n === 1 || ds.filter(function (v) { return v != null; }).length === 1) ds.forEach(function (v, i) { if (v != null) sv('circle', { cx: X(i), cy: Y(v), r: day > 1.5 ? 4 : 2.5, fill: mau }, lop); });
+      return p;
+    };
+    // học sinh khác: đường xám mảnh, chạm/bấm để chọn
+    D.hs.forEach(function (hc) {
+      if (hc.maHs === D.chon) return;
+      var ds = diemHs(hc.maHs);
+      veDuong(ds, 'rgba(78,96,111,.22)', 1.2, lopXam);
+      var hit = sv('path', { d: duongD(ds), fill: 'none', stroke: 'transparent', 'stroke-width': 12, class: 'hs-duong' }, lopXam);
+      if (n === 1) ds.forEach(function (v, i) { if (v != null) sv('circle', { cx: X(i), cy: Y(v), r: 8, fill: 'transparent', class: 'hs-duong' }, lopXam).onclick = function () { D.chon = hc.maHs; $('bdHocSinh').value = hc.maHs; veBieuDoTH(); }; });
+      hit.onclick = function () { D.chon = hc.maHs; $('bdHocSinh').value = hc.maHs; veBieuDoTH(); };
+      sv('title', {}, hit).textContent = hc.hoTen;
+    });
+    // TB lớp + học sinh đang chọn
+    var tenChon = (D.hs.filter(function (x) { return x.maHs === D.chon; })[0] || {}).hoTen || '';
+    var dsChon = D.chon ? diemHs(D.chon) : [];
+    veDuong(D.tbLop, '#FFFFFF', 6, lopNoi); veDuong(D.tbLop, MAU_TB, 2, lopNoi, { 'stroke-dasharray': '6 4' });
+    if (D.chon) { veDuong(dsChon, '#FFFFFF', 6, lopNoi); veDuong(dsChon, MAU_HS, 2.2, lopNoi); }
+    [[D.tbLop, MAU_TB], [dsChon, MAU_HS]].forEach(function (x) {
+      x[0].forEach(function (v, i) { if (v != null) sv('circle', { cx: X(i), cy: Y(v), r: 4, fill: x[1], stroke: '#FFFFFF', 'stroke-width': 2 }, lopNoi); });
+    });
+    // nhãn trực tiếp ở cuối đường (màn rộng)
+    if (!hep) {
+      var nhan = [];
+      var cuoi = function (ds) { for (var i = ds.length - 1; i >= 0; i--) if (ds[i] != null) return [i, ds[i]]; return null; };
+      var a = cuoi(D.tbLop), b = D.chon ? cuoi(dsChon) : null;
+      if (a) nhan.push({ y: Y(a[1]), x: X(a[0]), t: 'TB lớp' });
+      if (b) nhan.push({ y: Y(b[1]), x: X(b[0]), t: tenChon.length > 14 ? tenChon.split(' ').slice(-2).join(' ') : tenChon });
+      if (nhan.length === 2 && Math.abs(nhan[0].y - nhan[1].y) < 14) { var giua = (nhan[0].y + nhan[1].y) / 2, tren = nhan[0].y <= nhan[1].y ? 0 : 1; nhan[tren].y = giua - 8; nhan[1 - tren].y = giua + 8; }
+      nhan.forEach(function (x) { sv('text', { x: x.x + 10, y: x.y + 4, 'font-size': 12, 'font-weight': 600, fill: '#15110C' }, svg).textContent = x.t; });
+    }
+    // chú giải
+    [['TB lớp', MAU_TB, 'dashed'], [tenChon || 'Học sinh đang chọn', MAU_HS, 'solid'], ['Học sinh khác (bấm vào đường để chọn)', 'rgba(78,96,111,.4)', 'solid']].forEach(function (x, i) {
+      if (i === 1 && !D.chon) return;
+      var s = the('span', {}, [the('i', { style: 'border-top-color:' + x[1] + ';border-top-style:' + x[2] }), x[0]]); cg.appendChild(s);
+    });
+    $('bdGoiY').textContent = n === 1 ? 'Lớp mới có 1 lần thi — khi có thêm lần thi, các đường sẽ cho thấy xu hướng tiến bộ.' : 'Điểm quy về thang 10. Lần vắng thi được bỏ qua, đường nối giữa các lần có điểm.';
+    // con trỏ dọc + chú thích
+    var truc = sv('line', { y1: T.t, y2: T.t + h, stroke: 'rgba(21,17,12,.35)', 'stroke-width': 1, visibility: 'hidden' }, svg);
+    var tip = the('div', { class: 'bd-tip an' }); k.appendChild(tip);
+    var hien = function (ev) {
+      var r = svg.getBoundingClientRect(), x = (ev.clientX - r.left) * W / r.width;
+      if (x < T.l - 20 || x > T.l + w + 20) return an();
+      var i = n === 1 ? 0 : Math.max(0, Math.min(n - 1, Math.round((x - T.l) / w * (n - 1)))), d = D.cot[i];
+      truc.setAttribute('x1', X(i)); truc.setAttribute('x2', X(i)); truc.setAttribute('visibility', 'visible');
+      tip.textContent = '';
+      tip.appendChild(the('div', { class: 'tde', text: d.baiThi + ' – Lần ' + d.lan + (d.ngayThi ? ' · ' + d.ngayThi : '') }));
+      var dong = function (mau, v, ten, kieu) { tip.appendChild(the('div', { class: 'dong' }, [the('i', { style: 'border-top-color:' + mau + ';border-top-style:' + (kieu || 'solid') }), the('b', { text: v == null ? '—' : v.toFixed(2) }), the('span', { text: ten })])); };
+      if (D.chon) dong(MAU_HS, dsChon[i], tenChon + (D.hangCot[i][D.chon] ? ' (hạng ' + D.hangCot[i][D.chon] + ')' : ''));
+      dong(MAU_TB, D.tbLop[i], 'TB lớp', 'dashed');
+      tip.classList.remove('an');
+      var px = X(i) * r.width / W, tw = tip.offsetWidth;
+      tip.style.left = Math.max(0, Math.min(r.width - tw, px + 12 + tw > r.width ? px - tw - 12 : px + 12)) + 'px';
+    };
+    var an = function () { truc.setAttribute('visibility', 'hidden'); tip.classList.add('an'); };
+    svg.addEventListener('pointermove', hien); svg.addEventListener('pointerdown', hien); svg.addEventListener('pointerleave', an);
   }
   $('locNhomTH').onchange = veTongHop;
+  datCheTH(cheTH);
   $('nutSaoChepTH').onclick = function () {
     if (!bangTHText) return;
     var xong = function () { bao('Đã sao chép. Dán vào Excel/Google Sheet.'); };
