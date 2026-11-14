@@ -151,6 +151,29 @@ test('lớp đã có danh sách: em không có trong lớp -> mặc định mớ
   assert.deepEqual(xt.hocSinh[1].ungVien.map((u) => u.hoTen), ['Vũ Đức Minh']);
 });
 
+test('đổi tên bài thi: mọi lần trong lớp, tiêu đề phiếu mặc định đổi theo, không cho trùng bài khác', async () => {
+  const td = st.mau.ketQua.KetQua[0];
+  const r = td.map(() => ''); r[2] = 'Phạm Minh Anh'; r[3] = 'Toán 1'; r[5] = '105';
+  const da = JSON.parse(JSON.stringify(st.mau.dapAn)); da.ThongTin.forEach((x) => { if (x[0] === 'Tiêu đề phiếu') x[1] = ''; }); // tiêu đề phiếu = tên bài
+  const so = { kq: { KetQua: [td, r] }, da };
+  const ds = [];
+  for (const bai of ['Ôn tập chương 1', 'ôn tập CHƯƠNG 1', 'Ôn tập chương 2']) {
+    const bd = await A.rpc('gvBatDauDot', so, { baiThi: bai }); ds.push(bd.dsDot[0]);
+    await A.rpc('gvTaoPhieuLo', bd.dsDot[0].maDot, so, bd.dsDot[0].canTao);
+  }
+  assert.deepEqual(ds.map((d) => d.lan), [1, 2, 1]);
+  await assert.rejects(A.rpc('gvDoiTenBaiThi', ds[0].maDot, 'ôn tập chương 2'), /đã có bài thi/);
+  const dl = await A.rpc('gvDoiTenBaiThi', ds[1].maDot, 'Kiểm tra chương 1');
+  assert.match(dl.thongBao, /2 lần thi/);
+  assert.deepEqual(dl.dot.filter((d) => d.nhom === 'Toán 1' && /chương 1/i.test(d.baiThi)).map((d) => [d.baiThi, d.lan]).sort(), [['Kiểm tra chương 1', 1], ['Kiểm tra chương 1', 2]]);
+  const p = (await A.rpc('gvDsPhieuLan', ds[0].maDot))[0];
+  assert.equal((await A.rpc('gvXemPhieu', p.maPhieu)).d.tieuDe, 'KIỂM TRA CHƯƠNG 1');
+  // gửi tiếp bài cùng tên mới -> thành Lần 3
+  const bd3 = await A.rpc('gvBatDauDot', so, { baiThi: 'kiểm tra chương 1' });
+  assert.equal(bd3.dsDot[0].lan, 3);
+  for (const d of [...ds, bd3.dsDot[0]]) await A.rpc('gvXoaDot', d.maDot); // dọn để không ảnh hưởng test sau
+});
+
 test('1 file nhiều lớp: tự ghép theo cột Lớp, tạo lớp mới, cột Lớp trống thì đoán theo học sinh', async () => {
   const dl = await A.rpc('gvTaiDuLieu');
   const hue = dl.hocSinh.find((h) => h.hoTen === 'Lê Kim Huệ');

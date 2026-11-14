@@ -851,6 +851,32 @@ const HAM = {
     return HAM.gvTaiDuLieu(c);
   },
 
+  /** Đổi tên bài thi: mọi lần của bài đó trong lớp; tiêu đề phiếu đang lấy theo tên bài cũng đổi theo. */
+  async gvDoiTenBaiThi(c, maDot, tenMoi) {
+    const d = (await c.lanThi()).find((x) => x.maDot === maDot);
+    if (!d) throw new Loi('Không tìm thấy lần thi.');
+    if (!c.duocLopId(d.lopId)) throw new Loi('Bạn không phụ trách lớp "' + d.nhom + '".', 403);
+    tenMoi = L.chuoi_(tenMoi).replace(/\s+/g, ' ');
+    if (!tenMoi) throw new Loi('Vui lòng nhập tên bài thi.');
+    if (tenMoi.length > 200) throw new Loi('Tên bài thi quá dài.');
+    const cungLop = (await c.lanThi()).filter((x) => x.lopId === d.lopId);
+    const cacLan = cungLop.filter((x) => L.khongDau_(x.baiThi) === L.khongDau_(d.baiThi));
+    const trung = cungLop.find((x) => L.khongDau_(x.baiThi) === L.khongDau_(tenMoi) && L.khongDau_(x.baiThi) !== L.khongDau_(d.baiThi));
+    if (trung) throw new Loi('Lớp "' + d.nhom + '" đã có bài thi "' + trung.baiThi + '". Đặt tên khác để không gộp nhầm 2 bài.');
+    const ids = cacLan.map((x) => x.maDot), ph = ids.map(() => '?').join(',');
+    const tieuDeCu = [...new Set(cacLan.map((x) => x.baiThi.toUpperCase()))];
+    await c.db.batch([
+      c.db.prepare(`UPDATE lan_thi SET bai_thi = ? WHERE kg = ? AND id IN (${ph})`).bind(tenMoi, c.kg, ...ids),
+      // phiếu có tiêu đề = tên bài cũ (viết hoa, mặc định khi file không ghi tiêu đề) -> đổi theo
+      c.db.prepare(`UPDATE phieu SET du_lieu = json_set(du_lieu, '$.tieuDe', ?) WHERE kg = ? AND lan_thi IN (${ph})
+        AND json_extract(du_lieu, '$.tieuDe') IN (${tieuDeCu.map(() => '?').join(',')})`).bind(tenMoi.toUpperCase(), c.kg, ...ids, ...tieuDeCu)
+    ]);
+    c.xoaBoNho();
+    const kq = await HAM.gvTaiDuLieu(c);
+    kq.thongBao = 'Đã đổi tên "' + d.baiThi + '" thành "' + tenMoi + '"' + (cacLan.length > 1 ? ' (' + cacLan.length + ' lần thi)' : '') + '.';
+    return kq;
+  },
+
   async gvXoaDot(c, maDot) {
     const d = (await c.lanThi()).find((x) => x.maDot === maDot);
     if (!d) throw new Loi('Không tìm thấy lần thi.');
