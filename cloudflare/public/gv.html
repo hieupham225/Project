@@ -778,7 +778,7 @@
   <!-- Hộp hỏi xác nhận / nhập chữ (thay confirm/prompt của trình duyệt) -->
   <div id="hopHoi" class="phu-trang an" style="z-index:30">
     <div class="hop hop-hoi" role="dialog" aria-modal="true">
-      <div class="dau-hop an" id="hoiDau"><h2 id="hoiTieuDe"></h2></div>
+      <div class="dau-hop an" id="hoiDau"><h2 id="hoiTieuDe"></h2><button type="button" id="hoiDong" class="dong-x phu" aria-label="Đóng">✕</button></div>
       <p id="hoiNoiDung" style="white-space:pre-line;margin-top:0"></p>
       <label class="o an" id="hoiNhanO"><span id="hoiNhan"></span><input id="hoiNhap" type="text" class="an" style="width:100%"></label>
       <div class="chan-hop">
@@ -854,14 +854,14 @@
       $('hoiDongY').textContent = tuyChon.nut || 'Đồng ý';
       $('hoiDongY').className = tuyChon.nguyHiem ? 'nguy' : '';
       $('hopHoi').classList.remove('an');
-      (coNhap ? $('hoiNhap') : $('hoiDongY')).focus();
+      if (!laCamUng()) (coNhap ? $('hoiNhap') : $('hoiDongY')).focus(); // điện thoại: không bật bàn phím ngay khi mở
       var xong = function (dongY) {
         $('hopHoi').classList.add('an');
-        $('hoiDongY').onclick = $('hoiHuy').onclick = $('hoiNhap').onkeydown = null;
+        $('hoiDongY').onclick = $('hoiHuy').onclick = $('hoiDong').onclick = $('hoiNhap').onkeydown = null;
         traVe(coNhap ? (dongY ? $('hoiNhap').value : null) : dongY);
       };
       $('hoiDongY').onclick = function () { xong(true); };
-      $('hoiHuy').onclick = function () { xong(false); };
+      $('hoiHuy').onclick = $('hoiDong').onclick = function () { xong(false); };
       $('hoiNhap').onkeydown = function (e) { if (e.key === 'Enter') xong(true); if (e.key === 'Escape') xong(false); };
     });
   }
@@ -1201,7 +1201,7 @@
     [].slice.call(k.querySelectorAll('.chip-chon')).forEach(function (x) { x.remove(); });
     lopChon.forEach(function (n) {
       var moi = (DL.nhom || []).map(khoaTen).indexOf(khoaTen(n)) < 0;
-      var bo = the('button', { type: 'button', class: 'chip-bo', 'aria-label': 'Bỏ lớp ' + n, text: '×', onclick: function (e) { e.stopPropagation(); lopChon = lopChon.filter(function (x) { return x !== n; }); veLopChon(); $('fLopTim').focus(); } });
+      var bo = the('button', { type: 'button', class: 'chip-bo', 'aria-label': 'Bỏ lớp ' + n, text: '×', onclick: function (e) { e.stopPropagation(); lopChon = lopChon.filter(function (x) { return x !== n; }); veLopChon(); if (!laCamUng()) $('fLopTim').focus(); } });
       k.insertBefore(the('span', { class: 'chip-chon' + (moi ? ' moi' : '') }, [n + (moi ? ' (mới)' : ''), bo]), $('fLopTim'));
     });
     $('fLopTim').placeholder = lopChon.length ? 'Thêm lớp…' : 'Tìm hoặc gõ tên lớp mới…';
@@ -1209,7 +1209,7 @@
   function chonLop(n) {
     var k = khoaTen(n), i = lopChon.map(khoaTen).indexOf(k);
     if (i >= 0) lopChon.splice(i, 1); else lopChon.push(n);
-    $('fLopTim').value = ''; veLopChon(); veDsLop(); $('fLopTim').focus();
+    $('fLopTim').value = ''; veLopChon(); veDsLop(); if (!laCamUng()) $('fLopTim').focus();
   }
   function dongDsLop() { $('fLopDs').classList.add('an'); $('fLopTim').setAttribute('aria-expanded', 'false'); }
   function veDsLop() {
