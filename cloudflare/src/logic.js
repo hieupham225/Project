@@ -187,9 +187,9 @@ export function ghepTheoLop_(dsKq, dsHs, nhom, quyetDinh, tuThemMoi) {
     if (h.maHs) {
       var x = theoMa[h.maHs];
       if (!x) return { canChon: 'maLa', ungVien: cungTen(h) };
-      if (!thuocNhom_(x, nhom)) return { canChon: 'ngoaiLop', ungVien: [x] };
       if (h.hoTen && khongDau_(h.hoTen) !== khongDau_(x.hoTen)) return { canChon: 'lechTen', ungVien: [x] };
-      return { hs: x };
+      // Mã HS và họ tên đều khớp: chắc chắn đúng em -> nếu chưa ở lớp ghi trong file thì thêm vào lớp
+      return thuocNhom_(x, nhom) ? { hs: x } : { hs: x, themVaoLop: true };
     }
     var trongLop = lop.filter(function (x) { return khongDau_(x.hoTen) === khongDau_(h.hoTen); });
     if (trongLop.length === 1) return { hs: trongLop[0] };
@@ -303,7 +303,8 @@ export const LY_DO_CAN_CHON = {
   ngoaiLop: 'Học sinh này chưa thuộc lớp — thêm vào lớp?',
   lechTen: 'Họ tên trong file khác với họ tên của Mã HS',
   trungTen: 'Lớp có nhiều học sinh trùng họ tên — chọn đúng em',
-  khongCo: 'Không tìm thấy trong lớp'
+  khongCo: 'Không tìm thấy trong lớp',
+  canLop: 'Chưa rõ lớp — cột Lớp trống, chọn lớp cho dòng này'
 };
 
 export const MAU_FILE_KET_QUA = {
@@ -594,7 +595,7 @@ export function taoMauKetQua(dsHocSinh, tenLop, soCau) {
     ['Điểm trắc nghiệm', 'Điểm đúng sai', 'Điểm điền từ', 'Tổng điểm', 'Thứ hạng', 'Ưu điểm', 'Nhược điểm', 'Hướng khắc phục', 'Lời khuyên']);
   var dong = (dsHocSinh || []).map(function (h, j) {
     var r = tieuDe.map(function () { return ''; });
-    r[0] = String(j + 1); r[1] = h.maHs; r[2] = h.hoTen; r[3] = tenLop || '';
+    r[0] = String(j + 1); r[1] = h.maHs; r[2] = h.hoTen; r[3] = h.lopMau != null ? h.lopMau : (tenLop || '');
     return r;
   });
   if (!dong.length) {
@@ -612,6 +613,7 @@ export function taoMauKetQua(dsHocSinh, tenLop, soCau) {
     HuongDan: [
       ['HƯỚNG DẪN — BẢNG KẾT QUẢ HỌC SINH'],
       ['• Mỗi học sinh 1 dòng. KHÔNG sửa cột "Mã HS" (đã điền sẵn khi tải mẫu của lớp) — đó là mã để nhận đúng học sinh.'],
+      ['• Cột "Lớp": hệ thống tự đưa kết quả vào đúng lớp. Một file có thể gồm nhiều lớp; xóa các dòng của học sinh không làm bài này. Lớp chưa có sẽ được tạo mới.'],
       ['• "Mã đề thi": mã đề học sinh làm. Đáp án đúng của từng mã đề nằm ở file đáp án riêng — KHÔNG cần chép đáp án vào từng dòng.'],
       ['• "Câu 1" … "Câu N": đáp án học sinh chọn. Trắc nghiệm: A/B/C/D. Đúng/sai: "Đ,S,Đ,S" (ý bỏ trống để trống giữa 2 dấu phẩy). Điền từ: có thể để trống.'],
       ['• Cột điểm để trống thì hệ thống tự tính (trắc nghiệm 0,25đ/câu; đúng/sai: 1 ý 0,1 – 2 ý 0,25 – 3 ý 0,5 – 4 ý 1đ; điền từ 0,5đ/câu).'],

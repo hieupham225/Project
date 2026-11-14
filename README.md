@@ -18,7 +18,7 @@ Phụ huynh nhập **1 mã tra cứu riêng** để xem tất cả phiếu của
 ```
 Giáo viên                                                              Phụ huynh
   Đăng ký ──► Tạo lớp ──► Thêm học sinh (mỗi em 1 Mã HS + 1 mã tra cứu) ──(nhắn riêng 1 lần)──► nhận mã
-  Gửi kết quả: chọn lớp ──► ① bảng kết quả + ② bảng đáp án theo mã đề ──► chấm, ghép học sinh
+  Gửi kết quả: ① bảng kết quả (cột Lớp) + ② bảng đáp án theo mã đề ──► tự ghép lớp + học sinh, chấm
                ──► Lần 1, Lần 2… ──► Công bố ──────────────────────────────────────────────► nhập mã → xem / tải PDF
 ```
 
@@ -33,7 +33,8 @@ Bấm **⬇ Mẫu bảng kết quả của lớp** và **⬇ Mẫu bảng đáp 
 | Cột | Ghi chú |
 |---|---|
 | `Mã HS` | Đã điền sẵn trong file mẫu của lớp. **Không sửa.** Dùng để nhận đúng học sinh. |
-| `Họ và tên`, `Lớp` | Bắt buộc có họ tên. Dòng ghi lớp khác với lớp đang gửi sẽ tự được bỏ qua. |
+| `Họ và tên` | Bắt buộc. |
+| `Lớp` | Hệ thống tự đưa từng dòng vào đúng lớp, **một file có thể gồm nhiều lớp**. Lớp chưa có sẽ được tạo mới. Để trống: lấy lớp của học sinh (theo Mã HS / họ tên) nếu em chỉ học 1 lớp, không thì hệ thống hỏi. |
 | `Số báo danh`, `Mã đề thi`, `STT`, `Thứ hạng` | Mã đề dùng để lấy đúng đáp án. Số báo danh và thứ hạng được in lên phiếu. |
 | `Câu 1` … `Câu N` | Đáp án học sinh chọn. Trắc nghiệm: `A`–`D`. Đúng/sai: `Đ,S,Đ,S` (ý bỏ trống để trống giữa hai dấu phẩy). Điền từ: có thể để trống. |
 | `Điểm trắc nghiệm`, `Điểm đúng sai`, `Điểm điền từ`, `Tổng điểm` | Để trống thì hệ thống tự tính. Nếu điểm nhập khác điểm tính từ đáp án, hệ thống cảnh báo. |
@@ -66,10 +67,10 @@ Thử với bảng điểm thật của 117 học sinh: điểm tự tính khớ
    Xóa lớp không xóa học sinh hay mã tra cứu; chỉ xóa các lần thi và phiếu điểm **của lớp đó**.
 3. **Tin nhắn gửi mã (cả lớp)**: sao chép và nhắn **riêng** cho từng phụ huynh. Mỗi phụ huynh chỉ cần nhận mã một lần.
 4. **Gửi kết quả thi**:
-   1. Chọn lớp, rồi tải các file mẫu.
+   1. Tải file mẫu (mặc định gồm học sinh của tất cả lớp, mỗi dòng ghi sẵn lớp; có thể lọc 1 lớp). Xóa dòng của em không làm bài.
    2. Tải lên 2 file.
-   3. Kiểm tra bảng ghép. Dòng "cần chọn" (gõ sai tên, Mã HS lạ, tên không khớp Mã HS) thì chọn đúng em trong lớp.
-   4. Đặt tên bài thi và bấm **Tạo phiếu**. Gửi lại cùng một bài thì hệ thống ghi thành **Lần 2, Lần 3…**.
+   3. Kiểm tra bảng ghép: tóm tắt theo từng lớp, mỗi dòng có lớp và học sinh được ghép. Dòng "cần chọn" (chưa rõ lớp, gõ sai tên, Mã HS lạ, tên không khớp Mã HS) thì chọn lớp / đúng em.
+   4. Đặt tên bài thi và bấm **Tạo phiếu**: mỗi lớp trong file được 1 lần thi. Lớp đã làm bài này thì thành **Lần 2, Lần 3…** (tính riêng từng lớp).
    5. Bấm **Xem các phiếu** để kiểm tra, rồi bấm **📢 Công bố**.
 5. **Bài thi**: công bố / ẩn / xóa từng lần. **Tổng hợp**: bảng điểm cả lớp qua các bài và các lần, kèm trung bình và tiến bộ.
 6. **Giáo viên** (chủ / quản trị): mời giáo viên khác bằng email và giao lớp phụ trách.

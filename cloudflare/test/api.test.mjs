@@ -85,13 +85,16 @@ test('gửi kết quả bằng 2 file -> phiếu -> phụ huynh tra cứu', asyn
   const so = { kq: dienKetQua(st.mau.ketQua), da: st.mau.dapAn };
   // một em vắng
   so.kq.KetQua.splice(4, 1);
-  const xt = await A.rpc('gvXemTruoc', so, 'Toán 1', {});
+  const xt = await A.rpc('gvXemTruoc', so, {});
   assert.equal(xt.ok, true); assert.deepEqual(xt.soCau, { I: 12, II: 4, III: 6 }); assert.deepEqual(xt.canhBao, []);
-  assert.equal(xt.hocSinh.filter((h) => h.trangThai === 'co').length, 3); assert.equal(xt.vang.length, 1);
+  assert.equal(xt.hocSinh.filter((h) => h.trangThai === 'co').length, 3);
+  assert.equal(xt.nhom.length, 1); assert.equal(xt.nhom[0].nhom, 'Toán 1'); assert.equal(xt.nhom[0].vang.length, 1);
   assert.equal(xt.hocSinh[0].tongDiem, (11 * 0.25 + 4 + 2.5).toFixed(2));
   assert.ok(xt.phieuXemTruoc && xt.phieuXemTruoc.cham.phan1.length === 12);
-  const bd = await A.rpc('gvBatDauDot', so, { baiThi: 'Kiểm tra tháng 11', nhom: 'Toán 1', ngayThi: '10/11/2026' });
-  assert.equal(bd.ok, true); assert.equal(bd.lan, 1); assert.equal(bd.canTao.length, 3); assert.equal(bd.vang.length, 1);
+  const bd0 = await A.rpc('gvBatDauDot', so, { baiThi: 'Kiểm tra tháng 11', ngayThi: '10/11/2026' });
+  assert.equal(bd0.ok, true); assert.equal(bd0.dsDot.length, 1);
+  const bd = bd0.dsDot[0];
+  assert.equal(bd.nhom, 'Toán 1'); assert.equal(bd.lan, 1); assert.equal(bd.canTao.length, 3); assert.equal(bd.vang.length, 1);
   const r = await A.rpc('gvTaoPhieuLo', bd.maDot, so, bd.canTao);
   assert.equal(r.xong, 3);
   const ds = await A.rpc('gvDsPhieuLan', bd.maDot);
@@ -112,7 +115,7 @@ test('gửi kết quả bằng 2 file -> phiếu -> phụ huynh tra cứu', asyn
   const em2 = dl.hocSinh.find((h) => h.hoTen === 'Phạm Minh Anh');
   assert.equal((await PH.goi('/api/phieu', { ma: em2.maTraCuu, maPhieu: tc.phieu[0].maPhieu })).ok, false);
   // lần 2: gửi lại cùng bài -> Lần 2, phiếu có lịch sử
-  const bd2 = await A.rpc('gvBatDauDot', so, { baiThi: 'kiểm tra THÁNG 11', nhom: 'Toán 1', ngayThi: '20/11/2026' });
+  const bd2 = (await A.rpc('gvBatDauDot', so, { baiThi: 'kiểm tra THÁNG 11', ngayThi: '20/11/2026' })).dsDot[0];
   assert.equal(bd2.lan, 2); assert.equal(bd2.baiThi, 'Kiểm tra tháng 11');
   await A.rpc('gvTaoPhieuLo', bd2.maDot, so, bd2.canTao);
   const ds2 = await A.rpc('gvDsPhieuLan', bd2.maDot);
@@ -130,11 +133,45 @@ test('chỉ có bảng kết quả (đáp án chép trong từng dòng, kiểu t
     ...da.slice(1, 13), ...da.slice(13, 17).map((x) => x.split('').join(',')), '', '', '', '', '', '', '',
     '+ Ưu điểm: Giỏi\r\n+ Nhược điểm: Chưa có', 'Phát huy', ...da.slice(1)];
   const kq = { 'Tong hop diem': [tieuDe, dong('Phạm Minh Anh', 0), dong('Đỗ Hải Nam', 1), dong('Học Sinh Lớp Khác', 2).map((v, j) => (j === 3 ? 'Toán 3' : v)), Array(70).fill('')] };
-  const xt = await A.rpc('gvXemTruoc', { kq, da: null }, 'Toán 1', {});
+  const xt = await A.rpc('gvXemTruoc', { kq, da: null }, {});
   assert.equal(xt.ok, true); assert.deepEqual(xt.maDe, ['105']);
-  assert.match(xt.canhBao.join(' '), /1 dòng thuộc lớp khác \(Toán 3: 1\)/); assert.match(xt.canhBao.join(' '), /đáp án đúng chép trong từng dòng/);
-  assert.deepEqual(xt.hocSinh.map((h) => h.trangThai), ['co', 'co', 'boqua']);
+  assert.match(xt.canhBao.join(' '), /đáp án đúng chép trong từng dòng/);
+  // dòng ghi lớp "Toán 3" (chưa có) -> lớp mới, học sinh mới
+  assert.deepEqual(xt.hocSinh.map((h) => h.trangThai), ['co', 'co', 'moi']);
+  assert.deepEqual(xt.nhom.map((x) => [x.nhom, x.lopMoi, x.soDong]), [['Toán 1', false, 2], ['Toán 3', true, 1]]);
   assert.equal(xt.phieuXemTruoc.nhanXet.uu, 'Giỏi'); assert.equal(xt.phieuXemTruoc.nhanXet.nhuoc, 'Chưa có'); assert.equal(xt.phieuXemTruoc.thuHang, '1');
+});
+
+test('1 file nhiều lớp: tự ghép theo cột Lớp, tạo lớp mới, cột Lớp trống thì đoán theo học sinh', async () => {
+  const dl = await A.rpc('gvTaiDuLieu');
+  const hue = dl.hocSinh.find((h) => h.hoTen === 'Lê Kim Huệ');
+  const mau = await A.rpc('gvLayMau', '');
+  assert.ok(mau.ketQua.KetQua.slice(1).some((r) => r[3] === 'Toán 1'), 'mẫu chung ghi lớp từng em');
+  const kq = dienKetQua({ KetQua: [st.mau.ketQua.KetQua[0],
+    ['1', '', 'Phạm Minh Anh', '', ...Array(36).fill('')],           // lớp trống -> đoán Toán 1 (em chỉ học 1 lớp)
+    ['2', '', 'Trần Văn Mới', 'Lý 1', ...Array(36).fill('')],        // lớp mới + học sinh mới
+    ['3', hue.maHs, 'Lê Kim Huệ', 'lý 1', ...Array(36).fill('')],    // em đã có (Toán 1) -> thêm vào Lý 1
+    ['4', '', 'Người Lạ Hoắc', '', ...Array(36).fill('')]] });       // không rõ lớp -> giáo viên chọn
+  const so = { kq, da: st.mau.dapAn };
+  let xt = await A.rpc('gvXemTruoc', so, {});
+  assert.deepEqual(xt.hocSinh.map((h) => [h.nhom, h.trangThai]), [['Toán 1', 'co'], ['Lý 1', 'moi'], ['Lý 1', 'co'], ['', 'canChon']]);
+  assert.equal(xt.hocSinh[0].lopDoan, true); assert.equal(xt.hocSinh[2].themVaoLop, true); assert.equal(xt.hocSinh[3].canChon, 'canLop');
+  assert.equal((await A.rpc('gvBatDauDot', so, { baiThi: 'Khảo sát chung' })).ok, false, 'còn dòng chưa rõ lớp');
+  xt = await A.rpc('gvXemTruoc', so, { quyetDinh: { 3: 'boqua' } });
+  assert.equal(xt.hocSinh[3].trangThai, 'boqua');
+  const bd = await A.rpc('gvBatDauDot', so, { baiThi: 'Khảo sát chung', ngayThi: '01/12/2026', quyetDinh: { 3: 'boqua' } });
+  assert.equal(bd.ok, true);
+  assert.deepEqual(bd.dsDot.map((d) => [d.nhom, d.lan, d.canTao.length, d.lopMoi]), [['Toán 1', 1, 1, false], ['Lý 1', 1, 2, true]]);
+  for (const d of bd.dsDot) assert.equal((await A.rpc('gvTaoPhieuLo', d.maDot, so, d.canTao)).xong, d.canTao.length);
+  const sau = await A.rpc('gvTaiDuLieu');
+  assert.ok(sau.nhom.includes('Lý 1'));
+  assert.deepEqual(sau.hocSinh.find((h) => h.maHs === hue.maHs).nhom.sort(), ['Lý 1', 'Toán 1']);
+  assert.ok(sau.hocSinh.some((h) => h.hoTen === 'Trần Văn Mới' && h.nhom[0] === 'Lý 1'));
+  // phụ huynh Huệ thấy phiếu Lý 1 sau khi công bố, cùng 1 mã tra cứu
+  await A.rpc('gvCongBo', bd.dsDot[1].maDot, true);
+  const tc = await PH.goi('/api/tra-cuu', { ma: hue.maTraCuu });
+  assert.ok(tc.phieu.some((p) => p.nhom === 'Lý 1'));
+  st.soPhieuEm = tc.phieu.length;
 });
 
 test('2 không gian tách biệt hoàn toàn', async () => {
@@ -150,7 +187,7 @@ test('2 không gian tách biệt hoàn toàn', async () => {
   // B tạo lớp cùng tên "Toán 1" -> là lớp riêng của B
   const d2 = await B.rpc('gvTaoNhom', 'Toán 1');
   assert.deepEqual(d2.nhom, ['Toán 1']); assert.equal(d2.hocSinh.length, 0);
-  assert.equal((await PH.goi('/api/tra-cuu', { ma: st.em.maTraCuu })).phieu.length, 1, 'phiếu của A còn nguyên');
+  assert.equal((await PH.goi('/api/tra-cuu', { ma: st.em.maTraCuu })).phieu.length, st.soPhieuEm, 'phiếu của A còn nguyên');
   // B không chọn được không gian của A
   const toiA = await A.goi('/api/toi');
   assert.equal((await B.goi('/api/chon-khong-gian', { kg: toiA.khongGian.id })).ma, 403);
@@ -166,7 +203,9 @@ test('mời giáo viên + phân quyền theo lớp', async () => {
   const c = await C.rpc('gvTaiDuLieu');
   assert.deepEqual(c.nhom, ['Toán 2']); assert.deepEqual(c.hocSinh.map((h) => h.hoTen), ['Bùi Ngọc Lan']);
   assert.equal(c.dot.length, 0); assert.equal(c.taiKhoan.length, 0); assert.equal(c.toi.quanTri, false);
-  await assert.rejects(C.rpc('gvXemTruoc', { kq: dienKetQua(st.mau.ketQua), da: st.mau.dapAn }, 'Toán 1', {}), /không phụ trách/);
+  const xtC = await C.rpc('gvXemTruoc', { kq: dienKetQua(st.mau.ketQua), da: st.mau.dapAn }, {});
+  assert.ok(xtC.hocSinh.every((h) => h.trangThai === 'loi' && /giáo viên khác phụ trách/.test(h.loi)), 'không gửi được vào lớp của người khác');
+  await assert.rejects(C.rpc('gvBatDauDot', { kq: dienKetQua(st.mau.ketQua), da: st.mau.dapAn }, { baiThi: 'X' }).then((r) => { if (!r.ok) throw new Error(r.loi); }), /Không có dòng nào/);
   await assert.rejects(C.rpc('gvXemPhieu', st.maPhieu), /Không tìm thấy/);
   await assert.rejects(C.rpc('gvLuuCaiDat', { tenTrungTam: 'X' }), /quản trị/);
   await assert.rejects(C.rpc('gvLuuTaiKhoan', { ten: 'x@y.vn', hoTen: 'X' }), /quản trị/);

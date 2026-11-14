@@ -648,13 +648,7 @@ const HAM = {
     ten = L.chuoi_(ten).replace(/[;,]/g, ' ').replace(/\s+/g, ' ').trim();
     if (!ten) throw new Loi('Vui lòng nhập tên lớp.');
     if (c.lopTheoTen(ten)) throw new Loi('Đã có lớp "' + ten + '"' + (c.duocLop(ten) ? '.' : ' (do giáo viên khác phụ trách — nhờ quản trị giao lớp này cho bạn).'));
-    const id = taoId();
-    await c.db.prepare('INSERT INTO lop (id, kg, ten, khoa, ngay_tao) VALUES (?, ?, ?, ?, ?)').bind(id, c.kg, ten, L.khongDau_(ten), ngayVN()).run();
-    if (!c.tatCaLop) { // giáo viên tự tạo lớp -> tự giao cho mình
-      c.nd.lop = [...c.nd.lop, id];
-      await c.db.prepare('UPDATE thanh_vien SET lop = ? WHERE kg = ? AND tai_khoan = ?').bind(JSON.stringify(c.nd.lop), c.kg, c.nd.tkId).run();
-    }
-    await c.napLop();
+    await taoLop(c, ten); // giáo viên tự tạo lớp -> tự giao cho mình
     const kq = await HAM.gvTaiDuLieu(c);
     kq.thongBao = 'Đã tạo lớp "' + ten + '".';
     kq.nhomMoi = ten;
@@ -709,73 +703,81 @@ const HAM = {
   },
 
   /** Bước 1: đọc 2 file, chấm thử, ghép với danh sách lớp. so = { kq: sổ kết quả, da: sổ đáp án | null } */
-  async gvXemTruoc(c, so, nhom, quyetDinh, tuThemMoi) {
-    nhom = L.chuoi_(nhom);
-    if (!nhom) throw new Loi('Vui lòng chọn lớp trước.');
-    c.kiemTraLop(nhom);
+  /**
+   * Bước 1: đọc 2 file, xác định LỚP của từng dòng (cột "Lớp" trong file) rồi ghép với học sinh của lớp đó.
+   * tuyChon = { quyetDinh: {dòng: Mã HS | 'moi' | 'boqua'}, quyetDinhLop: {dòng: tên lớp}, themHsMoi }
+   */
+  async gvXemTruoc(c, so, tuyChon) {
+    tuyChon = tuyChon || {};
     const kq = docHaiFile(so);
     if (!kq.ok) return kq;
-    const lk = boQuaLopKhac(kq, nhom, quyetDinh);
-    const g = L.ghepTheoLop_(kq.hocSinh, await c.hocSinh(), nhom, lk.qd, tuThemMoi !== false);
-    const soKhac = Object.values(lk.khac).reduce((a, b) => a + b, 0);
-    if (soKhac) kq.canhBao.unshift(soKhac + ' dòng thuộc lớp khác (' + Object.keys(lk.khac).map((k) => k + ': ' + lk.khac[k]).join(', ') + ') — đã bỏ qua. Chọn lại ở cột cuối nếu cần.');
+    const dsHs = await c.hocSinh();
+    const g = ghepNhieuLop(c, kq, dsHs, tuyChon.quyetDinh, tuyChon.quyetDinhLop, tuyChon.themHsMoi !== false);
     const gon = (x) => ({ maHs: x.maHs, hoTen: x.hoTen, nhom: L.noiNhom_(x.nhom), sdt: c.duocHocSinh(x) ? x.sdt : '' });
     let dauTien = null;
     const dsXem = kq.hocSinh.map((h, i) => {
-      const r = g.dong[i], cham = L.chamBai_(kq, h);
-      if (!dauTien && (r.hs || r.moi)) dauTien = { h, cham, hs: r.hs || { hoTen: h.hoTen } };
+      const r = g.dong[i], ld = g.lopDong[i], cham = L.chamBai_(kq, h);
+      if (!dauTien && (r.hs || r.moi)) dauTien = { h, cham, hs: r.hs || { hoTen: h.hoTen }, nhom: ld.nhom };
+      const canChon = r.canLop ? 'canLop' : r.canChon || '';
       return { chiSo: i, stt: h.stt, hoTen: h.hoTen, maHsFile: h.maHs, maDe: h.maDe, sbd: h.sbd, tongDiem: cham.diem.tong, maxTong: cham.diem.maxTong,
-        trangThai: r.loi ? 'loi' : r.canChon ? 'canChon' : r.boQua ? 'boqua' : r.moi ? 'moi' : 'co', lop: h.lop,
-        loi: r.loi || '', lyDo: r.canChon ? L.LY_DO_CAN_CHON[r.canChon] : '', canChon: r.canChon || '', tuDong: !!r.tuDong,
+        trangThai: r.loi ? 'loi' : canChon ? 'canChon' : r.boQua ? 'boqua' : r.moi ? 'moi' : 'co',
+        lopFile: h.lop, nhom: ld.nhom || '', lopMoi: !!ld.lopMoi, lopDoan: !!ld.doan, goiYLop: ld.goiY || [],
+        loi: r.loi || '', lyDo: canChon ? L.LY_DO_CAN_CHON[canChon] || '' : '', canChon, tuDong: !!r.tuDong,
         hs: r.hs ? gon(r.hs) : null, themVaoLop: !!r.themVaoLop, ungVien: (r.ungVien || []).map(gon) };
     });
     return {
-      ok: true, nhom, tieuDe: kq.thongTin.tieuDe === 'PHIẾU KẾT QUẢ KIỂM TRA' ? '' : kq.thongTin.tieuDe, ngayThi: kq.thongTin.ngayThi,
+      ok: true, tieuDe: kq.thongTin.tieuDe === 'PHIẾU KẾT QUẢ KIỂM TRA' ? '' : kq.thongTin.tieuDe, ngayThi: kq.thongTin.ngayThi,
       soCau: { I: kq.cauHoi.I.length, II: kq.cauHoi.II.length, III: kq.cauHoi.III.length }, maDe: kq.maDe, coDapAn: !!so.da,
-      canhBao: kq.canhBao, hocSinh: dsXem, siSo: g.siSo, vang: g.vang.map(gon),
-      phieuXemTruoc: dauTien ? duLieuPhieu(c, kq, dauTien.h, dauTien.cham, dauTien.hs, '(xem trước)', { lan: 1, ngayThi: kq.thongTin.ngayThi, lichSu: [], nhom }) : null
+      canhBao: kq.canhBao, hocSinh: dsXem,
+      nhom: g.nhom.map((x) => ({ nhom: x.nhom, lopMoi: x.lopMoi, soDong: x.soDong, siSo: x.siSo, vang: x.vang.map(gon) })),
+      phieuXemTruoc: dauTien ? duLieuPhieu(c, kq, dauTien.h, dauTien.cham, dauTien.hs, '(xem trước)', { lan: 1, ngayThi: kq.thongTin.ngayThi, lichSu: [], nhom: dauTien.nhom }) : null
     };
   },
 
-  /** Bước 2: tạo 1 lần thi (Lần 1 nếu bài mới, lần tiếp theo nếu bài đã có trong lớp, hoặc ghi đè lần gần nhất). */
+  /** Bước 2: mỗi lớp có trong file -> 1 lần thi (Lần 1 nếu bài mới của lớp, lần tiếp theo nếu lớp đã làm, hoặc ghi đè lần gần nhất). */
   async gvBatDauDot(c, so, tuyChon) {
     tuyChon = tuyChon || {};
-    let baiThi = L.chuoi_(tuyChon.baiThi).replace(/\s+/g, ' ');
-    const nhom = L.chuoi_(tuyChon.nhom);
+    let baiThiGoc = L.chuoi_(tuyChon.baiThi).replace(/\s+/g, ' ');
     const ngayThi = L.chuanHoaNgay_(tuyChon.ngayThi) || ngayVN();
-    if (!baiThi) throw new Loi('Vui lòng nhập tên bài thi.');
-    if (!nhom) throw new Loi('Vui lòng chọn lớp.');
-    c.kiemTraLop(nhom);
-    const kq = docHaiFile(so, baiThi);
+    if (!baiThiGoc) throw new Loi('Vui lòng nhập tên bài thi.');
+    const kq = docHaiFile(so, baiThiGoc);
     if (!kq.ok) return kq;
-    const [idLop] = await c.idLop([nhom]);
-    const g = L.ghepTheoLop_(kq.hocSinh, await c.hocSinh(), nhom, boQuaLopKhac(kq, nhom, tuyChon.quyetDinh).qd, tuyChon.themHsMoi !== false);
-    const conChon = g.dong.filter((x) => x.canChon).length;
-    if (conChon) return { ok: false, loi: 'Còn ' + conChon + ' dòng chưa xác định học sinh (xem cột cuối của bảng ghép).' };
+    const g = ghepNhieuLop(c, kq, await c.hocSinh(), tuyChon.quyetDinh, tuyChon.quyetDinhLop, tuyChon.themHsMoi !== false);
+    const conChon = g.dong.filter((x) => x.canChon || x.canLop).length;
+    if (conChon) return { ok: false, loi: 'Còn ' + conChon + ' dòng chưa xác định lớp hoặc học sinh (xem bảng ghép).' };
 
-    const cacLan = (await c.lanThi()).filter((d) => d.lopId === idLop && L.khongDau_(d.baiThi) === L.khongDau_(baiThi));
-    let lan = 1;
-    if (cacLan.length) {
-      const ganNhat = cacLan.reduce((a, b) => (b.lan > a.lan ? b : a));
-      baiThi = ganNhat.baiThi;
-      if (tuyChon.ghiDe) { lan = ganNhat.lan; await c.db.prepare('DELETE FROM lan_thi WHERE id = ?').bind(ganNhat.maDot).run(); } else lan = ganNhat.lan + 1;
-    }
-    // học sinh đã có -> thêm vào lớp nếu chưa; học sinh mới -> tạo
-    const maTheoDong = {}, theoHs = {}, moi = [], chiSoMoi = [];
-    kq.hocSinh.forEach((h, i) => {
-      const x = g.dong[i];
-      if (x.hs) { maTheoDong[i] = x.hs.maHs; if (!x.hs.nhomId.includes(idLop)) theoHs[x.hs.id] = [...x.hs.nhomId, idLop]; } else if (x.moi) {
-        moi.push({ hoTen: h.hoTen, nhomId: [idLop], sdt: h.sdt, maHs: h.maHs }); chiSoMoi.push(i);
+    const dsDot = [], boQua = [];
+    kq.hocSinh.forEach((h, i) => { const x = g.dong[i]; if (x.loi) boQua.push((h.hoTen || h.maHs) + ': ' + x.loi); });
+    for (const nh of g.nhom) {
+      const dongTao = nh.chiSo.filter((i) => g.dong[i].hs || g.dong[i].moi);
+      if (!dongTao.length) continue; // cả lớp đều bỏ qua
+      const idLop = nh.lopMoi ? await taoLop(c, nh.nhom) : c.lopTheoTen(nh.nhom).id;
+      const cacLan = (await c.lanThi()).filter((d) => d.lopId === idLop && L.khongDau_(d.baiThi) === L.khongDau_(baiThiGoc));
+      let lan = 1, baiThi = baiThiGoc;
+      if (cacLan.length) {
+        const ganNhat = cacLan.reduce((a, b) => (b.lan > a.lan ? b : a));
+        baiThi = ganNhat.baiThi;
+        if (tuyChon.ghiDe) { lan = ganNhat.lan; await c.db.prepare('DELETE FROM lan_thi WHERE id = ?').bind(ganNhat.maDot).run(); } else lan = ganNhat.lan + 1;
       }
-    });
-    await c.datLop(theoHs);
-    (await c.themHocSinh(moi)).forEach((ma, j) => { maTheoDong[chiSoMoi[j]] = ma; });
-    const maDot = taoId();
-    await c.db.prepare('INSERT INTO lan_thi (id, kg, lop, bai_thi, lan, ngay_thi, thu_tu, cong_bo, ngay_tao) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)')
-      .bind(maDot, c.kg, idLop, baiThi, lan, ngayThi, L.soThuTuNgay_(ngayThi), ngayVN()).run();
-    const canTao = [], boQua = [];
-    kq.hocSinh.forEach((h, i) => { if (maTheoDong[i]) canTao.push({ i, maHs: maTheoDong[i] }); else if (!g.dong[i].boQua) boQua.push((h.hoTen || h.maHs) + ': ' + (g.dong[i].loi || 'bỏ qua')); });
-    return { ok: true, maDot, baiThi, lan, nhom, canTao, boQua, thuMuc: '', vang: g.vang.map((x) => x.hoTen + ' (' + x.maHs + ')') };
+      // học sinh đã có -> thêm vào lớp nếu chưa; học sinh mới -> tạo
+      const maTheoDong = {}, theoHs = {}, moi = [], chiSoMoi = [];
+      dongTao.forEach((i) => {
+        const x = g.dong[i], h = kq.hocSinh[i];
+        if (x.hs) { maTheoDong[i] = x.hs.maHs; if (!x.hs.nhomId.includes(idLop)) theoHs[x.hs.id] = [...x.hs.nhomId, idLop]; } else {
+          moi.push({ hoTen: h.hoTen, nhomId: [idLop], sdt: h.sdt, maHs: h.maHs }); chiSoMoi.push(i);
+        }
+      });
+      await c.datLop(theoHs);
+      (await c.themHocSinh(moi)).forEach((ma, j) => { maTheoDong[chiSoMoi[j]] = ma; });
+      const maDot = taoId();
+      await c.db.prepare('INSERT INTO lan_thi (id, kg, lop, bai_thi, lan, ngay_thi, thu_tu, cong_bo, ngay_tao) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)')
+        .bind(maDot, c.kg, idLop, baiThi, lan, ngayThi, L.soThuTuNgay_(ngayThi), ngayVN()).run();
+      c.xoaBoNho();
+      dsDot.push({ maDot, nhom: nh.nhom, lopMoi: nh.lopMoi, baiThi, lan, canTao: dongTao.map((i) => ({ i, maHs: maTheoDong[i] })),
+        vang: nh.vang.map((x) => x.hoTen + ' (' + x.maHs + ')') });
+    }
+    if (!dsDot.length) return { ok: false, loi: 'Không có dòng nào để tạo phiếu (tất cả đều bỏ qua hoặc lỗi).' };
+    return { ok: true, baiThi: dsDot[0].baiThi, dsDot, boQua };
   },
 
   /** Bước 3: chấm và lưu phiếu cho 1 lô học sinh. */
@@ -846,13 +848,19 @@ const HAM = {
   /** File mẫu: bảng kết quả (điền sẵn danh sách lớp) + bảng đáp án theo mã đề. */
   async gvLayMau(c, nhom) {
     nhom = L.chuoi_(nhom);
+    const tenCuoi = (s) => s.split(' ').pop();
+    const theoTen = (a, b) => tenCuoi(a.hoTen).localeCompare(tenCuoi(b.hoTen), 'vi') || a.hoTen.localeCompare(b.hoTen, 'vi');
+    const hs = (await c.hocSinh()).filter((h) => c.duocHocSinh(h));
     let ds = [];
-    if (nhom) {
+    if (nhom) { // chỉ 1 lớp
       c.kiemTraLop(nhom);
       const l = c.lopTheoTen(nhom);
-      const tenCuoi = (s) => s.split(' ').pop();
-      ds = (await c.hocSinh()).filter((h) => l && h.nhomId.includes(l.id))
-        .sort((a, b) => tenCuoi(a.hoTen).localeCompare(tenCuoi(b.hoTen), 'vi') || a.hoTen.localeCompare(b.hoTen, 'vi'));
+      ds = hs.filter((h) => l && h.nhomId.includes(l.id)).sort(theoTen).map((h) => ({ maHs: h.maHs, hoTen: h.hoTen, lopMau: l.ten }));
+    } else { // tất cả lớp mình phụ trách: mỗi lớp 1 khối, học sinh chưa có lớp ở cuối (cột Lớp để trống)
+      c.lop.filter((l) => c.duocLopId(l.id)).sort((a, b) => a.ten.localeCompare(b.ten, 'vi')).forEach((l) => {
+        hs.filter((h) => h.nhomId.includes(l.id)).sort(theoTen).forEach((h) => ds.push({ maHs: h.maHs, hoTen: h.hoTen, lopMau: l.ten }));
+      });
+      hs.filter((h) => !h.nhomId.length).sort(theoTen).forEach((h) => ds.push({ maHs: h.maHs, hoTen: h.hoTen, lopMau: '' }));
     }
     return { ketQua: L.taoMauKetQua(ds, nhom), dapAn: L.taoMauDapAn() };
   },
@@ -955,12 +963,71 @@ async function dsThanhVien(c) {
  * File có học sinh của nhiều lớp (cột "Lớp"): dòng ghi lớp khác với lớp đang gửi -> mặc định bỏ qua
  * (giáo viên vẫn chọn lại được). Trả về quyết định đã bổ sung + số dòng theo từng lớp khác.
  */
-function boQuaLopKhac(kq, nhom, quyetDinh) {
-  const qd = { ...(quyetDinh || {}) }, khac = {};
-  kq.hocSinh.forEach((h, i) => {
-    if (qd[i] === undefined && h.lop && L.khongDau_(h.lop) !== L.khongDau_(nhom)) { qd[i] = 'boqua'; khac[h.lop] = (khac[h.lop] || 0) + 1; }
+/**
+ * Lớp của từng dòng trong file kết quả:
+ *   - cột "Lớp" có ghi -> lớp đó (chưa có thì là lớp mới, sẽ được tạo; lớp của giáo viên khác -> lỗi)
+ *   - cột "Lớp" trống -> lớp của học sinh (theo Mã HS, hoặc họ tên duy nhất) nếu em chỉ học 1 lớp; còn lại giáo viên chọn
+ * quyetDinhLop = { dòng: tên lớp } (giáo viên chọn / sửa lớp cho dòng).
+ */
+function xacDinhLop(c, kq, dsHs, quyetDinhLop) {
+  quyetDinhLop = quyetDinhLop || {};
+  const theoMa = {};
+  dsHs.forEach((h) => { theoMa[h.maHs] = h; });
+  return kq.hocSinh.map((h, i) => {
+    const chon = L.chuoi_(quyetDinhLop[i]);
+    const ten = (chon || L.chuoi_(h.lop)).replace(/[;,]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (ten) {
+      const l = c.lopTheoTen(ten);
+      if (l) return c.duocLopId(l.id) ? { nhom: l.ten } : { loi: 'Lớp "' + l.ten + '" do giáo viên khác phụ trách' };
+      return { nhom: ten, lopMoi: true };
+    }
+    let hs = h.maHs ? theoMa[h.maHs] : null;
+    if (!hs) {
+      const cung = dsHs.filter((x) => c.duocHocSinh(x) && L.khongDau_(x.hoTen) === L.khongDau_(h.hoTen));
+      if (cung.length === 1) hs = cung[0];
+    }
+    const goiY = hs ? hs.nhom.filter((n) => c.duocLop(n)) : [];
+    if (goiY.length === 1) return { nhom: goiY[0], doan: true };
+    return { canLop: true, goiY };
   });
-  return { qd, khac };
+}
+
+/** Gom các dòng theo lớp rồi ghép học sinh trong từng lớp (ghepTheoLop_). */
+function ghepNhieuLop(c, kq, dsHs, quyetDinh, quyetDinhLop, tuThemMoi) {
+  quyetDinh = quyetDinh || {};
+  const lopDong = xacDinhLop(c, kq, dsHs, quyetDinhLop);
+  const dong = new Array(kq.hocSinh.length);
+  const theoKhoa = {}, nhom = [];
+  lopDong.forEach((x, i) => {
+    if (x.loi) dong[i] = { loi: x.loi };
+    else if (x.canLop) dong[i] = quyetDinh[i] === 'boqua' ? { boQua: true } : { canLop: true };
+    else {
+      const k = L.khongDau_(x.nhom);
+      if (!theoKhoa[k]) { theoKhoa[k] = { nhom: x.nhom, lopMoi: !!x.lopMoi, chiSo: [] }; nhom.push(theoKhoa[k]); }
+      theoKhoa[k].chiSo.push(i);
+      x.nhom = theoKhoa[k].nhom; // cùng 1 lớp viết khác hoa/thường -> 1 tên
+    }
+  });
+  nhom.forEach((gr) => {
+    const qd = {};
+    gr.chiSo.forEach((i, j) => { if (quyetDinh[i] !== undefined) qd[j] = quyetDinh[i]; });
+    const r = L.ghepTheoLop_(gr.chiSo.map((i) => kq.hocSinh[i]), dsHs, gr.nhom, qd, tuThemMoi);
+    gr.chiSo.forEach((i, j) => { dong[i] = r.dong[j]; });
+    gr.soDong = gr.chiSo.length; gr.siSo = r.siSo; gr.vang = r.vang;
+  });
+  return { lopDong, dong, nhom };
+}
+
+/** Tạo lớp mới (giáo viên không phải quản trị: tự giao lớp cho mình). Trả về id lớp. */
+async function taoLop(c, ten) {
+  const id = taoId();
+  await c.db.prepare('INSERT INTO lop (id, kg, ten, khoa, ngay_tao) VALUES (?, ?, ?, ?, ?)').bind(id, c.kg, ten, L.khongDau_(ten), ngayVN()).run();
+  if (!c.tatCaLop) {
+    c.nd.lop = [...c.nd.lop, id];
+    await c.db.prepare('UPDATE thanh_vien SET lop = ? WHERE kg = ? AND tai_khoan = ?').bind(JSON.stringify(c.nd.lop), c.kg, c.nd.tkId).run();
+  }
+  await c.napLop();
+  return id;
 }
 
 /** Đọc 2 file tải lên (dạng sổ { tênTab: [[ô…]] }). */

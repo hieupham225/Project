@@ -206,15 +206,17 @@ window.__worker = index_default;
       if (coLoi && dong.length > 3) {
         dong[1][2] = dong[1][2].replace(/\S+$/, 'Sai Chính Tả'); dong[1][1] = ''; // gõ sai tên, quên Mã HS
         dong.splice(dong.length - 1, 1);                                     // 1 em vắng thi
-        var lopKhac = dong[0].slice(); lopKhac[1] = ''; lopKhac[2] = 'Học Sinh Lớp Bên'; lopKhac[3] = 'Toán 3'; dong.push(lopKhac); // dòng của lớp khác
+        if (dong[2]) dong[2][3] = '';                                          // quên ghi lớp -> hệ thống tự lấy lớp của em đó
       }
       return { kq: { KetQua: [h].concat(dong) }, da: da };
     });
   }
   function guiDot(vai, lop, tieuDe, ngayThi) {
     return taoHaiFile(vai, lop, tieuDe, ngayThi, false).then(function (so) {
-      return rpc(vai, 'gvBatDauDot', so, { baiThi: tieuDe, nhom: lop, ngayThi: ngayThi }).then(function (bd) {
-        return rpc(vai, 'gvTaoPhieuLo', bd.maDot, so, bd.canTao).then(function () { return rpc(vai, 'gvCongBo', bd.maDot, true); });
+      return rpc(vai, 'gvBatDauDot', so, { baiThi: tieuDe, ngayThi: ngayThi }).then(function (bd) {
+        return bd.dsDot.reduce(function (p, d) {
+          return p.then(function () { return rpc(vai, 'gvTaoPhieuLo', d.maDot, so, d.canTao); }).then(function () { return rpc(vai, 'gvCongBo', d.maDot, true); });
+        }, Promise.resolve());
       });
     });
   }
@@ -272,7 +274,7 @@ window.__worker = index_default;
     var hd = document.getElementById('huongDan'), k = document.getElementById('maThu');
     k.textContent = '';
     if (vai === 'gv') {
-      hd.innerHTML = 'Giáo viên tự <b>đăng ký</b> tại trang <b>/gv</b>. Thử gửi kết quả: thẻ <b>Gửi kết quả thi</b> → chọn lớp → <b>📄 Dùng 2 file mẫu</b> → kiểm tra bảng ghép (có 1 dòng gõ sai tên, 1 em vắng, 1 dòng lớp khác) → <b>Tạo phiếu</b> → <b>Công bố</b>. Tài khoản có sẵn:';
+      hd.innerHTML = 'Giáo viên tự <b>đăng ký</b> tại trang <b>/gv</b>. Thử gửi kết quả: thẻ <b>Gửi kết quả thi</b> → <b>📄 Dùng 2 file mẫu</b> (gồm mọi lớp, hệ thống tự ghép theo cột Lớp) → kiểm tra bảng ghép (có 1 dòng gõ sai tên, 1 em vắng, 1 dòng quên ghi lớp) → <b>Tạo phiếu</b> → <b>Công bố</b>. Tài khoản có sẵn:';
       TAI_KHOAN.forEach(function (t) {
         k.appendChild(nutChip(t.mo, t.email + ' / ' + t.matKhau, function () {
           var w = document.getElementById('khungGv').contentWindow, d = w.document;
@@ -305,11 +307,10 @@ window.__worker = index_default;
     try {
       if (!w.document.getElementById('manDangNhap').classList.contains('an')) { w.document.getElementById('dnTen').focus(); return; }
       w.document.querySelector('[data-tab=tabGui]').click();
-      var lop = w.lopDangChon();
-      if (!lop) { w.bao('Chọn lớp ở bước 1 trước, rồi bấm lại "📄 Dùng 2 file mẫu".', true); return; }
+      var lop = w.document.getElementById('gMauLop').value; // '' = mẫu gồm tất cả lớp
       var thang = new Date().getMonth() + 1;
       taoHaiFile('gv', lop, 'Kiểm tra tháng ' + thang, new Intl.DateTimeFormat('en-GB').format(new Date()), true).then(function (so) {
-        return w.napFile('kq', so.kq, 'Ket_qua_' + lop.replace(/\s+/g, '_') + '.xlsx (mẫu)').then(function () { return w.napFile('da', so.da, 'Dap_an_theo_ma_de.xlsx (mẫu)'); })
+        return w.napFile('kq', so.kq, 'Ket_qua_' + (lop || 'tat_ca_lop').replace(/\s+/g, '_') + '.xlsx (mẫu)').then(function () { return w.napFile('da', so.da, 'Dap_an_theo_ma_de.xlsx (mẫu)'); })
           .then(function () { var o = w.document.getElementById('gBaiThi'); if (!o.value.trim()) { o.value = 'Kiểm tra tháng ' + thang; o.dispatchEvent(new Event('input')); } });
       }).catch(function (e) { w.bao(e.message, true); });
     } catch (e) { console.error(e); }
