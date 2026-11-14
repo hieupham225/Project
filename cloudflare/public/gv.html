@@ -1713,18 +1713,24 @@
     var nhomTruoc = null, baiTruoc = null;
     ds.forEach(function (d) {
       if (d.nhom !== nhomTruoc) {
-        tb.appendChild(the('tr', { class: 'nhom-dau' }, [the('td', { colspan: 7, text: '👥 Nhóm: ' + (d.nhom || '(chưa đặt)') })]));
+        tb.appendChild(the('tr', { class: 'nhom-dau' }, [the('td', { colspan: 7, text: '👥 Lớp: ' + (d.nhom || '(chưa đặt)') })]));
         nhomTruoc = d.nhom; baiTruoc = null;
       }
       var cb = the('input', { type: 'checkbox' }); cb.checked = d.congBo;
       cb.onchange = function () {
+        if (!cb.checked && !cb.dataset.daHoi) { // bỏ tích = ẩn khỏi phụ huynh -> hỏi trước
+          cb.checked = true;
+          return hoi('Ẩn ' + tenLanThi(d) + ' (lớp ' + d.nhom + ') khỏi phụ huynh?\nPhụ huynh sẽ không xem được ' + d.soPhieu + ' phiếu của lần này cho tới khi công bố lại.', { nut: 'Ẩn khỏi phụ huynh', nguyHiem: true })
+            .then(function (ok) { if (ok) { cb.dataset.daHoi = '1'; cb.checked = false; cb.onchange(); } });
+        }
+        delete cb.dataset.daHoi;
         goi('gvCongBo', d.maDot, cb.checked).then(function (dl) { capNhat(dl); bao((cb.checked ? 'Đã công bố ' : 'Đã ẩn ') + tenLanThi(d) + '.'); })
           .catch(function (e) { cb.checked = !cb.checked; baoLoi(e); });
       };
       tb.appendChild(the('tr', {}, [
         the('td', {}, [d.baiThi !== baiTruoc ? the('b', { text: d.baiThi }) : the('span', { class: 'goi-y', text: '〃' })]),
         the('td', { text: 'Lần ' + d.lan }), the('td', { text: d.ngayThi }), the('td', { text: d.soPhieu }),
-        the('td', {}, [the('label', {}, [cb, d.congBo ? ' Đang công bố' : ' Chưa công bố'])]),
+        the('td', {}, [the('label', {}, [cb, d.congBo ? ' Đã công bố' : ' Chưa công bố'])]),
         the('td', {}, [d.soPhieu ? the('button', { class: 'phu nho', text: 'Xem phiếu', onclick: function () { hopDsPhieu(d); } }) : '']),
         the('td', {}, [the('button', { class: 'nguy nho', text: 'Xóa lần này', onclick: function () {
           hoi('Xóa ' + tenLanThi(d) + ' (lớp ' + d.nhom + ') và ' + d.soPhieu + ' phiếu?', { nut: 'Xóa', nguyHiem: true }).then(function (ok) { if (!ok) return;
