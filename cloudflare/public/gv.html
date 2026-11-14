@@ -18,6 +18,7 @@
     --do: #AA071E; --do-nen: #E3193B26; --xanh: #0D8626; --xanh-chu: #09441F; --xanh-nen: #24BB5E26;
     --vang: #753F07; --vang-nen: #E2A40033; --xanh-duong-nen: #0171E31F; --xanh-duong-chu: #042F97;
     --r-trong: 8px; --r-phan-tu: 12px; --r-khung: 16px; --r-tron: 9999px;
+    --cao: 36px; --cao-nho: 30px; /* chiều cao chung của nút và ô nhập để đứng cạnh nhau thẳng hàng */
     --bong-thap: 0 1px 1px rgba(0,0,0,.06), 0 2px 8px rgba(0,0,0,.06);
     --bong-cao: 0 2px 2px rgba(0,0,0,.1), 0 8px 24px rgba(0,0,0,.1);
     --em: cubic-bezier(.24,1,.4,1);
@@ -38,24 +39,25 @@
   .thanh { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
   .gian { flex: 1; }
   /* Nút: Primary (đen), Secondary (.phu, xám nhạt), Destructive (.nguy, đỏ nhạt) */
-  button, .nut { font: 500 14px/20px var(--font); min-height: 32px; padding: 6px 14px; border-radius: var(--r-tron); border: 0; background: var(--mau); color: var(--tren-mau); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background-color .125s var(--em), opacity .125s, transform .1s; }
+  button, .nut { font: 500 14px/20px var(--font); min-height: var(--cao); padding: 0 16px; border-radius: var(--r-tron); border: 0; background: var(--mau); color: var(--tren-mau); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background-color .125s var(--em), opacity .125s, transform .1s; }
   button:hover:not(:disabled), .nut:hover { background: #2E2924; }
   button:active:not(:disabled) { transform: scale(.98); }
   button.phu, .nut.phu { background: var(--mau-nhat); color: var(--chu); }
   button.phu:hover:not(:disabled), .nut.phu:hover { background: rgba(21,17,12,.14); }
   button.nguy { background: var(--do-nen); color: var(--do); }
   button.nguy:hover:not(:disabled) { background: #E3193B3D; }
-  button.nho { min-height: 28px; padding: 4px 10px; font-size: 13px; line-height: 18px; }
+  button.nho { min-height: var(--cao-nho); padding: 0 12px; font-size: 13px; line-height: 18px; }
   button:disabled { opacity: .45; cursor: default; }
-  input[type=text], input[type=search], input[type=email], input[type=password], input[type=date], input[type=number], select, textarea { font: 400 14px/20px var(--font); color: var(--chu); min-height: 36px; padding: 7px 12px; border: 1px solid var(--vien-dam); border-radius: var(--r-phan-tu); background: var(--be-mat); transition: border-color .125s, box-shadow .125s; }
+  input[type=text], input[type=search], input[type=email], input[type=password], input[type=date], input[type=number], select, textarea { font: 400 14px/20px var(--font); color: var(--chu); height: var(--cao); padding: 0 16px; border: 1px solid var(--vien-dam); border-radius: var(--r-tron); background: var(--be-mat); transition: border-color .125s, box-shadow .125s; }
   input:hover, select:hover, textarea:hover { border-color: #A4B0BC; }
   input:focus, select:focus, textarea:focus { outline: none; border-color: var(--thuong-hieu); box-shadow: 0 0 0 3px rgba(34,91,255,.18); }
   input::placeholder, textarea::placeholder { color: #8394A3; }
-  select { padding-right: 32px; appearance: none; -webkit-appearance: none; background: var(--be-mat) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234E606F' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center; }
+  select { padding-right: 36px; appearance: none; -webkit-appearance: none; background: var(--be-mat) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234E606F' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center; }
   input[type=checkbox], input[type=radio] { accent-color: var(--mau); width: 16px; height: 16px; }
   input[type=file] { font: inherit; color: var(--phu); max-width: 100%; }
-  input[type=file]::file-selector-button { font: 500 13px var(--font); padding: 6px 12px; margin-right: 10px; border: 0; border-radius: var(--r-tron); background: var(--mau-nhat); color: var(--chu); cursor: pointer; }
-  textarea { width: 100%; min-height: 120px; }
+  input[type=file]::file-selector-button { font: 500 13px var(--font); height: var(--cao-nho); padding: 0 12px; margin-right: 10px; border: 0; border-radius: var(--r-tron); background: var(--mau-nhat); color: var(--chu); cursor: pointer; }
+  /* Ô nhiều dòng: giữ bo góc (bo tròn hai đầu sẽ cắt chữ ở các góc) */
+  textarea { width: 100%; height: auto; min-height: 120px; padding: 10px 14px; border-radius: var(--r-phan-tu); }
   label.o { display: flex; flex-direction: column; gap: 6px; font-weight: 500; font-size: 13px; color: var(--chu); }
   .luoi { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
   table.ds { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--be-mat); }
@@ -95,13 +97,13 @@
   .dang-nhap { max-width: 400px; margin: 8vh auto; background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); padding: 28px; box-shadow: var(--bong-thap); }
   .dang-nhap h1 { font-size: 24px; line-height: 1.33; font-weight: 600; letter-spacing: -.01em; margin: 0 0 6px; }
   .dang-nhap label.o { margin-top: 14px; }
-  .dang-nhap input[type=text], .dang-nhap input[type=password], .dang-nhap input[type=email] { width: 100%; font-size: 16px; min-height: 44px; padding: 10px 14px; }
+  .dang-nhap input[type=text], .dang-nhap input[type=password], .dang-nhap input[type=email] { width: 100%; font-size: 16px; height: 44px; padding: 0 18px; }
   .dang-nhap button { width: 100%; margin-top: 18px; min-height: 44px; font-size: 15px; font-weight: 600; }
   .nguoi-dung { margin-left: auto; display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--phu); }
   .nguoi-dung b { color: var(--chu); }
   .o-link { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
   code { font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
-  .o-link code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: var(--mau-nhat); padding: 7px 12px; border-radius: var(--r-trong); font-size: 13px; }
+  .o-link code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: var(--mau-nhat); height: var(--cao); line-height: var(--cao); padding: 0 16px; border-radius: var(--r-tron); font-size: 13px; }
   .lop-chon { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 8px 0; }
   .lop-chon label { display: inline-flex; gap: 6px; align-items: center; font-weight: 500; }
   .chip { display: inline-flex; padding: 1px 8px; margin: 1px 4px 1px 0; border-radius: var(--r-tron); background: var(--mau-nhat); color: var(--chu); font-size: 12px; font-weight: 500; }
@@ -180,9 +182,10 @@
     .kg-chon { max-width: 100%; flex: 1 1 100%; }
     button.tab { padding: 6px 10px; font-size: 13px; }
     /* Ô nhập, nút: đủ to để chạm, không vượt bề ngang */
-    input[type=text], input[type=search], input[type=email], input[type=password], input[type=date], input[type=number], select, textarea { font-size: 16px; min-height: 42px; }
-    button, .nut { min-height: 40px; padding: 8px 14px; }
-    button.nho { min-height: 34px; padding: 6px 12px; font-size: 13px; }
+    input[type=text], input[type=search], input[type=email], input[type=password], input[type=date], input[type=number], select, textarea { font-size: 16px; }
+    :root { --cao: 42px; --cao-nho: 36px; }
+    button, .nut { padding: 0 16px; }
+    button.nho { padding: 0 12px; font-size: 13px; }
     .thanh > input, .thanh > select, .thanh > textarea { flex: 1 1 100%; width: 100% !important; min-width: 0 !important; }
     .thanh > .gian:empty { display: none; }
     .luoi { grid-template-columns: 1fr !important; }
