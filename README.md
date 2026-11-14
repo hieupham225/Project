@@ -8,6 +8,8 @@ Phụ huynh nhập **1 mã tra cứu riêng** để xem tất cả phiếu của
 - **Miễn phí:** chạy trên gói miễn phí của Cloudflare (Workers + D1).
 - **Dữ liệu tách biệt:** mỗi giáo viên hoặc trung tâm có một không gian riêng. Trong một trung tâm, mỗi giáo viên chỉ thấy các lớp mình phụ trách.
 
+**Đang chạy tại:** https://phieu-ket-qua.ketquahoctap.workers.dev (phụ huynh) · https://phieu-ket-qua.ketquahoctap.workers.dev/gv (giáo viên)
+
 | Trang | Ai dùng | Làm gì |
 |---|---|---|
 | `/` | Phụ huynh | Nhập mã tra cứu, xem phiếu, tải PDF |
