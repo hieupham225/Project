@@ -345,6 +345,8 @@
   .ds-chon-truong .nhom-chon { font-size: 11px; font-weight: 700; color: var(--tat); text-transform: uppercase; letter-spacing: .03em; padding: 8px 6px 4px; }
   .ds-chon-truong .muc-chon { justify-content: flex-start; text-align: left; min-height: 32px; height: auto; padding: 6px 10px; background: none; color: var(--chu); border-radius: var(--r-trong); font-weight: 500; white-space: normal; }
   .ds-chon-truong .muc-chon:hover, .ds-chon-truong .muc-chon.dang { background: var(--phu-nhan); }
+  .ds-chon-truong .muc-chon { flex-direction: column; align-items: flex-start; gap: 1px; }
+  .ds-chon-truong .muc-chon small { font-size: 11px; font-weight: 400; color: var(--phu); line-height: 1.35; }
   .pop-mau .chan-pop { display: flex; flex-wrap: wrap; gap: 6px; }
   .pop-mau .chan-pop .nho { white-space: normal; height: auto; min-height: var(--cao-nho); }
   @media (max-width: 700px) { .dau-mau { padding: 10px 12px; } .than-mau { padding: 10px 12px; } .chan-mau { padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); } .buoc-mau { width: 100%; order: 3; } .o-buoc { font-size: 11px; } }
@@ -2572,8 +2574,19 @@
   function docTep(f) { return new Promise(function (ok, loi) { var r = new FileReader(); r.onload = function () { ok(r.result); }; r.onerror = loi; r.readAsArrayBuffer(f); }); }
 
   /* ---- tên dễ hiểu cho "chỗ thay đổi" ---- */
-  var TRUONG_HE_THONG = [['Họ_và_tên', 'Họ và tên'], ['Lớp', 'Lớp'], ['Số_báo_danh', 'Số báo danh'], ['Mã_đề_thi', 'Mã đề thi'], ['Tổng_điểm', 'Tổng điểm'],
-    ['Tiêu_đề', 'Tên bài thi'], ['Mô_tả', 'Mô tả bài thi'], ['Lần', 'Lần làm'], ['Ngày_thi', 'Ngày thi'], ['Tên_trung_tâm', 'Tên trung tâm'], ['Mã_phiếu', 'Mã phiếu']];
+  // [tên trường, tên dễ hiểu, lấy từ đâu]
+  var TRUONG_HE_THONG = [
+    ['Họ_và_tên', 'Họ và tên', 'Danh sách học sinh'],
+    ['Lớp', 'Lớp', 'Lớp của bài thi (cột Lớp trong file kết quả)'],
+    ['Số_báo_danh', 'Số báo danh', 'Danh sách học sinh / cột Số báo danh trong file kết quả'],
+    ['Mã_đề_thi', 'Mã đề thi', 'Cột Mã đề thi trong file kết quả'],
+    ['Tổng_điểm', 'Tổng điểm', 'Hệ thống chấm (hoặc cột Tổng điểm trong file kết quả)'],
+    ['Tiêu_đề', 'Tên bài thi', 'Tab ThongTin của file đáp án ("Tiêu đề phiếu"), trống thì lấy tên bài thi nhập khi gửi kết quả'],
+    ['Mô_tả', 'Mô tả bài thi', 'Tab ThongTin của file đáp án ("Mô tả"); sửa được ở Bài thi > Sửa'],
+    ['Lần', 'Lần làm', 'Hệ thống tự đếm (lần 1, 2…)'],
+    ['Ngày_thi', 'Ngày thi', 'Ô Ngày thi khi gửi kết quả'],
+    ['Tên_trung_tâm', 'Tên trung tâm', 'Cài đặt'],
+    ['Mã_phiếu', 'Mã phiếu', 'Hệ thống tạo']];
   var khoaT = function (s) { return String(s || '').normalize('NFC').toLowerCase().replace(/[\s_]+/g, '_'); };
   function chuCot(j) { var s = ''; j++; while (j > 0) { var r = (j - 1) % 26; s = String.fromCharCode(65 + r) + s; j = Math.floor((j - 1) / 26); } return s; }
   /** Tên dễ hiểu của 1 cột Excel: "Câu 3" -> Bài làm câu 3; "3" -> Đáp án câu 3; cột không tiêu đề -> tên cột đứng trước (thường là bản định dạng của cột đó) */
@@ -2597,13 +2610,13 @@
   /** Danh sách để chọn "Chỗ này điền gì": cột file Excel (nếu có) + thông tin hệ thống tự điền + chỗ đã có trong mẫu */
   function dsLuaChon(bang, daCo) {
     var ds = [], co = {};
-    var them = function (ten, nhan, nhom) { var k = khoaT(ten); if (!co[k]) { co[k] = 1; ds.push({ ten: ten, nhan: nhan, nhom: nhom }); } };
+    var them = function (ten, nhan, nhom, nguon) { var k = khoaT(ten); if (!co[k]) { co[k] = 1; ds.push({ ten: ten, nhan: nhan, nhom: nhom, nguon: nguon }); } };
     if (bang && window.MauWord) bang.tieuDe.forEach(function (h, j) {
       if (!String(h).trim() && !bang.dong.some(function (r) { return String(r[j] || '').trim(); })) return;
-      them(window.MauWord.tenTruongWord(h, j), nhanCotExcel(bang, j) + ' · cột ' + chuCot(j), 'Cột trong file Excel');
+      them(window.MauWord.tenTruongWord(h, j), nhanCotExcel(bang, j), 'Từ file Excel kết quả', 'Cột ' + chuCot(j) + (String(h).trim() ? ' "' + String(h).trim() + '"' : ' (không có tiêu đề)'));
     });
-    TRUONG_HE_THONG.forEach(function (x) { them(x[0], x[1], 'Hệ thống tự điền'); });
-    (daCo || []).forEach(function (t) { them(t, nhanTruong(t, bang), 'Đang có trong mẫu'); });
+    TRUONG_HE_THONG.forEach(function (x) { them(x[0], x[1], 'Hệ thống tự điền', x[2]); });
+    (daCo || []).forEach(function (t) { them(t, nhanTruong(t, bang), 'Đang có trong mẫu', bang ? 'Không có cột này trong file Excel đang chọn' : 'Cột cùng tên trong file Excel kết quả khi gửi'); });
     return ds;
   }
 
@@ -2743,9 +2756,10 @@
           ds.textContent = '';
           var q = khoaT(tim.value).replace(/_/g, ' '), nhomTruoc = '';
           dsLuaChon(bang, truongTrongHtml(vung().innerHTML)).forEach(function (x) {
-            if (q && khoaT(x.nhan + ' ' + x.ten).replace(/_/g, ' ').indexOf(q) < 0) return;
+            if (q && khoaT(x.nhan + ' ' + x.ten + ' ' + (x.nguon || '')).replace(/_/g, ' ').indexOf(q) < 0) return;
             if (x.nhom !== nhomTruoc) { ds.appendChild(the('div', { class: 'nhom-chon', text: x.nhom })); nhomTruoc = x.nhom; }
-            ds.appendChild(the('button', { type: 'button', class: 'muc-chon' + (hienTai && khoaT(hienTai) === khoaT(x.ten) ? ' dang' : ''), onclick: function () { khiChon(x.ten); } }, [x.nhan]));
+            ds.appendChild(the('button', { type: 'button', class: 'muc-chon' + (hienTai && khoaT(hienTai) === khoaT(x.ten) ? ' dang' : ''), onclick: function () { khiChon(x.ten); } },
+              [the('span', { text: x.nhan }), x.nguon ? the('small', { text: 'Lấy từ: ' + x.nguon }) : null]));
           });
           if (!ds.children.length) ds.appendChild(the('div', { class: 'goi-y', style: 'padding:8px', text: bang ? 'Không thấy. Thử từ khác.' : 'Không thấy. Thêm file Excel kết quả (nút phía trên) để chọn theo cột của file.' }));
         };
