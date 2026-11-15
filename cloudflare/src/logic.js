@@ -540,6 +540,13 @@ export function docFileDapAn(so) {
     var cc = { cau: k.indexOf('cau'), phan: k.indexOf('phan'), chuDe: timChiSo_(k, ['chudekienthuc', 'chude']), mucDo: timChiSo_(k, ['mucdo']),
       noiDung: timChiSo_(k, ['noidungphantichcuthe', 'noidungphantich', 'noidung']), maDe: timChiSo_(k, ['made', 'madethi']),
       cauGoc: timChiSo_(k, ['caugoc', 'caudegoc', 'cautrongdegoc']) };
+    // Dạng ngang: mỗi hàng = 1 câu đề gốc; cột tiêu đề là mã đề ("101" | "Mã 101" | "Mã đề 101"), ô = số thứ tự câu đó trong mã đề
+    var cotMa = [];
+    bangCh[hc].forEach(function (h, j) {
+      if (j === cc.cau || j === cc.maDe || j === cc.cauGoc) return;
+      var ma = khongDau_(String(h || '')).replace(/^(?:made|ma)/, '');
+      if (ma && dapAn[ma]) cotMa.push({ j: j, ma: ma });
+    });
     var tre = []; // dòng theo mã đề chỉ ghi "Câu gốc": lấy chủ đề / nội dung của câu đó trong đề gốc
     bangCh.slice(hc + 1).forEach(function (r) {
       var n = parseInt(oChuoi_(r, cc.cau), 10);
@@ -549,7 +556,17 @@ export function docFileDapAn(so) {
       // 1 ô "Mã đề" có thể ghi nhiều mã: "101, 103"
       var dsMa = oChuoi_(r, cc.maDe).split(/[,;\s]+/).map(khongDau_).filter(Boolean);
       if (dsMa.length) dsMa.forEach(function (ma) { (theoDe[n] = theoDe[n] || {})[ma] = Object.assign({}, tt); if (goc) tre.push({ n: n, ma: ma, goc: goc }); });
-      else cauHoi[n] = tt;
+      else {
+        cauHoi[n] = tt;
+        cotMa.forEach(function (c) { // câu n của đề gốc là câu số "so" của mã đề c.ma
+          var so = parseInt(oChuoi_(r, c.j), 10);
+          if (so) (theoDe[so] = theoDe[so] || {})[c.ma] = Object.assign({}, tt);
+        });
+      }
+    });
+    // dạng ngang: câu của mã đề không được hàng nào trỏ tới -> coi như giữ vị trí đề gốc; câu bị trỏ trùng -> giữ hàng đầu tiên
+    if (cotMa.length) cotMa.forEach(function (c) {
+      Object.keys(cauHoi).forEach(function (n) { if (!(theoDe[n] && theoDe[n][c.ma])) (theoDe[n] = theoDe[n] || {})[c.ma] = Object.assign({}, cauHoi[n]); });
     });
     tre.forEach(function (x) {
       var g = cauHoi[x.goc], tt = theoDe[x.n][x.ma];
@@ -798,9 +815,8 @@ function taoMauDapAnTheoCauTruc_(ct) {
     kc.forEach(function (x) { for (var n = x.tu; n <= x.den; n++) r.push(dapAnMau_(x.p, n - x.tu, lech)); });
     return r;
   });
-  var cauHoi = [['Mã đề', 'Câu', 'Câu gốc', 'Phần', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể']];
-  kc.forEach(function (x) { for (var n = x.tu; n <= x.den; n++) cauHoi.push(['', String(n), '', x.p.ma, '', '', '']); });
-  cauHoi.push(['102', '1', '2', '', '', '', ''], ['102', '2', '1', '', '', '', '']);
+  var cauHoi = [['Câu', 'Phần', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể', '101', '102']];
+  kc.forEach(function (x) { for (var n = x.tu; n <= x.den; n++) cauHoi.push([String(n), x.p.ma, '', '', '', String(n), String(n)]); });
   return {
     DapAn: [tieuDe].concat(hai),
     CauHoi: cauHoi,
@@ -820,8 +836,7 @@ function taoMauDapAnTheoCauTruc_(ct) {
     }), [
       x_dt_(ct),
       ['• Tab CauHoi (tùy chọn): chủ đề, mức độ, nội dung từng câu — hiện trên phiếu. Cột "Phần" đã điền sẵn theo cấu trúc đề.'],
-      ['• Các dòng để trống cột "Mã đề" là ĐỀ GỐC: ghi chủ đề, nội dung 1 lần cho mọi câu.'],
-      ['• Mã đề đảo thứ tự câu: thêm dòng "Mã đề" + "Câu" + "Câu gốc" (VD "102 | 1 | 2": câu 1 của mã 102 là câu 2 của đề gốc). Câu không có dòng riêng giữ như đề gốc.'],
+      ['• Mỗi hàng là 1 câu của ĐỀ GỐC (chủ đề, nội dung ghi 1 lần). Cột "101", "102"…: câu đó là câu số mấy trong từng mã đề (thêm cột cho đủ mã đề; ô trống = giữ vị trí như đề gốc).'],
       ['• Tab ThongTin (tùy chọn): tiêu đề phiếu, mô tả, ngày thi, mô tả từng phần.']
     ])
   };
@@ -836,19 +851,19 @@ function x_dt_(ct) {
 export function taoMauDapAn(cauTruc) {
   if (cauTruc && cauTruc.id !== 'thpt2025-toan') return taoMauDapAnTheoCauTruc_(cauTruc);
   var de = MAU_FILE_KET_QUA.DeThi.slice(1); // Phần | Câu | Chủ đề | Mức độ | Nội dung | Đáp án (mã 105)
-  // Tab CauHoi: dòng "Mã đề" trống = đề gốc (mã 105); mã 106 đảo thứ tự câu phần I (đổi chỗ từng cặp) -> chỉ cần ghi "Câu gốc"
-  var cauHoi = [['Mã đề', 'Câu', 'Câu gốc', 'Phần', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể']];
+  // Tab CauHoi: mỗi hàng = 1 câu của đề gốc (chủ đề, nội dung gõ 1 lần); cột mã đề "105", "106": câu đó là câu số mấy trong mã đề.
+  // Ví dụ: mã 105 giữ thứ tự đề gốc; mã 106 đảo câu phần I (đổi chỗ từng cặp: câu gốc 1 là câu 2 của mã 106…)
+  var cauHoi = [['Câu', 'Phần', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể', '105', '106']];
   var dapAn105 = [], dapAn106 = [];
   var doi = { A: 'B', B: 'C', C: 'D', D: 'A' };
-  var goc106 = function (n) { return n <= 12 ? (n % 2 ? n + 1 : n - 1) : n; }; // câu n của mã 106 = câu goc106(n) của đề gốc
+  var doiCho = function (n) { return n <= 12 ? (n % 2 ? n + 1 : n - 1) : n; }; // câu gốc n <-> câu doiCho(n) của mã 106
   de.forEach(function (r, i) {
-    cauHoi.push(['', String(i + 1), '', r[0], r[2], r[3], r[4]]);
+    cauHoi.push([String(i + 1), r[0], r[2], r[3], r[4], String(i + 1), String(doiCho(i + 1))]);
     dapAn105.push(r[5]);
   });
   de.forEach(function (r, i) {
-    var g = de[goc106(i + 1) - 1];
+    var g = de[doiCho(i + 1) - 1];
     dapAn106.push(g[0] === 'I' ? doi[g[5]] : g[0] === 'II' ? g[5].split('').reverse().join('') : g[5]);
-    if (i < 12) cauHoi.push(['106', String(i + 1), String(goc106(i + 1)), '', '', '', '']);
   });
   var tieuDe = ['Mã đề'].concat(de.map(function (r, i) { return 'Câu ' + (i + 1); }));
   return {
@@ -869,10 +884,10 @@ export function taoMauDapAn(cauTruc) {
       ['HƯỚNG DẪN — BẢNG ĐÁP ÁN THEO MÃ ĐỀ'],
       ['• Tab DapAn: mỗi mã đề 1 dòng. Cột "Câu 1" … "Câu N" là đáp án đúng. Đúng/sai viết "ĐSĐS" hoặc "Đ,S,Đ,S".'],
       ['• Tab CauHoi (tùy chọn): chủ đề, mức độ, nội dung từng câu — hiện trên phiếu. "Phần" (I/II/III) để trống thì hệ thống tự nhận theo đáp án.'],
-      ['• Các dòng để trống cột "Mã đề" là ĐỀ GỐC: ghi chủ đề, nội dung 1 lần cho mọi câu.'],
-      ['• Mã đề đảo thứ tự câu: thêm dòng có "Mã đề" + "Câu" + "Câu gốc" (câu đó là câu số mấy trong đề gốc) — hệ thống tự lấy chủ đề, nội dung của câu gốc.'],
-      ['   VD dòng "106 | 1 | 2": câu 1 của mã 106 chính là câu 2 của đề gốc. Câu nào không có dòng riêng thì giữ như đề gốc. 1 ô "Mã đề" ghi được nhiều mã: "106, 108".'],
-      ['• Cũng có thể ghi thẳng chủ đề / nội dung riêng cho dòng có "Mã đề" (bỏ trống "Câu gốc").'],
+      ['• Tab CauHoi: mỗi hàng là 1 câu của ĐỀ GỐC — ghi chủ đề, nội dung 1 lần.'],
+      ['• Mã đề đảo thứ tự câu: thêm 1 cột cho mỗi mã đề (tiêu đề cột là mã đề, VD "101", "102"…). Ô = câu đó là câu số mấy trong mã đề.'],
+      ['   VD hàng câu 1, cột "106" ghi 2: câu 1 của đề gốc là câu 2 của mã 106. Ô để trống / không có cột cho mã đề: giữ đúng vị trí như đề gốc.'],
+      ['• Tiêu đề cột mã đề phải trùng mã đề trong tab DapAn.'],
       ['• Tab ThongTin (tùy chọn): tiêu đề phiếu, mô tả, ngày thi, tên/mô tả từng phần.']
     ]
   };

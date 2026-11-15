@@ -101,19 +101,28 @@ test('điểm giáo viên nhập vẫn được ưu tiên theo từng phần', (
   assert.equal(L.chamBai_(g, g.hocSinh[0]).diem.p1, '7.50');
 });
 
-test('mã đề đảo thứ tự câu: tab CauHoi ghi "Câu gốc" -> chủ đề / nội dung đúng câu của từng mã đề; thiếu thì cảnh báo', () => {
+test('mã đề đảo thứ tự câu: tab CauHoi dạng ngang (cột mã đề = câu số mấy trong mã đề) hoặc dạng "Mã đề | Câu | Câu gốc"; thiếu thì cảnh báo', () => {
   const da = L.taoMauDapAn();
+  assert.deepEqual(da.CauHoi[0], ['Câu', 'Phần', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể', '105', '106']);
+  assert.deepEqual(da.CauHoi[1].slice(5), ['1', '2'], 'câu gốc 1 = câu 1 mã 105 = câu 2 mã 106');
   const td = ['STT', 'Họ và tên', 'Lớp', 'Mã đề thi', ...Array.from({ length: 22 }, (_, i) => 'Câu ' + (i + 1))];
   const r5 = ['1', 'An', 'Toán 1', '105', ...da.DapAn[1].slice(1)], r6 = ['2', 'Bình', 'Toán 1', '106', ...da.DapAn[2].slice(1)];
-  const g = L.ghepHaiFile(L.docFileKetQua({ KetQua: [td, r5, r6] }), L.docFileDapAn({ DapAn: da.DapAn, CauHoi: da.CauHoi }), {});
-  const c5 = L.chamBai_(g, g.hocSinh[0]), c6 = L.chamBai_(g, g.hocSinh[1]);
-  const goc = da.CauHoi.filter((r) => r[0] === '' && r[1] !== 'Câu');
-  assert.equal(c5.phan1[0].noiDung, goc[0][6]);
-  assert.equal(c6.phan1[0].noiDung, goc[1][6], 'câu 1 mã 106 = câu 2 đề gốc');
-  assert.equal(c6.phan1[1].noiDung, goc[0][6], 'câu 2 mã 106 = câu 1 đề gốc');
-  assert.equal(c6.phan2[0].noiDung, goc[12][6], 'câu không có dòng riêng giữ như đề gốc');
-  assert.equal(c6.diem.p1, '3.00');
-  assert.deepEqual(g.canhBao, []);
-  const chiGoc = L.docFileDapAn({ DapAn: da.DapAn, CauHoi: da.CauHoi.filter((r, i) => i === 0 || !r[0]) });
+  const goc = da.CauHoi.slice(1).map((r) => r[4]);
+  const kiemTra = (cauHoi, ten) => {
+    const g = L.ghepHaiFile(L.docFileKetQua({ KetQua: [td, r5, r6] }), L.docFileDapAn({ DapAn: da.DapAn, CauHoi: cauHoi }), {});
+    const c5 = L.chamBai_(g, g.hocSinh[0]), c6 = L.chamBai_(g, g.hocSinh[1]);
+    assert.equal(c5.phan1[0].noiDung, goc[0], ten);
+    assert.equal(c6.phan1[0].noiDung, goc[1], ten + ': câu 1 mã 106 = câu 2 đề gốc');
+    assert.equal(c6.phan1[1].noiDung, goc[0], ten + ': câu 2 mã 106 = câu 1 đề gốc');
+    assert.equal(c6.phan2[0].noiDung, goc[12], ten + ': câu giữ vị trí');
+    assert.equal(c6.diem.p1, '3.00');
+    assert.deepEqual(g.canhBao, [], ten);
+  };
+  kiemTra(da.CauHoi, 'dạng ngang');
+  const doc = [['Mã đề', 'Câu', 'Câu gốc', 'Phần', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể']]
+    .concat(da.CauHoi.slice(1).map((r) => ['', r[0], '', r[1], r[2], r[3], r[4]]))
+    .concat(Array.from({ length: 12 }, (_, i) => ['106', String(i + 1), String(i % 2 ? i : i + 2), '', '', '', '']));
+  kiemTra(doc, 'dạng dọc');
+  const chiGoc = L.docFileDapAn({ DapAn: da.DapAn, CauHoi: da.CauHoi.map((r) => r.slice(0, 5)) });
   assert.match(L.ghepHaiFile(L.docFileKetQua({ KetQua: [td, r5, r6] }), chiGoc, {}).canhBao.join(' '), /chỉ có 1 bộ chủ đề/);
 });
