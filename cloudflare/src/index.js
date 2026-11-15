@@ -337,8 +337,9 @@ async function layPhieu(req, db, b) {
       WHERE p.id = ? AND p.hoc_sinh = ? AND lt.cong_bo = 1`).bind(String(b.maPhieu || ''), hs.id).first();
   if (!p) return json({ ok: false, loi: 'Không tìm thấy phiếu kết quả.' });
   const d = JSON.parse(p.du_lieu);
-  await ganHtmlMau(db, hs.kg, d);
-  return json({ ok: true, d, logo: JSON.parse(hs.cai_dat || '{}').logo || '' });
+  const logoKg = JSON.parse(hs.cai_dat || '{}').logo || '';
+  await ganHtmlMau(db, hs.kg, d, logoKg);
+  return json({ ok: true, d, logo: logoKg });
 }
 
 /* =====================================================================
@@ -1118,7 +1119,7 @@ const HAM = {
     const p = await c.db.prepare('SELECT p.du_lieu, lt.lop FROM phieu p JOIN lan_thi lt ON lt.id = p.lan_thi WHERE p.id = ? AND p.kg = ?').bind(String(maPhieu), c.kg).first();
     if (!p || !c.duocLopId(p.lop)) throw new Loi('Không tìm thấy phiếu.');
     const d = JSON.parse(p.du_lieu);
-    await ganHtmlMau(c.db, c.kg, d);
+    await ganHtmlMau(c.db, c.kg, d, c.nd.caiDat.logo || '');
     return { d, logo: c.nd.caiDat.logo || '' };
   },
 
@@ -1375,18 +1376,18 @@ async function layMauPhieu(db, kg, id) {
   return { id: m.id, ten: m.ten, html: m.html, truong: JSON.parse(m.truong), trang: JSON.parse(m.trang) };
 }
 /** Giá trị điền vào mẫu: các trường lưu từ file + trường hệ thống (dùng khi file không có cột tương ứng). */
-function giaTriPhieu(d) {
+function giaTriPhieu(d, logo) {
   const ch = d.cham || { diem: {} };
   const heThong = { Họ_và_tên: d.hoTen, Lớp: d.lop, Số_báo_danh: d.sbd, SBD: d.sbd, Mã_đề_thi: d.maDe, Tổng_điểm: ch.diem.tong, Lần: d.lan,
-    Ngày_thi: d.ngayThi, Mã_phiếu: d.maPhieu, Tên_trung_tâm: d.trungTam, Tiêu_đề: d.tieuDe, Mô_tả: d.moTa };
+    Ngày_thi: d.ngayThi, Mã_phiếu: d.maPhieu, Tên_trung_tâm: d.trungTam, Tiêu_đề: d.tieuDe, Mô_tả: d.moTa, Logo: logo || '' };
   return Object.assign(heThong, d.giaTri || {});
 }
 /** Phiếu dùng mẫu Word: điền mẫu thành HTML để trang phụ huynh / giáo viên hiển thị và tạo PDF. */
-async function ganHtmlMau(db, kg, d) {
+async function ganHtmlMau(db, kg, d, logo) {
   if (!d || !d.mau) return;
   const m = await db.prepare('SELECT html, trang FROM mau_phieu WHERE id = ? AND kg = ?').bind(d.mau, kg).first();
   if (!m) return;
-  d.htmlMau = KP.dungKhoi(MW.dienMau(m.html, giaTriPhieu(d)), d);
+  d.htmlMau = KP.dungKhoi(MW.dienMau(m.html, giaTriPhieu(d, logo)), d);
   d.trangMau = JSON.parse(m.trang || '{}');
 }
 /** Trường của mẫu không có cột tương ứng trong file (và không phải trường hệ thống) -> báo khi xem trước. */

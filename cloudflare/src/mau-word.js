@@ -607,7 +607,10 @@ export function dienMau(html, giaTri, tuyChon) {
     var v = theoKhoa[khoaTruong(tenGoc)];
     if (v == null || v === '') return tuyChon.giuTrong ? m : '<span' + (style || '') + '></span>';
     var truoc = /data-truoc="([^"]*)"/.exec(them || ''), sau = /data-sau="([^"]*)"/.exec(them || '');
-    var noi = anToan(String(v).replace(/\r\n?/g, '\n')).replace(/\n/g, '<br>');
+    // trường Logo: ảnh logo trung tâm (Cài đặt) -> chèn ảnh thay vì chữ
+    var laAnh = /^data:image\/(png|jpe?g|gif|webp);base64,[a-z0-9+/=]+$/i.test(String(v));
+    var noi = laAnh ? '<img src="' + String(v) + '" alt="" style="max-height:70pt;max-width:150pt;vertical-align:middle">'
+      : anToan(String(v).replace(/\r\n?/g, '\n')).replace(/\n/g, '<br>');
     return '<span' + (style || '') + '>' + (truoc ? truoc[1] : '') + noi + (sau ? sau[1] : '') + '</span>';
   });
 }

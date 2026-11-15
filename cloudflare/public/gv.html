@@ -2599,12 +2599,13 @@
     ['Lớp', 'Lớp', 'Lớp của bài thi (cột Lớp trong file kết quả)'],
     ['Số_báo_danh', 'Số báo danh', 'Danh sách học sinh / cột Số báo danh trong file kết quả'],
     ['Mã_đề_thi', 'Mã đề thi', 'Cột Mã đề thi trong file kết quả'],
-    ['Tổng_điểm', 'Tổng điểm', 'Hệ thống chấm (hoặc cột Tổng điểm trong file kết quả)'],
+    ['Tổng_điểm', 'Tổng điểm', 'Hệ thống chấm từ file kết quả + file đáp án'],
     ['Tiêu_đề', 'Tên bài thi', 'Tab ThongTin của file đáp án ("Tiêu đề phiếu"), trống thì lấy tên bài thi nhập khi gửi kết quả'],
     ['Mô_tả', 'Mô tả bài thi', 'Tab ThongTin của file đáp án ("Mô tả"); sửa được ở Bài thi > Sửa'],
     ['Lần', 'Lần làm', 'Hệ thống tự đếm (lần 1, 2…)'],
     ['Ngày_thi', 'Ngày thi', 'Ô Ngày thi khi gửi kết quả'],
     ['Tên_trung_tâm', 'Tên trung tâm', 'Cài đặt'],
+    ['Logo', 'Logo trung tâm (ảnh)', 'Cài đặt > Logo tải lên'],
     ['Mã_phiếu', 'Mã phiếu', 'Hệ thống tạo']];
   var khoaT = function (s) { return String(s || '').normalize('NFC').toLowerCase().replace(/[\s_]+/g, '_'); };
   function chuCot(j) { var s = ''; j++; while (j > 0) { var r = (j - 1) % 26; s = String.fromCharCode(65 + r) + s; j = Math.floor((j - 1) / 26); } return s; }
@@ -2889,6 +2890,7 @@
         if (!xemThu) { htmlSua = vung().innerHTML; xemThu = true; }
         var r = bang.dong[+chonHs.value] || [], gt = {};
         bang.tieuDe.forEach(function (h, j) { gt[window.MauWord.tenTruongWord(h, j)] = r[j]; });
+        if (DL.caiDat && DL.caiDat.logo && !gt.Logo) gt.Logo = DL.caiDat.logo;
         var tam = doc().createElement('div'); tam.innerHTML = htmlSua;
         [].forEach.call(tam.querySelectorAll('.truong'), function (s) { s.textContent = '«' + s.getAttribute('data-truong') + '»'; s.className = 'truong'; s.removeAttribute('contenteditable'); });
         vung().innerHTML = window.MauWord.dienMau(tam.innerHTML, gt, { giuTrong: true });

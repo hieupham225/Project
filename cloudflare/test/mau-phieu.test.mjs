@@ -176,3 +176,10 @@ test('khối có sẵn: bảng phân tích tự dựng theo đề (số câu, ch
   assert.match(hL, /PHẦN III: Câu trắc nghiệm trả lời ngắn/);
   assert.match(hL, /Tổng điểm: <span[^>]*>10\.00<\/span>\/10/);
 });
+
+test('trường Logo: ảnh logo (data:image) chèn thành <img>, giá trị khác vẫn là chữ', async () => {
+  const MW = await import('../src/mau-word.js');
+  const html = '<span class="truong" data-truong="Logo">«Logo»</span>';
+  assert.match(MW.dienMau(html, { Logo: 'data:image/png;base64,iVBORw0KGgo=' }), /<img src="data:image\/png;base64,iVBORw0KGgo=" alt=""/);
+  assert.doesNotMatch(MW.dienMau(html, { Logo: '"><script>x</script>' }), /<script>/);
+});
