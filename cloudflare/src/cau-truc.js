@@ -131,7 +131,7 @@ export const CAU_TRUC_CO_SAN = [
   { id: 'thpt2025-hoa-hoc', mon: 'Hóa học', ten: 'THPT 2025 – Hóa học', phan: baPhan(18, 4, 6, 0.25) },
   { id: 'thpt2025-sinh-hoc', mon: 'Sinh học', ten: 'THPT 2025 – Sinh học', phan: baPhan(18, 4, 6, 0.25) },
   { id: 'thpt2025-lich-su', mon: 'Lịch sử', ten: 'THPT 2025 – Lịch sử', phan: baPhan(24, 4, 0) },
-  { id: 'thpt2025-dia-li', mon: 'Địa lí', ten: 'THPT 2025 – Địa lí', phan: baPhan(24, 4, 0) },
+  { id: 'thpt2025-dia-li', mon: 'Địa lí', ten: 'THPT 2025 – Địa lí', phan: baPhan(18, 4, 6, 0.25) },
   { id: 'thpt2025-tieng-anh', mon: 'Tiếng Anh', ten: 'THPT 2025 – Tiếng Anh',
     phan: [{ ma: 'I', ten: 'Câu trắc nghiệm nhiều phương án lựa chọn.', dang: 'trac_nghiem', soCau: 40, diemMoiCau: 0.25, phuongAn: 'ABCD' }] }
 ];

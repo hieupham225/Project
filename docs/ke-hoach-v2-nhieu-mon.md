@@ -34,6 +34,8 @@ Mỗi dạng câu là một module gồm 4 việc: **đọc đáp án → chấm
 |---|---|
 | THPT 2025 – Toán (= v1) | I: 12 câu `trac_nghiem` × 0,25 · II: 4 câu `dung_sai` · III: 6 câu `tra_loi_ngan` × 0,5 |
 | THPT 2025 – Vật lí / Hóa học / Sinh học | I: 18 câu × 0,25 · II: 4 câu `dung_sai` · III: 6 câu `tra_loi_ngan` × 0,25 |
+| THPT 2025 – Địa lí | I: 18 câu × 0,25 · II: 4 câu `dung_sai` · III: 6 câu `tra_loi_ngan` × 0,25 |
+| THPT 2025 – Lịch sử | I: 24 câu × 0,25 · II: 4 câu `dung_sai` |
 | THPT 2025 – Tiếng Anh | 40 câu `trac_nghiem` × 0,25 |
 | Tiếng Anh – đề trung tâm (mẫu để chỉnh) | Trắc nghiệm · Điền từ / viết lại câu · Sắp xếp · Viết đoạn văn (`tu_luan`) |
 
