@@ -22,9 +22,11 @@ var TH = O + ';text-align:center;font-weight:bold';
 
 /** Các phần của phiếu: theo cấu trúc đề (v2: cham.phan) hoặc 3 phần cố định (v1). */
 function cacPhan(c) {
-  if (Array.isArray(c.phan) && c.phan.length) return c.phan.map(function (p, i) { return { ma: p.ma, ten: p.ten, dang: p.dang, cau: p.cau, diem: p.diem, toiDa: p.toiDa, so: i + 1 }; });
+  // phiếu chấm theo cấu trúc có sẵn trước 15/11/2026: phần III ghi "tra_loi_ngan" -> nay là Tự luận
+  var cuCoSan = /^thpt2025-/.test((c.cauTruc && c.cauTruc.id) || '');
+  if (Array.isArray(c.phan) && c.phan.length) return c.phan.map(function (p, i) { return { ma: p.ma, ten: p.ten, dang: cuCoSan && p.dang === 'tra_loi_ngan' ? 'tu_luan' : p.dang, cau: p.cau, diem: p.diem, toiDa: p.toiDa, so: i + 1 }; });
   var dm = c.diem || {}, ds = [];
-  [['I', 'trac_nghiem', c.phan1, dm.p1, dm.max1], ['II', 'dung_sai', c.phan2, dm.p2, dm.max2], ['III', 'tra_loi_ngan', c.phan3, dm.p3, dm.max3]].forEach(function (x) {
+  [['I', 'trac_nghiem', c.phan1, dm.p1, dm.max1], ['II', 'dung_sai', c.phan2, dm.p2, dm.max2], ['III', 'tu_luan', c.phan3, dm.p3, dm.max3]].forEach(function (x) {
     if ((x[2] || []).length) ds.push({ ma: x[0], dang: x[1], cau: x[2], diem: x[3], toiDa: x[4], so: ds.length + 1 });
   });
   return ds;
@@ -178,7 +180,7 @@ export function phieuMinhHoa() {
       phan: [
         { ma: 'I', dang: 'trac_nghiem', diem: '2.50', toiDa: '3', cau: [cau(1, 'Lượng giác', 'Giá trị lượng giác của góc', 'A', 'A'), cau(2, 'Hàm số lượng giác', 'Tập xác định, tập giá trị', 'C', 'B'), cau(3, 'Dãy số / Cấp số', 'Cấp số cộng', 'D', 'D')] },
         { ma: 'II', dang: 'dung_sai', diem: '3.50', toiDa: '4', cau: [ds(1, 'Hàm số lượng giác', 'a) Tập xác định…\nb) GTLN / GTNN…', 'Đ,S,Đ,S', 'DSDS'), ds(2, 'Phương trình lượng giác', 'a) Kiểm tra nghiệm…\nb) Số nghiệm…', 'Đ,Đ,S,S', 'DDSD')] },
-        { ma: 'III', dang: 'tra_loi_ngan', diem: '2.50', toiDa: '3', cau: [cau(1, 'Lượng giác', 'Tính giá trị biểu thức', '-4/5', '-4/5'), cau(2, 'Tổ hợp', 'Bài toán đếm nâng cao', '70', '72')] }
+        { ma: 'III', dang: 'tu_luan', diem: '2.50', toiDa: '3', cau: [cau(1, 'Lượng giác', 'Tính giá trị biểu thức', '-4/5', '-4/5'), cau(2, 'Tổ hợp', 'Bài toán đếm nâng cao', '70', '72')] }
       ],
       diem: { tong: '8.50', maxTong: '10' }
     }

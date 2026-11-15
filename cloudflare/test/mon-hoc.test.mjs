@@ -57,14 +57,15 @@ test('môn học của lớp: tạo lớp có môn, đổi môn, danh sách cấ
 test('gửi kết quả Vật lí: tự gợi ý cấu trúc theo môn của lớp, chia 18/4/6, lưu cấu trúc vào lần thi', async () => {
   const mau = await A.rpc('gvLayMau', 'Lý 11A');
   assert.equal(mau.cauTruc, 'thpt2025-vat-li', 'mẫu theo môn của lớp');
-  assert.ok(mau.ketQua.KetQua[0].includes('Câu 28') && !mau.ketQua.KetQua[0].includes('Câu 29'));
+  // phần III (câu 23–28) là Tự luận: file kết quả không có cột bài làm, chỉ có cột "Điểm tự luận"
+  assert.ok(mau.ketQua.KetQua[0].includes('Câu 22') && !mau.ketQua.KetQua[0].includes('Câu 23') && mau.ketQua.KetQua[0].includes('Điểm tự luận'));
   const so = { kq: dien(mau.ketQua, mau.dapAn), da: mau.dapAn };
   const xt = await A.rpc('gvXemTruoc', so, {});
   assert.equal(xt.cauTruc, 'thpt2025-vat-li');
   assert.deepEqual(xt.phanDe.map((p) => p.soCau), [18, 4, 6]);
   assert.equal(xt.hocSinh[0].maxTong, '10');
-  // em 1 sai câu 1 (phần I, 0,25đ) -> 9,75
-  assert.equal(xt.hocSinh[0].tongDiem, '9.75');
+  // em 1 sai câu 1 (phần I, 0,25đ); tự luận chưa nhập điểm -> 4,25 + 4 + 0
+  assert.equal(xt.hocSinh[0].tongDiem, '8.25');
   const bd = await A.rpc('gvBatDauDot', so, { baiThi: 'KT 15 phút', cauTruc: xt.cauTruc });
   const d = bd.dsDot[0];
   const tp = await A.rpc('gvTaoPhieuLo', d.maDot, so, d.canTao);
@@ -75,7 +76,8 @@ test('gửi kết quả Vật lí: tự gợi ý cấu trúc theo môn của l�
   const p = (await A.rpc('gvXemPhieu', (ph.ds || ph.phieu || ph)[0].maPhieu)).d;
   assert.equal(p.cham.cauTruc.id, 'thpt2025-vat-li');
   assert.deepEqual(p.cham.phan.map((x) => [x.ma, x.cau.length]), [['I', 18], ['II', 4], ['III', 6]]);
-  assert.equal(p.tenPhan.III, 'Câu trắc nghiệm trả lời ngắn.');
+  assert.equal(p.tenPhan.III, 'Tự luận');
+  assert.equal(p.cham.phan[2].dang, 'tu_luan');
 });
 
 test('chọn tay cấu trúc khác gợi ý; lớp mới trong file nhận môn của đề', async () => {

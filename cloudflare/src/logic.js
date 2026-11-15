@@ -661,15 +661,12 @@ export function ghepHaiFile(kqF, da, thongTinThem, cauTruc) {
   };
   // Cột "Dạng bài" (tab CauHoi) quyết định câu thuộc phần nào của cấu trúc đề (phần có dạng đó): khối phân tích, điểm phần
   // đều theo dạng bài. Cột "Phần" chỉ dùng khi không ghi dạng bài.
-  var MA_THEO_DANG_V1 = { trac_nghiem: 'I', dung_sai: 'II', tra_loi_ngan: 'III' };
+  var MA_THEO_DANG_V1 = { trac_nghiem: 'I', dung_sai: 'II', tu_luan: 'III' };
   var khongCoDang = {};
   var phanTheoDang = function (dang, n) {
     if (!dang) return '';
     var p = cauTruc ? cauTruc.phan.filter(function (x) { return x.dang === dang; })[0] : null;
-    if (!p && cauTruc && (dang === 'tu_luan' || dang === 'tra_loi_ngan')) { // đề ghi "Tự luận" mà cấu trúc là "Trả lời ngắn" (hoặc ngược lại): coi như cùng phần
-      p = cauTruc.phan.filter(function (x) { return x.dang === (dang === 'tu_luan' ? 'tra_loi_ngan' : 'tu_luan'); })[0] || null;
-    }
-    var ma = cauTruc ? (p && p.ma) : MA_THEO_DANG_V1[dang === 'tu_luan' ? 'tra_loi_ngan' : dang];
+    var ma = cauTruc ? (p && p.ma) : MA_THEO_DANG_V1[dang];
     if (!ma) (khongCoDang[dang] = khongCoDang[dang] || []).push(n);
     return ma || '';
   };
@@ -687,7 +684,7 @@ export function ghepHaiFile(kqF, da, thongTinThem, cauTruc) {
     viTri[n] = phan + '.' + q.cau;
   });
   Object.keys(khongCoDang).forEach(function (d) {
-    canhBao.push('Câu ' + khongCoDang[d].join(', ') + ' ghi dạng bài "' + CT.TEN_DANG_FILE[d] + '" nhưng cấu trúc đề "' + ((cauTruc && cauTruc.ten) || 'Toán') + '" không có phần dạng này — hệ thống xếp theo cột Phần / đáp án.');
+    canhBao.push('Câu ' + khongCoDang[d].join(', ') + ' ghi dạng bài "' + CT.TEN_DANG_FILE[d] + '" nhưng cấu trúc đề "' + ((cauTruc && cauTruc.ten) || 'Toán') + '" không có phần dạng này — các câu này được xếp theo cột "Phần" và chấm theo dạng của phần đó. Kiểm tra lại cột "Dạng bài" hoặc chọn đúng cấu trúc đề.');
   });
   // Nhiều mã đề có đáp án khác nhau (đảo câu) mà tab CauHoi chỉ có 1 bộ chủ đề -> chủ đề / nội dung trên phiếu có thể không khớp câu của từng mã đề
   var dsMa = Object.keys(dapAn);
@@ -735,7 +732,7 @@ export function ghepHaiFile(kqF, da, thongTinThem, cauTruc) {
 /** Mẫu bảng kết quả: cột giống bảng giáo viên đang dùng để trộn thư; điền sẵn danh sách lớp nếu có. */
 export function taoMauKetQua(dsHocSinh, tenLop, soCau, cauTruc) {
   if (cauTruc && cauTruc.id !== 'thpt2025-toan') return taoMauKetQuaTheoCauTruc_(dsHocSinh, tenLop, cauTruc);
-  soCau = soCau || 22;
+  soCau = soCau || 16; // câu 17–22 (tự luận) giáo viên chấm: không cần cột bài làm, điền điểm vào cột "Điểm tự luận"
   var cau = []; for (var i = 1; i <= soCau; i++) cau.push('Câu ' + i);
   var tieuDe = ['STT', 'Mã HS', 'Họ và tên', 'Lớp', 'Số báo danh', 'Mã đề thi'].concat(cau,
     ['Điểm trắc nghiệm', 'Điểm đúng sai', 'Điểm tự luận', 'Tổng điểm', 'Thứ hạng', 'Ưu điểm', 'Nhược điểm', 'Hướng khắc phục', 'Lời khuyên']);
@@ -762,7 +759,7 @@ export function taoMauKetQua(dsHocSinh, tenLop, soCau, cauTruc) {
       ['• Cột "Lớp": hệ thống tự đưa kết quả vào đúng lớp. Một file có thể gồm nhiều lớp; xóa các dòng của học sinh không làm bài này. Lớp chưa có sẽ được tạo mới.'],
       ['• "Mã đề thi": mã đề học sinh làm. Đáp án đúng của từng mã đề nằm ở file đáp án riêng — KHÔNG cần chép đáp án vào từng dòng.'],
       ['• "Câu 1" … "Câu N": đáp án học sinh chọn. Trắc nghiệm: A/B/C/D. Đúng/sai: "Đ,S,Đ,S" (ý bỏ trống để trống giữa 2 dấu phẩy). Điền từ: có thể để trống.'],
-      ['• Điểm do hệ thống chấm từ bài làm + đáp án (trắc nghiệm 0,25đ/câu; đúng/sai: 1 ý 0,1 – 2 ý 0,25 – 3 ý 0,5 – 4 ý 1đ; tự luận 0,5đ/câu). Phần tự luận chấm tay (không ghi bài làm câu 17–22): điền điểm vào cột "Điểm tự luận". Điểm điền khác điểm hệ thống chấm sẽ được cảnh báo khi xem trước.'],
+      ['• Câu 1–12 (trắc nghiệm) và 13–16 (đúng/sai): hệ thống chấm từ bài làm + đáp án (trắc nghiệm 0,25đ/câu; đúng/sai: 1 ý 0,1 – 2 ý 0,25 – 3 ý 0,5 – 4 ý 1đ). Câu 17–22 (tự luận): giáo viên chấm, điền tổng điểm phần tự luận (tối đa 3) vào cột "Điểm tự luận". Cột điểm trắc nghiệm / đúng sai điền khác điểm hệ thống chấm sẽ được cảnh báo khi xem trước.'],
       ['• Nhận xét: dùng 2 cột "Ưu điểm", "Nhược điểm", hoặc 1 cột "Ưu, nhược" dạng "+ Ưu điểm: …  + Nhược điểm: …".'],
       ['• Có thể dùng luôn bảng tổng hợp điểm đang dùng để trộn thư Word: các cột đáp án đúng ở cuối mỗi dòng sẽ được bỏ qua.']
     ]
@@ -814,9 +811,11 @@ function khoangCau_(ct) {
 function cotDiemPhan_(p) { return 'Điểm phần ' + p.ma; }
 
 function taoMauKetQuaTheoCauTruc_(dsHocSinh, tenLop, ct) {
-  var kc = khoangCau_(ct), soCau = kc.length ? kc[kc.length - 1].den : 0;
-  var cau = []; for (var i = 1; i <= soCau; i++) cau.push('Câu ' + i);
-  var cotDiem = ct.phan.map(cotDiemPhan_);
+  var kc = khoangCau_(ct);
+  // cột bài làm chỉ cho phần hệ thống tự chấm; phần tự luận (giáo viên chấm) chỉ có cột điểm
+  var cau = []; kc.forEach(function (x) { if (x.p.dang !== 'tu_luan') for (var i = x.tu; i <= x.den; i++) cau.push('Câu ' + i); });
+  var tl = ct.phan.filter(function (p) { return p.dang === 'tu_luan'; });
+  var cotDiem = tl.map(function (p) { return tl.length === 1 ? 'Điểm tự luận' : cotDiemPhan_(p); });
   var tieuDe = ['STT', 'Mã HS', 'Họ và tên', 'Lớp', 'Số báo danh', 'Mã đề thi'].concat(cau, cotDiem,
     ['Tổng điểm', 'Thứ hạng', 'Ưu điểm', 'Nhược điểm', 'Hướng khắc phục', 'Lời khuyên']);
   var dong = (dsHocSinh || []).map(function (h, j) {
@@ -827,8 +826,8 @@ function taoMauKetQuaTheoCauTruc_(dsHocSinh, tenLop, ct) {
   if (!dong.length) {
     var vd = tieuDe.map(function () { return ''; });
     vd[0] = '1'; vd[2] = 'Nguyễn Văn An'; vd[3] = tenLop || (ct.mon + ' 1'); vd[4] = '210101'; vd[5] = '101';
-    kc.forEach(function (x) { for (var n = x.tu; n <= x.den; n++) vd[5 + n] = dapAnMau_(x.p, n - x.tu, 0); });
-    var c0 = 6 + soCau + cotDiem.length + 2;
+    kc.forEach(function (x) { for (var n = x.tu; n <= x.den; n++) { var j = tieuDe.indexOf('Câu ' + n); if (j >= 0) vd[j] = dapAnMau_(x.p, n - x.tu, 0); } });
+    var c0 = 6 + cau.length + cotDiem.length + 2;
     vd[c0] = 'Nắm vững kiến thức cơ bản.'; vd[c0 + 1] = 'Còn nhầm lẫn ở một số câu vận dụng.'; vd[c0 + 2] = 'Luyện thêm các dạng bài vận dụng.';
     dong.push(vd);
   }
@@ -839,11 +838,11 @@ function taoMauKetQuaTheoCauTruc_(dsHocSinh, tenLop, ct) {
       ['• Mỗi học sinh 1 dòng. KHÔNG sửa cột "Mã HS" (đã điền sẵn khi tải mẫu của lớp) — đó là mã để nhận đúng học sinh.'],
       ['• Cột "Lớp": hệ thống tự đưa kết quả vào đúng lớp. Một file có thể gồm nhiều lớp; xóa các dòng của học sinh không làm bài này.'],
       ['• "Mã đề thi": mã đề học sinh làm. Đáp án đúng của từng mã đề nằm ở file đáp án riêng.'],
-      ['• "Câu 1" … "Câu ' + soCau + '": đáp án học sinh làm, đánh số liên tục qua các phần:']
+      ['• Cột "Câu …": đáp án học sinh làm (câu đánh số liên tục qua các phần; phần tự luận không cần cột bài làm):']
     ].concat(kc.map(function (x) {
       return ['    – Câu ' + x.tu + (x.den > x.tu ? '–' + x.den : '') + ': Phần ' + x.p.ma + ' (' + x.p.ten.replace(/\.$/, '') + ') — ' + TEN_DANG_HD[x.p.dang](x.p) + '.'];
     }), [
-      ['• Điểm do hệ thống chấm từ bài làm + đáp án. Cột "Điểm phần …" chỉ dùng cho phần chấm tay (không ghi bài làm); điểm điền khác điểm hệ thống chấm sẽ được cảnh báo khi xem trước.'],
+      ['• Điểm do hệ thống chấm từ bài làm + đáp án.' + (tl.length ? ' Phần tự luận: giáo viên chấm, điền tổng điểm phần vào cột "' + cotDiem.join('", "') + '".' : '')],
       ['• Nhận xét: dùng 2 cột "Ưu điểm", "Nhược điểm", hoặc 1 cột "Ưu, nhược" dạng "+ Ưu điểm: …  + Nhược điểm: …".']
     ])
   };
@@ -897,13 +896,13 @@ export function taoMauDapAn(cauTruc) {
   // Tab CauHoi: mỗi hàng = 1 câu của đề gốc (chủ đề, nội dung gõ 1 lần); cột mã đề "105", "106": câu đó là câu số mấy trong mã đề.
   // Ví dụ: mã 105 giữ thứ tự đề gốc; mã 106 đảo câu phần I (đổi chỗ từng cặp: câu gốc 1 là câu 2 của mã 106…)
   var cauHoi = [['Câu', 'Phần', 'Dạng bài', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể', '105', '106']];
-  var dangTheoPhan = { I: 'trac_nghiem', II: 'dung_sai', III: 'tra_loi_ngan' };
+  var dangTheoPhan = { I: 'trac_nghiem', II: 'dung_sai', III: 'tu_luan' };
   var dapAn105 = [], dapAn106 = [];
   var doi = { A: 'B', B: 'C', C: 'D', D: 'A' };
   var doiCho = function (n) { return n <= 12 ? (n % 2 ? n + 1 : n - 1) : n; }; // câu gốc n <-> câu doiCho(n) của mã 106
   de.forEach(function (r, i) {
     // Toán: câu 17–22 ghi "Tự luận" như thầy cô quen gọi (hệ thống xếp vào phần trả lời ngắn của cấu trúc Toán)
-    cauHoi.push([String(i + 1), r[0], r[0] === 'III' ? 'Tự luận' : CT.TEN_DANG_FILE[dangTheoPhan[r[0]]] || '', r[2], r[3], r[4], String(i + 1), String(doiCho(i + 1))]);
+    cauHoi.push([String(i + 1), r[0], CT.TEN_DANG_FILE[dangTheoPhan[r[0]]] || '', r[2], r[3], r[4], String(i + 1), String(doiCho(i + 1))]);
     dapAn105.push(r[5]);
   });
   de.forEach(function (r, i) {

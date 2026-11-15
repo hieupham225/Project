@@ -1388,16 +1388,16 @@
   /* ---- File Word (.docx) danh sách mã tra cứu của 1 lớp: Họ và tên – Lớp – Số báo danh – Mã tra cứu ----
      Tạo ngay trên trình duyệt: WordprocessingML tối thiểu, nén zip bằng CFB của thư viện SheetJS (đã có sẵn). */
   // Dạng bài theo môn (lấy từ các cấu trúc đề có sẵn của môn) — dùng cho khối "Bảng phân tích từng câu"
-  var DANG_THEO_MA = { I: 'trac_nghiem', II: 'dung_sai', III: 'tra_loi_ngan' };
+  var DANG_THEO_MA = { I: 'trac_nghiem', II: 'dung_sai', III: 'tu_luan' };
   function dangCuaMon(mon) {
     var ds = [];
     (DL.cauTrucDe || []).forEach(function (c) { if (c.mon === mon) c.phan.forEach(function (p) { if (ds.indexOf(p.dang) < 0) ds.push(p.dang); }); });
     // luôn có 4 dạng cơ bản (đề tự tạo có thể dùng), thêm dạng riêng của môn (VD Tiếng Anh: điền từ, sắp xếp)
-    ['trac_nghiem', 'dung_sai', 'tra_loi_ngan', 'tu_luan'].forEach(function (d, i) { if (ds.indexOf(d) < 0) ds.splice(Math.min(i, ds.length), 0, d); });
+    ['trac_nghiem', 'dung_sai', 'tu_luan', 'tra_loi_ngan'].forEach(function (d, i) { if (ds.indexOf(d) < 0) ds.splice(Math.min(i, ds.length), 0, d); });
     return ds;
   }
   function tenDang(dang) {
-    return { trac_nghiem: 'Trắc nghiệm ABCD', dung_sai: 'Trắc nghiệm Đúng / Sai', tra_loi_ngan: 'Trả lời ngắn', tu_luan: 'Tự luận (chấm tay)', dien_tu: 'Điền từ / viết lại câu', sap_xep: 'Sắp xếp câu / đoạn' }[dang] || dang;
+    return { trac_nghiem: 'Trắc nghiệm ABCD', dung_sai: 'Trắc nghiệm Đúng / Sai', tra_loi_ngan: 'Trả lời ngắn', tu_luan: 'Tự luận', dien_tu: 'Điền từ / viết lại câu', sap_xep: 'Sắp xếp câu / đoạn' }[dang] || dang;
   }
   function xmlAnToan(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function taoDocxMaTraCuu(tenLop, ds) {
@@ -2655,7 +2655,7 @@
   $('nutTaoMau').onclick = function () { manMau().chonCach(); };
 
   /* ---- Cấu trúc đề ---- */
-  var DANG_CHON = [['trac_nghiem', 'Trắc nghiệm ABCD'], ['dung_sai', 'Trắc nghiệm Đúng / Sai'], ['tra_loi_ngan', 'Trả lời ngắn (tự chấm)'], ['tu_luan', 'Tự luận (giáo viên chấm tay)'], ['dien_tu', 'Điền từ / viết lại câu'], ['sap_xep', 'Sắp xếp câu / đoạn']];
+  var DANG_CHON = [['trac_nghiem', 'Trắc nghiệm ABCD'], ['dung_sai', 'Trắc nghiệm Đúng / Sai'], ['tra_loi_ngan', 'Trả lời ngắn (hệ thống tự chấm đáp số)'], ['tu_luan', 'Tự luận (giáo viên chấm, nhập điểm)'], ['dien_tu', 'Điền từ / viết lại câu'], ['sap_xep', 'Sắp xếp câu / đoạn']];
   function soVN(n) { return String(Math.round(n * 100) / 100).replace('.', ','); }
   function diemPhan(p) { return p.soCau * (p.dang === 'dung_sai' ? ((p.bangDiem || [])[4] || p.diemMoiCau || 1) : p.diemMoiCau); }
   function veDsCauTruc() {
@@ -2916,8 +2916,8 @@
         p('<b>A. THÔNG TIN CHUNG</b>', 'margin-top:6pt') +
         '<table style="border-collapse:collapse;width:100%"><tbody><tr><td>' + p('<b>1. Họ và tên:</b> ' + tr('Họ_và_tên')) + '</td><td>' + p('<b>2. Lớp:</b> ' + tr('Lớp')) + '</td><td>' + p('<b>3. Mã đề thi:</b> ' + tr('Mã_đề_thi')) + '</td></tr>' +
         '<tr><td>' + p('<b>4. Số báo danh:</b> ' + tr('Số_báo_danh', 'font-weight:normal')) + '</td><td colspan="2">' + p('<b>5. Xếp hạng:</b> ' + k('xep-hang', 'span')) + '</td></tr></tbody></table>' +
-        p('<b>6. Kết quả cụ thể:</b>') + '<div class="khoi" data-khoi="bang-diem" data-muc="trac_nghiem:Trắc nghiệm|dung_sai:Đúng sai|tra_loi_ngan:Tự luận">Điểm các phần</div>' + k('cac-lan') +
-        '<p style="margin:6pt 0;border-bottom:1.5pt solid #000"></p>' + p('<b>B. PHÂN TÍCH BÀI THI</b>') + kp('trac_nghiem') + kp('dung_sai') + kp('tra_loi_ngan') + k('nhan-xet') + '</div>';
+        p('<b>6. Kết quả cụ thể:</b>') + '<div class="khoi" data-khoi="bang-diem" data-muc="trac_nghiem:Trắc nghiệm|dung_sai:Đúng sai|tu_luan:Tự luận">Điểm các phần</div>' + k('cac-lan') +
+        '<p style="margin:6pt 0;border-bottom:1.5pt solid #000"></p>' + p('<b>B. PHÂN TÍCH BÀI THI</b>') + kp('trac_nghiem') + kp('dung_sai') + kp('tu_luan') + k('nhan-xet') + '</div>';
       return { id: '', ten: 'Phân tích bài thi (tự đủ số câu)', html: html, trang: { mon: 'Toán', rong: 595.3, cao: 841.9, tren: 36, duoi: 36, trai: 36, phai: 36, rongToiDa: 523 }, tenTep: '' };
     };
 

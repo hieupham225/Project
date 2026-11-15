@@ -121,7 +121,8 @@ function baPhan(soI, soII, soIII, diemIII, tenIII) {
     { ma: 'I', ten: TEN.I, dang: 'trac_nghiem', soCau: soI, diemMoiCau: 0.25, phuongAn: 'ABCD' },
     { ma: 'II', ten: TEN.II, dang: 'dung_sai', soCau: soII, soY: 4, diemMoiCau: 1, bangDiem: BANG_DUNG_SAI }
   ];
-  if (soIII) ds.push({ ma: 'III', ten: tenIII || 'Câu trắc nghiệm trả lời ngắn.', dang: 'tra_loi_ngan', soCau: soIII, diemMoiCau: diemIII });
+  // phần III (6 câu): dạng Tự luận — giáo viên chấm, điểm lấy từ cột "Điểm tự luận" (chốt 15/11/2026, mọi môn)
+  if (soIII) ds.push({ ma: 'III', ten: tenIII || TEN.III, dang: 'tu_luan', soCau: soIII, diemMoiCau: diemIII });
   return ds;
 }
 

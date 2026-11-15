@@ -46,12 +46,12 @@ function taoFile(soCau, dapAnDung, traLoi, them = []) {
   return { kq, da };
 }
 
-test('Vật lí THPT 2025: chia 18/4/6 câu theo cấu trúc, điểm III 0,25/câu, tổng 10', () => {
+test('Vật lí THPT 2025: chia 18/4/6 câu theo cấu trúc; phần III Tự luận lấy cột "Điểm tự luận", tổng 10', () => {
   const ct = layCauTrucCoSan('thpt2025-vat-li');
   const dung = [...Array(18).fill('A'), 'DSDS', 'DDSS', 'SSDD', 'DSSD', '1.5', '2', '30', '0.25', '12', '7'];
   const full = dung.slice();
   const nua = [...Array(9).fill('A'), ...Array(9).fill('B'), 'DSDS', 'DDSD', 'SSDD', 'SSSS', '1,5', '2', '31', '0.25', '', '7'];
-  const { kq, da } = taoFile(28, dung, [full, nua]);
+  const { kq, da } = taoFile(28, dung, [full, nua], [['Điểm tự luận', ['1.5', '1']]]);
   const g = L.ghepHaiFile(L.docFileKetQua(kq), L.docFileDapAn(da), { tieuDe: 'KT' }, ct);
   assert.equal(g.ok, true);
   assert.deepEqual(Object.keys(g.cauHoi).map((p) => g.cauHoi[p].length), [18, 4, 6]);
@@ -62,7 +62,8 @@ test('Vật lí THPT 2025: chia 18/4/6 câu theo cấu trúc, điểm III 0,25/c
   // I: 9 câu đúng = 2,25 · II: 1 + 0,5 (3 ý) + 1 + 0,1 (1 ý: SSSS vs DSSD -> ý 2,3 đúng = 2 ý = 0,25)
   assert.equal(b.diem.p1, '2.25');
   assert.equal(b.diem.p2, (1 + 0.5 + 1 + 0.25).toFixed(2));
-  assert.equal(b.diem.p3, (4 * 0.25).toFixed(2)); // 1,5 · 2 · 0,25 · 7 đúng; 31 sai; bỏ trống
+  assert.equal(b.diem.p3, '1.00', 'tự luận: lấy cột điểm giáo viên, không tự chấm bài làm câu 23–28');
+  assert.equal(a.phan[2].dang, 'tu_luan');
 });
 
 test('Tiếng Anh THPT 2025: 40 câu trắc nghiệm, mỗi câu 0,25', () => {
@@ -176,16 +177,21 @@ test('cột "Dạng bài" (tab CauHoi) quyết định câu vào phần nào, kh
   const g = L.ghepHaiFile(kq, da, {}, ct);
   assert.deepEqual(Object.keys(g.cauHoi).map((p) => g.cauHoi[p].map((q) => q.cauGoc)), [[1, 3], [2, 5], [4]]);
   const c = L.chamBai_(g, g.hocSinh[0]);
-  assert.deepEqual(c.phan.map((p) => [p.dang, p.diem]), [['trac_nghiem', '0.25'], ['dung_sai', '2.00'], ['tra_loi_ngan', '0.50']]);
+  assert.deepEqual(c.phan.map((p) => [p.dang, p.diem]), [['trac_nghiem', '0.25'], ['dung_sai', '2.00'], ['tu_luan', '0.00']], 'tự luận không tự chấm');
   assert.deepEqual(g.canhBao.filter((x) => /dạng bài/.test(x)), []);
+  // dạng bài cấu trúc không có (Trả lời ngắn với cấu trúc Toán): cảnh báo rõ, xếp theo cột Phần
+  const da2 = L.docFileDapAn({ DapAn: [['Mã đề', 'Câu 1', 'Câu 2'], ['101', 'A', '0.5']], CauHoi: [['Câu', 'Phần', 'Dạng bài'], ['1', 'I', 'TN'], ['2', 'III', 'Trả lời ngắn']] });
+  const g2 = L.ghepHaiFile(L.docFileKetQua({ KetQua: [['Họ và tên', 'Mã đề thi', 'Câu 1', 'Câu 2'], ['An', '101', 'A', '0.5']] }), da2, {}, ct);
+  assert.deepEqual(g2.cauHoi.III.map((q) => q.cauGoc), [2]);
+  assert.match(g2.canhBao.join(' '), /Câu 2 ghi dạng bài "Trả lời ngắn" nhưng cấu trúc đề "THPT 2025 – Toán" không có phần dạng này/);
 });
 
 test('khối Điểm các phần: theo dạng bài, thứ tự + nhãn tự đặt; nhận xét "Ưu và nhược điểm" / "Điểm cần lưu ý"', async () => {
   const KP = await import('../src/khoi-phieu.js');
   const d = KP.phieuMinhHoa();
-  assert.match(KP.dungKhoi('<div class="khoi" data-khoi="bang-diem">x</div>', d), /Trắc nghiệm: <span[^>]*>2\.50<\/span>\/3; Đúng sai: .*Trả lời ngắn: /);
+  assert.match(KP.dungKhoi('<div class="khoi" data-khoi="bang-diem">x</div>', d), /Trắc nghiệm: <span[^>]*>2\.50<\/span>\/3; Đúng sai: .*Tự luận: /);
   const out = KP.dungKhoi('<div class="khoi" data-khoi="bang-diem" data-thutu="dung_sai,trac_nghiem" data-nhan="dung_sai=Phần II – ĐS">x</div>', d);
-  assert.ok(out.indexOf('Phần II – ĐS') < out.indexOf('Trắc nghiệm') && out.indexOf('Trắc nghiệm') < out.indexOf('Trả lời ngắn'), out);
+  assert.ok(out.indexOf('Phần II – ĐS') < out.indexOf('Trắc nghiệm') && out.indexOf('Trắc nghiệm') < out.indexOf('Tự luận'), out);
   const kq = L.docFileKetQua({ KetQua: [['Họ và tên', 'Ưu và nhược điểm'], ['An', '+ Ưu điểm: Chăm.\r\n+ Điểm cần lưu ý: Ẩu.']] });
   assert.deepEqual([kq.hocSinh[0].nhanXet.uu, kq.hocSinh[0].nhanXet.nhuoc, kq.hocSinh[0].nhanXet.nhanNhuoc], ['Chăm.', 'Ẩu.', 'Điểm cần lưu ý']);
 });

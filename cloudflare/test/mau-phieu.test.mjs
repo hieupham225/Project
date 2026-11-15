@@ -167,13 +167,14 @@ test('khối có sẵn: bảng phân tích tự dựng theo đề (số câu, ch
   // Vật lí 18/4/6: cùng mẫu, bảng tự đủ 28 câu
   const ctL = L.layCauTrucCoSan('thpt2025-vat-li'), daL = L.taoMauDapAn(ctL), kqL = L.taoMauKetQua([{ maHs: '', hoTen: 'Lý Cường', lopMau: 'Lý K' }], '', null, ctL);
   kqL.KetQua[1][5] = '101'; kqL.KetQua[0].forEach((h, j) => { const m = /^Câu (\d+)$/.exec(h); if (m) kqL.KetQua[1][j] = daL.DapAn[1][+m[1]]; });
+  kqL.KetQua[1][kqL.KetQua[0].indexOf('Điểm tự luận')] = '1.5'; // phần III tự luận: giáo viên nhập điểm
   const soL = { kq: kqL, da: daL };
   const bdL = await B.rpc('gvBatDauDot', soL, { baiThi: 'Lý khối', mauPhieu: mau, cauTruc: ctL.id });
   await B.rpc('gvTaoPhieuLo', bdL.dsDot[0].maDot, soL, bdL.dsDot[0].canTao);
   const pL = Object.values(await B.rpc('gvDsPhieuLan', bdL.dsDot[0].maDot)).find((x) => x && x.maPhieu);
   const hL = (await B.rpc('gvXemPhieu', pL.maPhieu)).d.htmlMau;
   assert.equal((hL.match(/<tr>/g) || []).length, 3 * 2 + 28);
-  assert.match(hL, /PHẦN III: Câu trắc nghiệm trả lời ngắn/);
+  assert.match(hL, /PHẦN III: Tự luận/);
   assert.match(hL, /Tổng điểm: <span[^>]*>10\.00<\/span>\/10/);
 });
 

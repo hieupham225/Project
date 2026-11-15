@@ -98,6 +98,7 @@ Giai đoạn 1–3 cho ra bản dùng được với Toán, Lý, Hóa, Sinh và 
 - **Dạng bài quyết định mọi thứ**: tab CauHoi của file đáp án có cột **"Dạng bài"** (Trắc nghiệm ABCD / Đúng sai / Tự luận…). Câu vào khối phân tích nào, chấm thế nào, điểm phần — đều theo dạng bài; cột "Phần" chỉ để nhóm. Khối phân tích trong mẫu phiếu chọn theo dạng bài (danh sách dạng theo môn của mẫu), đổi thứ tự, đổi tiêu đề tùy ý.
 - **Ưu tiên điểm chấm từ file kết quả + file đáp án.** Cột điểm giáo viên nhập chỉ dùng cho phần không chấm được (không có bài làm, VD tự luận chấm tay). Lệch thì cảnh báo ở màn xem trước khi tạo phiếu (tên học sinh, điểm file ≠ điểm chấm).
 - **Cấu trúc đề tự tạo**: cấu trúc THPT 2025 có sẵn không sửa được; quản trị nhân bản rồi sửa bản sao (dạng bài, số câu, điểm mỗi câu, bảng điểm đúng sai). Không xóa được khi đang dùng.
+- **Phần III (6 câu) của Toán, Lý, Hóa, Sinh, Địa là dạng Tự luận** ở mọi chỗ (cấu trúc có sẵn, file đáp án mẫu, mẫu phiếu): giáo viên chấm, điểm lấy từ cột "Điểm tự luận"; file kết quả mẫu không có cột bài làm phần này. Dạng "Trả lời ngắn" (tự chấm đáp số) vẫn dùng được cho đề tự tạo. File đáp án ghi dạng bài mà cấu trúc không có → cảnh báo, xếp theo cột Phần (không tự quy đổi ngầm).
 - Khi đưa lên production: chạy migration theo thứ tự 0003 → 0004 → 0005 → 0006.
 
 ## Rủi ro và cách giữ an toàn
