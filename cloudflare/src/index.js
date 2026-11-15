@@ -1460,7 +1460,7 @@ function truongThieu(mau, kq) {
 /** Lọc HTML mẫu phiếu: chỉ giữ thẻ / thuộc tính an toàn (mẫu do giáo viên tải lên, hiển thị cho phụ huynh). */
 function lamSachHtml(html) {
   const THE = new Set(['div', 'p', 'span', 'br', 'b', 'i', 'u', 'table', 'tbody', 'thead', 'tr', 'td', 'th', 'colgroup', 'col', 'img']);
-  const THUOC_TINH = new Set(['style', 'colspan', 'rowspan', 'class', 'data-truong', 'data-truoc', 'data-sau', 'data-goc', 'data-khoi', 'data-phan', 'data-dang', 'data-ten', 'data-thutu', 'data-nhan', 'src', 'alt']);
+  const THUOC_TINH = new Set(['style', 'colspan', 'rowspan', 'class', 'data-truong', 'data-truoc', 'data-sau', 'data-goc', 'data-khoi', 'data-phan', 'data-dang', 'data-ten', 'data-thutu', 'data-nhan', 'data-muc', 'src', 'alt']);
   html = html.replace(/<!--[\s\S]*?-->/g, '').replace(/<(script|style|iframe|object|embed|svg|math|template)[\s\S]*?<\/\1\s*>/gi, '');
   return html.replace(/<(\/?)([a-zA-Z0-9]+)([^>]*)>/g, (m, dong, ten, thuocTinh) => {
     ten = ten.toLowerCase();

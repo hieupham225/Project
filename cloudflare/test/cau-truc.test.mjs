@@ -189,3 +189,12 @@ test('khối Điểm các phần: theo dạng bài, thứ tự + nhãn tự đ�
   const kq = L.docFileKetQua({ KetQua: [['Họ và tên', 'Ưu và nhược điểm'], ['An', '+ Ưu điểm: Chăm.\r\n+ Điểm cần lưu ý: Ẩu.']] });
   assert.deepEqual([kq.hocSinh[0].nhanXet.uu, kq.hocSinh[0].nhanXet.nhuoc, kq.hocSinh[0].nhanXet.nhanNhuoc], ['Chăm.', 'Ẩu.', 'Điểm cần lưu ý']);
 });
+
+test('khối Điểm các phần: mỗi dòng = nhãn + dạng bài tính điểm (data-muc)', async () => {
+  const KP = await import('../src/khoi-phieu.js');
+  const d = KP.phieuMinhHoa();
+  assert.equal(KP.ghiMuc([{ dang: 'dung_sai', nhan: 'Phần 2 | ĐS' }, { dang: 'trac_nghiem', nhan: 'TN: ABCD' }]), 'dung_sai:Phần 2   ĐS|trac_nghiem:TN: ABCD');
+  const out = KP.dungKhoi('<div class="khoi" data-khoi="bang-diem" data-muc="dung_sai:Phần 2|trac_nghiem:TN: ABCD|dien_tu:Không có">x</div>', d);
+  assert.match(out, /Phần 2: <span[^>]*>3\.50<\/span>\/4; TN: ABCD: <span[^>]*>2\.50<\/span>\/3; <b>Tổng điểm: <span[^>]*>8\.50/);
+  assert.doesNotMatch(out, /Không có|Tự luận/, 'dạng đề không có -> ẩn; dạng không có dòng -> không hiện riêng');
+});

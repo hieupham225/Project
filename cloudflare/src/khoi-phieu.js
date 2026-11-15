@@ -102,9 +102,27 @@ export function docNhan(s) {
 export function ghiNhan(o) {
   return Object.keys(o || {}).filter(function (k) { return o[k]; }).map(function (k) { return k + '=' + String(o[k]).replace(/[|=]/g, ' ').trim(); }).join('|');
 }
-/** Điểm gộp theo dạng bài, theo thứ tự / nhãn của khối. */
+/** data-muc "trac_nghiem:Trắc nghiệm|dung_sai:Đúng sai" <-> [{ dang, nhan }] (các dòng của khối Điểm các phần). */
+export function docMuc(s) {
+  return String(s || '').split('|').map(function (x) { var i = x.indexOf(':'); return i > 0 ? { dang: x.slice(0, i), nhan: x.slice(i + 1) } : null; }).filter(Boolean);
+}
+export function ghiMuc(ds) {
+  return (ds || []).filter(function (x) { return x && x.dang; }).map(function (x) { return x.dang + ':' + String(x.nhan || '').replace(/\|/g, ' ').trim(); }).join('|');
+}
+/** Điểm gộp theo dạng bài, theo các dòng của khối (data-muc: nhãn + dạng bài; mẫu cũ: data-thutu / data-nhan). */
 export function diemTheoDang(c, tt) {
   tt = tt || {};
+  if (tt.muc) {
+    var tong = {};
+    cacPhan(c).forEach(function (p) {
+      var k = p.dang || p.ma; if (!tong[k]) tong[k] = { diem: 0, toiDa: 0 };
+      tong[k].diem += parseFloat(p.diem) || 0; tong[k].toiDa += parseFloat(p.toiDa) || 0;
+    });
+    // dòng chọn dạng bài mà đề không có -> không hiện; dạng không có dòng nào -> không hiện riêng (vẫn tính vào Tổng điểm)
+    return docMuc(tt.muc).filter(function (m) { return tong[m.dang]; }).map(function (m) {
+      return { dang: m.dang, nhan: m.nhan || TEN_NGAN_DANG[m.dang] || m.dang, diem: tong[m.dang].diem.toFixed(2), toiDa: String(Math.round(tong[m.dang].toiDa * 100) / 100) };
+    });
+  }
   var nhan = docNhan(tt.nhan), thuTu = String(tt.thutu || '').split(',').filter(Boolean), nhom = {}, ds = [];
   cacPhan(c).forEach(function (p) {
     var k = p.dang || p.ma;
