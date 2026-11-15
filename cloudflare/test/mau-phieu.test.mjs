@@ -135,3 +135,44 @@ ${p(run('+ Ưu điểm: Chăm chỉ'))}${p(run('+ Nhược điểm: Còn ẩu'))
   const k2 = MW.docMauWord({ 'word/document.xml': doc });
   assert.deepEqual(k2.doDuoc.map((x) => [x.truong, x.goc]), [['Họ_và_tên', 'Trần Minh An'], ['Mã_đề_thi', '102']]);
 });
+
+test('khối có sẵn: bảng phân tích tự dựng theo đề (số câu, chủ đề đúng mã đề), điểm các phần, nhận xét', async () => {
+  const L = await import('../src/logic.js');
+  const B = trinhDuyet();
+  assert.equal((await B.goi('/api/dang-ky', { hoTen: 'Cô Khối', tenKhongGian: 'TT khối', email: `khoi.${lam}@vd.vn`, matKhau: 'matkhau123' })).ok, true);
+  const html = '<div class="mau-word" style="width:500pt"><p style="margin:0">Họ tên: <span class="truong" data-truong="Họ_và_tên" style="">«Họ_và_tên»</span> – Xếp hạng: <span class="khoi" data-khoi="xep-hang">Xếp hạng</span></p>' +
+    '<div class="khoi" data-khoi="bang-diem">Điểm các phần</div><div class="khoi" data-khoi="phan-tich">Bảng phân tích từng câu</div><div class="khoi" data-khoi="nhan-xet">Nhận xét</div></div>';
+  const dl = await B.rpc('gvLuuMauPhieu', { ten: 'Mẫu khối', html, truong: ['Họ_và_tên'], trang: { rong: 595, trai: 36, phai: 36 } });
+  const mau = dl.mauPhieu[0].id;
+  assert.ok(dl.khoiPhieu.some((k) => k.ma === 'phan-tich'));
+  assert.match((await B.rpc('gvLayMauPhieu', mau)).html, /data-khoi="phan-tich"/, 'bộ lọc giữ khối');
+  // Toán: mã 105 (đề gốc) và 106 (đảo câu phần I) — tab CauHoi dạng ngang
+  const ct = L.layCauTrucCoSan('thpt2025-toan'), da = L.taoMauDapAn();
+  const td = ['STT', 'Họ và tên', 'Lớp', 'Thứ hạng', 'Mã đề thi', ...Array.from({ length: 22 }, (_, i) => 'Câu ' + (i + 1)), 'Ưu điểm'];
+  const so = { kq: { KetQua: [td, ['1', 'Hồ An', 'Toán K', '2', '105', ...da.DapAn[1].slice(1), 'Chăm'], ['2', 'Vũ Bình', 'Toán K', '1', '106', ...da.DapAn[2].slice(1), '']] }, da };
+  const bd = await B.rpc('gvBatDauDot', so, { baiThi: 'KT khối', mauPhieu: mau, cauTruc: ct.id });
+  await B.rpc('gvTaoPhieuLo', bd.dsDot[0].maDot, so, bd.dsDot[0].canTao);
+  const ds = Object.values(await B.rpc('gvDsPhieuLan', bd.dsDot[0].maDot)).filter((x) => x && x.maPhieu);
+  const xem = async (ten) => (await B.rpc('gvXemPhieu', ds.find((x) => x.hoTen === ten).maPhieu)).d.htmlMau;
+  const goc = da.CauHoi.slice(1).map((r) => r[4]);
+  const h5 = await xem('Hồ An'), h6 = await xem('Vũ Bình');
+  assert.ok(!/class="khoi"/.test(h5), 'khối đã được dựng');
+  assert.equal((h5.match(/<tr>/g) || []).length, 3 * 2 + 22, '3 bảng: 22 hàng câu + mỗi bảng 1 hàng tiêu đề + 1 hàng tổng');
+  assert.ok(h5.indexOf(L.chuoi_(goc[0])) < h5.indexOf(L.chuoi_(goc[1])), 'mã 105: câu 1 = câu 1 đề gốc');
+  const i6 = h6.indexOf('PHẦN I');
+  assert.ok(h6.indexOf(goc[1], i6) < h6.indexOf(goc[0], i6), 'mã 106: câu 1 = câu 2 đề gốc');
+  assert.match(h5, /Phần 1: <span[^>]*>3\.00<\/span>\/3/); assert.match(h5, /Tổng điểm: <span[^>]*>[\d.]+<\/span>\/10/);
+  assert.match(h5, />2<\/span> \/ 2/, 'xếp hạng 2 / 2');
+  assert.match(h5, /Ưu điểm: Chăm/); assert.match(h6, /Chúc <span[^>]*>Vũ Bình/);
+  // Vật lí 18/4/6: cùng mẫu, bảng tự đủ 28 câu
+  const ctL = L.layCauTrucCoSan('thpt2025-vat-li'), daL = L.taoMauDapAn(ctL), kqL = L.taoMauKetQua([{ maHs: '', hoTen: 'Lý Cường', lopMau: 'Lý K' }], '', null, ctL);
+  kqL.KetQua[1][5] = '101'; kqL.KetQua[0].forEach((h, j) => { const m = /^Câu (\d+)$/.exec(h); if (m) kqL.KetQua[1][j] = daL.DapAn[1][+m[1]]; });
+  const soL = { kq: kqL, da: daL };
+  const bdL = await B.rpc('gvBatDauDot', soL, { baiThi: 'Lý khối', mauPhieu: mau, cauTruc: ctL.id });
+  await B.rpc('gvTaoPhieuLo', bdL.dsDot[0].maDot, soL, bdL.dsDot[0].canTao);
+  const pL = Object.values(await B.rpc('gvDsPhieuLan', bdL.dsDot[0].maDot)).find((x) => x && x.maPhieu);
+  const hL = (await B.rpc('gvXemPhieu', pL.maPhieu)).d.htmlMau;
+  assert.equal((hL.match(/<tr>/g) || []).length, 3 * 2 + 28);
+  assert.match(hL, /PHẦN III: Câu trắc nghiệm trả lời ngắn/);
+  assert.match(hL, /Tổng điểm: <span[^>]*>10\.00<\/span>\/10/);
+});

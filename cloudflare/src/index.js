@@ -10,6 +10,7 @@
  */
 import * as L from './logic.js';
 import * as MW from './mau-word.js';
+import * as KP from './khoi-phieu.js';
 import TRANG from './trang.js';
 
 const COOKIE = 'kq_phien';
@@ -498,6 +499,7 @@ const HAM = {
       nhom: c.lop.filter((l) => c.duocLopId(l.id)).map((l) => l.ten),
       monLop: Object.fromEntries(c.lop.filter((l) => c.duocLopId(l.id)).map((l) => [l.ten, l.mon || ''])),
       dsMon: L.DS_MON,
+      khoiPhieu: KP.CAC_KHOI,
       mauPhieu: mau.map((m) => ({ id: m.id, ten: m.ten, soTruong: JSON.parse(m.truong).length, tenTep: m.ten_tep, ngayTao: m.ngay_tao,
         soLanDung: lt.filter((d) => d.mauPhieu === m.id).length })),
       cauTrucDe: L.CAU_TRUC_CO_SAN.map((ct) => ({ id: ct.id, mon: ct.mon, ten: ct.ten, moTa: L.moTaCauTruc(ct),
@@ -812,7 +814,7 @@ const HAM = {
       nhom: g.nhom.map((x) => ({ nhom: x.nhom, lopMoi: x.lopMoi, soDong: x.soDong, siSo: x.siSo, vang: x.vang.map(gon) })),
       phieuXemTruoc: dauTien ? (() => {
         const d = duLieuPhieu(c, kq, dauTien.h, dauTien.cham, dauTien.hs, '(xem trước)', { lan: 1, ngayThi: kq.thongTin.ngayThi, lichSu: [], nhom: dauTien.nhom }, mau);
-        if (mau) { d.htmlMau = MW.dienMau(mau.html, giaTriPhieu(d)); d.trangMau = mau.trang; }
+        if (mau) { d.htmlMau = KP.dungKhoi(MW.dienMau(mau.html, giaTriPhieu(d)), d); d.trangMau = mau.trang; }
         return d;
       })() : null,
       mauPhieu: mau ? { id: mau.id, ten: mau.ten, truongThieu: truongThieu(mau, kq) } : null
@@ -1384,7 +1386,7 @@ async function ganHtmlMau(db, kg, d) {
   if (!d || !d.mau) return;
   const m = await db.prepare('SELECT html, trang FROM mau_phieu WHERE id = ? AND kg = ?').bind(d.mau, kg).first();
   if (!m) return;
-  d.htmlMau = MW.dienMau(m.html, giaTriPhieu(d));
+  d.htmlMau = KP.dungKhoi(MW.dienMau(m.html, giaTriPhieu(d)), d);
   d.trangMau = JSON.parse(m.trang || '{}');
 }
 /** Trường của mẫu không có cột tương ứng trong file (và không phải trường hệ thống) -> báo khi xem trước. */
@@ -1396,7 +1398,7 @@ function truongThieu(mau, kq) {
 /** Lọc HTML mẫu phiếu: chỉ giữ thẻ / thuộc tính an toàn (mẫu do giáo viên tải lên, hiển thị cho phụ huynh). */
 function lamSachHtml(html) {
   const THE = new Set(['div', 'p', 'span', 'br', 'b', 'i', 'u', 'table', 'tbody', 'thead', 'tr', 'td', 'th', 'colgroup', 'col', 'img']);
-  const THUOC_TINH = new Set(['style', 'colspan', 'rowspan', 'class', 'data-truong', 'data-truoc', 'data-sau', 'data-goc', 'src', 'alt']);
+  const THUOC_TINH = new Set(['style', 'colspan', 'rowspan', 'class', 'data-truong', 'data-truoc', 'data-sau', 'data-goc', 'data-khoi', 'data-phan', 'src', 'alt']);
   html = html.replace(/<!--[\s\S]*?-->/g, '').replace(/<(script|style|iframe|object|embed|svg|math|template)[\s\S]*?<\/\1\s*>/gi, '');
   return html.replace(/<(\/?)([a-zA-Z0-9]+)([^>]*)>/g, (m, dong, ten, thuocTinh) => {
     ten = ten.toLowerCase();

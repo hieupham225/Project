@@ -15,7 +15,7 @@ for (const ten of fs.readdirSync(path.join(goc, 'public'))) {
   trang['/' + ten] = { loai: LOAI[duoi], noiDung: fs.readFileSync(path.join(goc, 'public', ten), 'utf8') };
 }
 // Module dùng chung máy chủ + trình duyệt: đọc file Word thành mẫu phiếu
-for (const ten of ['mau-word.js']) trang['/' + ten] = { loai: LOAI['.js'], noiDung: fs.readFileSync(path.join(goc, 'src', ten), 'utf8') };
+for (const ten of ['mau-word.js', 'khoi-phieu.js']) trang['/' + ten] = { loai: LOAI['.js'], noiDung: fs.readFileSync(path.join(goc, 'src', ten), 'utf8') };
 const dich = path.join(goc, 'src', 'trang.js');
 const noiDung = '// Tự sinh bởi scripts/dong-goi-trang.mjs từ thư mục public/ — không sửa tay.\nexport default ' + JSON.stringify(trang) + ';\n';
 // Chỉ ghi khi nội dung đổi: src/ nằm trong watch_dir của `wrangler dev`, ghi lại y hệt sẽ gây build lặp vô hạn.

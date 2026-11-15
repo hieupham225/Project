@@ -857,7 +857,8 @@
       </div>
       <div class="the">
         <div class="dau-the-mau"><h2 style="margin:0">Mẫu phiếu<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Tải lên file Word (.docx) đang dùng để trộn thư (mail merge): hệ thống giữ nguyên bố cục, các trường «Tên_cột» lấy dữ liệu từ cột cùng tên trong file Excel kết quả. File Word thường: gõ {{Tên cột}} vào chỗ cần điền. Khi gửi kết quả, chọn mẫu phiếu cho bài thi.</span></button></h2>
-          <label class="nut">⬆ Tải mẫu Word lên<input id="fileMauWord" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="an"></label></div>
+          <span class="cum-thao-tac"><button id="nutMauTrong" type="button" class="phu">+ Mẫu trống</button>
+          <label class="nut">⬆ Tải mẫu Word lên<input id="fileMauWord" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="an"></label></span></div>
         <div id="dsMauPhieu" class="ds-mau"></div>
       </div>
     </section>
@@ -2640,10 +2641,39 @@
     };
     var truongHienCo = function () { return vung() ? truongTrongHtml(vung().innerHTML) : []; };
     var luuLichSu = function () { if (vung()) { lichSu.push(vung().innerHTML); if (lichSu.length > 40) lichSu.shift(); } };
-    var khoaTruongSua = function () { [].forEach.call(vung().querySelectorAll('.truong'), function (s) { s.setAttribute('contenteditable', 'false'); }); };
+    var khoaTruongSua = function () { [].forEach.call(vung().querySelectorAll('.truong, .khoi'), function (s) { s.setAttribute('contenteditable', 'false'); }); };
+    var chonKhoi = the('select', { 'aria-label': 'Khối có sẵn' }, [the('option', { value: '', text: 'Chèn khối có sẵn…' })].concat((DL.khoiPhieu || []).map(function (k) {
+      return the('option', { value: k.ma, text: k.ten, title: k.moTa });
+    })));
+    var chenKhoi = function () {
+      var ma = chonKhoi.value; if (!ma || xemThu) return;
+      luuLichSu();
+      var k = (DL.khoiPhieu || []).filter(function (x) { return x.ma === ma; })[0] || { ten: ma };
+      var el = doc().createElement(ma === 'xep-hang' ? 'span' : 'div');
+      el.className = 'khoi'; el.setAttribute('data-khoi', ma); el.setAttribute('contenteditable', 'false'); el.textContent = k.ten;
+      var sel = doc().getSelection(), n = sel && sel.rangeCount ? sel.getRangeAt(0).startContainer : null;
+      var e = n && (n.nodeType === 1 ? n : n.parentElement);
+      var goc = vung().querySelector('.mau-word') || vung();
+      if (ma === 'xep-hang' && e && goc.contains(e)) { var r = sel.getRangeAt(0); r.collapse(false); r.insertNode(el); }
+      else {
+        // chèn ngay sau đoạn / bảng cấp ngoài cùng đang đặt con trỏ; không có thì chèn cuối phiếu
+        var cap = e && goc.contains(e) ? e : null;
+        while (cap && cap.parentElement !== goc) cap = cap.parentElement;
+        if (cap) cap.after(el); else goc.appendChild(el);
+      }
+      chonKhoi.value = ''; capNhatNut();
+      el.scrollIntoView({ block: 'center' });
+    };
+    chonKhoi.onchange = chenKhoi;
+    var boKhoi = function () {
+      var k = khoiChon; if (!k) return;
+      luuLichSu(); k.remove(); khoiChon = null; capNhatNut();
+    };
+    var khoiChon = null;
     var chonTruong = function (s) {
       [].forEach.call(vung().querySelectorAll('.truong.dang-chon'), function (x) { x.classList.remove('dang-chon'); });
       truongChon = s; if (s) { s.classList.add('dang-chon'); oTruong.value = s.getAttribute('data-truong'); }
+      if (s || khoiChon) { if (khoiChon) khoiChon.classList.remove('dang-chon'); khoiChon = null; }
       capNhatNut();
     };
     var phamVi = function () { // vùng bôi đen trong phiếu (không rỗng)
@@ -2665,10 +2695,12 @@
       nutDoiTen.disabled = nutBo.disabled = xemThu || !truongChon;
       nutThemDong.disabled = nutXoaDong.disabled = xemThu || !o;
       nutHoanTac.disabled = xemThu || !lichSu.length;
+      nutBoKhoi.classList.toggle('an', !khoiChon); chonKhoi.disabled = xemThu;
       var n = truongHienCo().length;
       trangThai.textContent = xemThu ? 'Đang xem thử với dữ liệu thật — tắt "Xem thử" để sửa tiếp.'
         : r ? 'Đã bôi đen "' + r.toString().slice(0, 40) + '" — gõ / chọn tên trường rồi bấm "Gắn trường".'
         : truongChon ? 'Đang chọn trường «' + truongChon.getAttribute('data-truong') + '».'
+        : khoiChon ? 'Đang chọn khối "' + khoiChon.textContent + '" — hệ thống tự dựng phần này cho từng học sinh khi tạo phiếu.'
         : n + ' trường. Bôi đen chữ trên phiếu để gắn trường; bấm vào trường (tô vàng) để đổi tên / bỏ; gõ trực tiếp để sửa chữ.';
     };
     var ganTruong = function () {
@@ -2756,6 +2788,7 @@
     nutThemDong = nut('+ Dòng', 'Thêm dòng bảng dưới ô đang đặt con trỏ', themDong);
     nutXoaDong = nut('− Dòng', 'Xóa dòng bảng đang đặt con trỏ', xoaDong);
     nutHoanTac = nut('↶ Hoàn tác', 'Hoàn tác thao tác gần nhất', hoanTac);
+    var nutBoKhoi = nut('Xóa khối', 'Xóa khối đang chọn', boKhoi);
     oTruong.oninput = capNhatNut;
     oTruong.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); if (truongChon && !phamVi()) doiTen(); else ganTruong(); } };
     var nutLuu = the('button', { text: 'Lưu mẫu phiếu', onclick: function () {
@@ -2770,7 +2803,13 @@
       var d = doc();
       khoaTruongSua();
       d.addEventListener('selectionchange', capNhatNut);
-      d.addEventListener('click', function (e) { var s = e.target.closest && e.target.closest('.truong'); chonTruong(s && vung().contains(s) ? s : null); });
+      d.addEventListener('click', function (e) {
+        var s = e.target.closest && e.target.closest('.truong'); chonTruong(s && vung().contains(s) ? s : null);
+        var k = e.target.closest && e.target.closest('.khoi');
+        if (khoiChon) khoiChon.classList.remove('dang-chon');
+        khoiChon = k && vung().contains(k) ? k : null; if (khoiChon) khoiChon.classList.add('dang-chon');
+        capNhatNut();
+      });
       d.addEventListener('keydown', function (e) {
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && lichSu.length) { e.preventDefault(); hoanTac(); }
         else if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Enter') { if (!d._daLuu) { luuLichSu(); d._daLuu = true; setTimeout(function () { d._daLuu = false; }, 1500); } }
@@ -2780,7 +2819,10 @@
     khung.srcdoc = '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="script-src \'none\'">' +
       '<style>body{margin:0;padding:16px;background:#fff;color:#000}#vung{outline:none;width:max-content;min-width:100%}' +
       '.truong{background:#FFF1B8;outline:1px dashed #C9A227;border-radius:2px;cursor:pointer}.truong.dang-chon{background:#DCE6FF;outline:2px solid #225BFF}' +
-      'td:focus-within{box-shadow:inset 0 0 0 2px rgba(34,91,255,.35)}::selection{background:#B9CCFF}</style></head><body><div id="vung" contenteditable="true" spellcheck="false">' +
+      'td:focus-within{box-shadow:inset 0 0 0 2px rgba(34,91,255,.35)}::selection{background:#B9CCFF}' +
+      'div.khoi{margin:6pt 0;padding:14px 12px;border:2px dashed #7A93D8;border-radius:8px;background:#EEF3FF;color:#2A4AA8;font:600 13px system-ui,sans-serif;text-align:center;cursor:pointer}' +
+      'div.khoi::before{content:"▦ KHỐI: ";font-weight:700}span.khoi{padding:1px 6px;border:1px dashed #7A93D8;border-radius:4px;background:#EEF3FF;color:#2A4AA8;font:600 12px system-ui,sans-serif;cursor:pointer}' +
+      '.khoi.dang-chon{border-color:#225BFF;background:#DCE6FF}</style></head><body><div id="vung" contenteditable="true" spellcheck="false">' +
       m.html + '</div></body></html>';
     veChonHs();
     moHop(m.id ? 'Chỉnh sửa mẫu phiếu' : 'Chỉnh sửa mẫu phiếu mới', the('div', { class: 'trinh-sua' }, [
@@ -2788,11 +2830,32 @@
       the('div', { class: 'thanh-cong-cu' }, [
         the('div', { class: 'nhom-cc' }, [oTruong, dsGoiY, nutGan, nutDoiTen, nutBo]),
         the('div', { class: 'nhom-cc' }, [nutThemDong, nutXoaDong, nutHoanTac]),
+        the('div', { class: 'nhom-cc' }, [chonKhoi, nutBoKhoi]),
         the('div', { class: 'nhom-cc' }, [nutExcel, chonHs, nutXem])]),
       trangThai,
       khung,
       the('div', { class: 'chan-hop' }, [the('button', { class: 'phu', text: 'Hủy', onclick: function () { $('hop').classList.add('an'); } }), nutLuu])]));
   }
+
+  /* Mẫu trống: đầu phiếu + thông tin học sinh (trường) + các khối có sẵn — dùng được cho mọi đề, mọi mã đề */
+  $('nutMauTrong').onclick = function () {
+    var cd = DL.caiDat || {}, k = function (ma, the) { var x = (DL.khoiPhieu || []).filter(function (y) { return y.ma === ma; })[0]; the = the || 'div';
+      return '<' + the + ' class="khoi" data-khoi="' + ma + '">' + (x ? x.ten : ma) + '</' + the + '>'; };
+    var tr = function (ten, kieu) { return '<span class="truong" data-truong="' + ten + '" style="' + (kieu || "color:#d40000;font-weight:bold") + '">«' + ten + '»</span>'; };
+    var p = function (noi, st) { return '<p style="margin:0;' + (st || '') + '">' + noi + '</p>'; };
+    var html = '<div class="mau-word" style="width:523pt;font-family:\'Times New Roman\',serif;font-size:12pt;line-height:1.35;color:#000">' +
+      '<table style="border-collapse:collapse;width:100%"><colgroup><col style="width:30%"><col></colgroup><tbody><tr>' +
+      '<td style="vertical-align:middle;text-align:center">' + (cd.logo ? '<img src="' + cd.logo + '" alt="" style="max-height:70pt;max-width:150pt">' : '') +
+      p(tr('Tên_trung_tâm', 'color:#1b7a34;font-weight:bold'), 'text-align:center') + '</td>' +
+      '<td style="vertical-align:middle">' + p(tr('Tiêu_đề', 'font-weight:bold;font-size:14pt'), 'text-align:center') + p('(' + tr('Mô_tả', 'font-style:italic;font-weight:bold') + ')', 'text-align:center') +
+      p('(Lần ' + tr('Lần', 'font-weight:bold') + ' · Ngày thi: ' + tr('Ngày_thi', 'font-weight:bold') + ')', 'text-align:center;font-weight:bold') + '</td></tr></tbody></table>' +
+      p('<b>A. THÔNG TIN CHUNG</b>', 'margin-top:6pt') +
+      '<table style="border-collapse:collapse;width:100%"><tbody><tr><td>' + p('<b>1. Họ và tên:</b> ' + tr('Họ_và_tên')) + '</td><td>' + p('<b>2. Lớp:</b> ' + tr('Lớp')) + '</td><td>' + p('<b>3. Mã đề thi:</b> ' + tr('Mã_đề_thi')) + '</td></tr>' +
+      '<tr><td>' + p('<b>4. Số báo danh:</b> ' + tr('Số_báo_danh', 'font-weight:normal')) + '</td><td colspan="2">' + p('<b>5. Xếp hạng:</b> ' + k('xep-hang', 'span')) + '</td></tr></tbody></table>' +
+      p('<b>6. Kết quả cụ thể:</b>') + k('bang-diem') + k('cac-lan') +
+      '<p style="margin:6pt 0;border-bottom:1.5pt solid #000"></p>' + p('<b>B. PHÂN TÍCH BÀI THI</b>') + k('phan-tich') + k('nhan-xet') + '</div>';
+    moTrinhSua({ id: '', ten: 'Phân tích bài thi (khối tự dựng)', html: html, trang: { rong: 595.3, cao: 841.9, tren: 36, duoi: 36, trai: 36, phai: 36, rongToiDa: 523 }, tenTep: '' });
+  };
 
   function veCaiDat() {
     veMauPhieu();
