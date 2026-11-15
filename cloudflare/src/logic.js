@@ -179,8 +179,8 @@ export function chamBai_(kq, h) {
  */
 export function ghepTheoLop_(dsKq, dsHs, nhom, quyetDinh, tuThemMoi) {
   quyetDinh = quyetDinh || {};
-  var theoMa = {};
-  dsHs.forEach(function (x) { theoMa[x.maHs] = x; });
+  var theoMa = {}, theoSbd = {};
+  dsHs.forEach(function (x) { theoMa[x.maHs] = x; if (x.sbd) theoSbd[x.sbd] = x; });
   var lop = dsHs.filter(function (x) { return thuocNhom_(x, nhom); });
   var cungTen = function (h) { return dsHs.filter(function (x) { return khongDau_(x.hoTen) === khongDau_(h.hoTen); }); };
   var ghepMot = function (h, i) {
@@ -188,6 +188,13 @@ export function ghepTheoLop_(dsKq, dsHs, nhom, quyetDinh, tuThemMoi) {
     if (qd === 'boqua') return { boQua: true };
     if (qd === 'moi') return { moi: true };
     if (qd && theoMa[qd]) return { hs: theoMa[qd], themVaoLop: !thuocNhom_(theoMa[qd], nhom) };
+    // Số báo danh (cố định cả khóa) -> đúng em; tên khác hẳn thì hỏi lại (có thể gõ nhầm SBD)
+    var s = chuanHoaSbd_(h.sbd), xs = s && theoSbd[s];
+    if (xs) {
+      var tenGoi = function (s) { return khongDau_(String(s).trim().split(/\s+/).pop()); };
+      if (h.hoTen && khongDau_(h.hoTen) !== khongDau_(xs.hoTen) && tenGoi(h.hoTen) !== tenGoi(xs.hoTen) && !ganGiongTen_(h.hoTen, xs.hoTen)) return { canChon: 'lechSbd', ungVien: [xs] };
+      return thuocNhom_(xs, nhom) ? { hs: xs } : { hs: xs, themVaoLop: true };
+    }
     if (h.maHs) {
       var x = theoMa[h.maHs];
       if (!x) return { canChon: 'maLa', ungVien: cungTen(h) };
@@ -325,8 +332,13 @@ export const LY_DO_CAN_CHON = {
   trungTen: 'Lớp có nhiều học sinh trùng họ tên — chọn đúng em',
   khongCo: 'Không tìm thấy trong lớp',
   ganGiong: 'Tên gần giống 1 em trong lớp — có phải gõ sai?',
-  canLop: 'Chưa rõ lớp — cột Lớp trống, chọn lớp cho dòng này'
+  canLop: 'Chưa rõ lớp — cột Lớp trống, chọn lớp cho dòng này',
+  lechSbd: 'Số báo danh trong file là của học sinh khác tên — kiểm tra lại SBD'
 };
+
+/** Số báo danh: chỉ giữ chữ số. Hợp lệ khi đủ 8 số. */
+export function chuanHoaSbd_(s) { return String(s == null ? '' : s).replace(/\D/g, ''); }
+export function sbdHopLe_(s) { return /^\d{8}$/.test(chuanHoaSbd_(s)); }
 
 export const MAU_FILE_KET_QUA = {
   KetQua: [
@@ -643,7 +655,7 @@ export function taoMauKetQua(dsHocSinh, tenLop, soCau, cauTruc) {
     ['Điểm trắc nghiệm', 'Điểm đúng sai', 'Điểm điền từ', 'Tổng điểm', 'Thứ hạng', 'Ưu điểm', 'Nhược điểm', 'Hướng khắc phục', 'Lời khuyên']);
   var dong = (dsHocSinh || []).map(function (h, j) {
     var r = tieuDe.map(function () { return ''; });
-    r[0] = String(j + 1); r[1] = h.maHs; r[2] = h.hoTen; r[3] = h.lopMau != null ? h.lopMau : (tenLop || '');
+    r[0] = String(j + 1); r[1] = h.maHs; r[2] = h.hoTen; r[3] = h.lopMau != null ? h.lopMau : (tenLop || ''); r[4] = h.sbd || '';
     return r;
   });
   if (!dong.length) {
@@ -667,6 +679,24 @@ export function taoMauKetQua(dsHocSinh, tenLop, soCau, cauTruc) {
       ['• Cột điểm để trống thì hệ thống tự tính (trắc nghiệm 0,25đ/câu; đúng/sai: 1 ý 0,1 – 2 ý 0,25 – 3 ý 0,5 – 4 ý 1đ; điền từ 0,5đ/câu).'],
       ['• Nhận xét: dùng 2 cột "Ưu điểm", "Nhược điểm", hoặc 1 cột "Ưu, nhược" dạng "+ Ưu điểm: …  + Nhược điểm: …".'],
       ['• Có thể dùng luôn bảng tổng hợp điểm đang dùng để trộn thư Word: các cột đáp án đúng ở cuối mỗi dòng sẽ được bỏ qua.']
+    ]
+  };
+}
+
+/** Mẫu phiếu nhập lớp: STT | Số báo danh | Họ và tên | Ngày sinh | Lớp | SĐT phụ huynh | Ghi chú */
+export function taoMauNhapLop(ds, tenLop) {
+  var tieuDe = ['STT', 'Số báo danh', 'Họ và tên', 'Ngày sinh', 'Lớp', 'SĐT phụ huynh', 'Ghi chú'];
+  var dong = (ds || []).map(function (h, i) { return [String(i + 1), h.sbd || '', h.hoTen, h.ngaySinh || '', h.lop || tenLop || '', h.sdt || '', '']; });
+  if (!dong.length) dong.push(['1', '24010001', 'Nguyễn Văn An', '15/03/2009', tenLop || 'Toán 1', '0912345678', '']);
+  return {
+    DanhSach: [tieuDe].concat(dong),
+    HuongDan: [
+      ['HƯỚNG DẪN — PHIẾU NHẬP LỚP'],
+      ['• Mỗi học sinh 1 dòng. "Số báo danh" gồm đúng 8 chữ số, cố định cả khóa và không trùng giữa các học sinh.'],
+      ['• Học sinh đã có trong hệ thống (cùng SBD, hoặc cùng họ tên trong lớp): chỉ bổ sung SBD / ngày sinh / SĐT còn trống, không tạo trùng.'],
+      ['• "Ngày sinh" ghi dd/mm/yyyy (VD 15/03/2009) — dùng để nhóm các lớp theo năm sinh.'],
+      ['• "Lớp": học sinh học nhiều lớp thì ghi các lớp ngăn bằng dấu chấm phẩy (VD "Toán 1; Lý 11A").'],
+      ['• Lưu file rồi vào Học sinh → Nhập Excel (hoặc nút ⬆ trong trang lớp) để tải lên.']
     ]
   };
 }
@@ -704,7 +734,7 @@ function taoMauKetQuaTheoCauTruc_(dsHocSinh, tenLop, ct) {
     ['Tổng điểm', 'Thứ hạng', 'Ưu điểm', 'Nhược điểm', 'Hướng khắc phục', 'Lời khuyên']);
   var dong = (dsHocSinh || []).map(function (h, j) {
     var r = tieuDe.map(function () { return ''; });
-    r[0] = String(j + 1); r[1] = h.maHs; r[2] = h.hoTen; r[3] = h.lopMau != null ? h.lopMau : (tenLop || '');
+    r[0] = String(j + 1); r[1] = h.maHs; r[2] = h.hoTen; r[3] = h.lopMau != null ? h.lopMau : (tenLop || ''); r[4] = h.sbd || '';
     return r;
   });
   if (!dong.length) {

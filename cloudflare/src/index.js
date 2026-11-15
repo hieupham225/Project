@@ -361,7 +361,7 @@ class NguCanh {
   async hocSinh() {
     if (this.bo.hs) return this.bo.hs;
     const [hs, hl] = await this.db.batch([
-      this.db.prepare('SELECT id, ma_hs, ho_ten, ngay_sinh, sdt, ghi_chu, ma_tra_cuu, ngay_tao FROM hoc_sinh WHERE kg = ?').bind(this.kg),
+      this.db.prepare('SELECT id, ma_hs, ho_ten, ngay_sinh, sdt, ghi_chu, ma_tra_cuu, sbd, ngay_tao FROM hoc_sinh WHERE kg = ?').bind(this.kg),
       this.db.prepare('SELECT hl.hoc_sinh, hl.lop FROM hoc_sinh_lop hl JOIN hoc_sinh h ON h.id = hl.hoc_sinh WHERE h.kg = ? ORDER BY hl.thu_tu').bind(this.kg)
     ]);
     const theoHs = {};
@@ -369,7 +369,7 @@ class NguCanh {
     this.bo.hs = hs.results.map((r) => {
       const nhomId = (theoHs[r.id] || []).filter((id) => this.lopTheoId(id));
       const nhom = nhomId.map((id) => this.lopTheoId(id).ten);
-      return { id: r.id, maHs: r.ma_hs, hoTen: r.ho_ten, ngaySinh: r.ngay_sinh, sdt: r.sdt, ghiChu: r.ghi_chu, maTraCuu: r.ma_tra_cuu,
+      return { id: r.id, maHs: r.ma_hs, hoTen: r.ho_ten, ngaySinh: r.ngay_sinh, sdt: r.sdt, ghiChu: r.ghi_chu, maTraCuu: r.ma_tra_cuu, sbd: r.sbd || '',
         ngayTao: r.ngay_tao, nhomId, nhom, lop: nhom.join('; ') };
     }).sort((a, b) => a.maHs.localeCompare(b.maHs, 'vi', { numeric: true }));
     return this.bo.hs;
@@ -422,17 +422,20 @@ class NguCanh {
       if (trung.length) throw new Loi('Trùng mã tra cứu (rất hiếm), vui lòng thử lại.', 409);
     }
     const homNay = ngayVN(), dongHs = [], dongLop = [], maHsMoi = [];
+    const daCoSbd = new Set(co.map((h) => h.sbd).filter(Boolean));
     ds.forEach((h, i) => {
+      let sbd = L.chuanHoaSbd_(h.sbd);
+      if (!L.sbdHopLe_(sbd) || daCoSbd.has(sbd)) sbd = ''; else daCoSbd.add(sbd);
       let maHs = L.chuoi_(h.maHs);
       if (!maHs || daCoMa.has(maHs)) { do { maHs = 'HS' + String(++lonNhat).padStart(4, '0'); } while (daCoMa.has(maHs)); }
       daCoMa.add(maHs);
       const id = taoId();
-      dongHs.push([id, this.kg, maHs, h.hoTen, L.chuoi_(h.ngaySinh), L.chuoi_(h.sdt), L.chuoi_(h.ghiChu), ma[i], homNay]);
+      dongHs.push([id, this.kg, maHs, h.hoTen, L.chuoi_(h.ngaySinh), L.chuoi_(h.sdt), L.chuoi_(h.ghiChu), ma[i], sbd, homNay]);
       (h.nhomId || []).forEach((l, k) => dongLop.push([id, l, k]));
       maHsMoi.push(maHs);
     });
     await chay(this.db, [
-      ...lenhChenNhieu(this.db, 'hoc_sinh', ['id', 'kg', 'ma_hs', 'ho_ten', 'ngay_sinh', 'sdt', 'ghi_chu', 'ma_tra_cuu', 'ngay_tao'], dongHs),
+      ...lenhChenNhieu(this.db, 'hoc_sinh', ['id', 'kg', 'ma_hs', 'ho_ten', 'ngay_sinh', 'sdt', 'ghi_chu', 'ma_tra_cuu', 'sbd', 'ngay_tao'], dongHs),
       ...lenhChenNhieu(this.db, 'hoc_sinh_lop', ['hoc_sinh', 'lop', 'thu_tu'], dongLop, 'INSERT OR IGNORE')
     ]);
     this.bo.hs = null;
@@ -473,7 +476,7 @@ const HAM = {
     const dem = {};
     phieu.forEach((p) => { dem[p.lan_thi] = (dem[p.lan_thi] || 0) + 1; });
     const hocSinh = hs.filter((h) => c.duocHocSinh(h)).map((h) => {
-      const o = { maHs: h.maHs, hoTen: h.hoTen, lop: h.lop, nhom: h.nhom, ngaySinh: h.ngaySinh, sdt: h.sdt, ghiChu: h.ghiChu, maTraCuu: h.maTraCuu, ngayTao: h.ngayTao };
+      const o = { maHs: h.maHs, hoTen: h.hoTen, lop: h.lop, nhom: h.nhom, ngaySinh: h.ngaySinh, sdt: h.sdt, ghiChu: h.ghiChu, maTraCuu: h.maTraCuu, sbd: h.sbd, ngayTao: h.ngayTao };
       if (!c.tatCaLop) { o.nhom = h.nhom.filter((n) => c.duocLop(n)); o.nhomKhac = h.nhom.length - o.nhom.length; o.lop = o.nhom.join('; '); }
       return o;
     });
@@ -529,13 +532,14 @@ const HAM = {
     const cu = hs.maHs ? ds.find((h) => h.maHs === hs.maHs) : null;
     if (hs.maHs && (!cu || !c.duocHocSinh(cu))) throw new Loi('Không tìm thấy học sinh ' + hs.maHs + '.');
     if (!cu && !idGui.length && !c.tatCaLop) throw new Loi('Vui lòng chọn lớp cho học sinh.');
+    const sbd = kiemTraSbd(hs.sbd, ds, cu);
     if (cu) {
       const giuLai = cu.nhomId.filter((id) => !c.duocLopId(id)); // lớp do giáo viên khác phụ trách: giữ nguyên
-      await c.db.prepare('UPDATE hoc_sinh SET ho_ten = ?, ngay_sinh = ?, sdt = ?, ghi_chu = ? WHERE id = ?')
-        .bind(hoTen, L.chuoi_(hs.ngaySinh), L.chuoi_(hs.sdt), L.chuoi_(hs.ghiChu), cu.id).run();
+      await c.db.prepare('UPDATE hoc_sinh SET ho_ten = ?, ngay_sinh = ?, sdt = ?, ghi_chu = ?, sbd = ? WHERE id = ?')
+        .bind(hoTen, L.chuoi_(hs.ngaySinh), L.chuoi_(hs.sdt), L.chuoi_(hs.ghiChu), sbd, cu.id).run();
       await c.datLop({ [cu.id]: [...giuLai, ...idGui.filter((x) => !giuLai.includes(x))] });
     } else {
-      await c.themHocSinh([{ hoTen, nhomId: idGui, ngaySinh: hs.ngaySinh, sdt: hs.sdt, ghiChu: hs.ghiChu }]);
+      await c.themHocSinh([{ hoTen, nhomId: idGui, ngaySinh: hs.ngaySinh, sdt: hs.sdt, ghiChu: hs.ghiChu, sbd }]);
     }
     return HAM.gvTaiDuLieu(c);
   },
@@ -544,21 +548,31 @@ const HAM = {
   async gvThemNhieuHocSinh(c, bang, quyetDinh, nhomMacDinh) {
     quyetDinh = quyetDinh || {};
     bang = (bang || []).map((r) => (r || []).map(L.chuoi_));
-    let cc = { ten: 0, lop: 1, sdt: 2, ngaySinh: 3, ghiChu: -1 }, batDau = 0;
+    let cc = { ten: 0, lop: 1, sdt: 2, ngaySinh: 3, ghiChu: -1, sbd: -1 }, batDau = 0;
     for (let i = 0; i < Math.min(15, bang.length); i++) {
       const k = bang[i].map(L.khongDau_);
       const cTen = L.timChiSo_(k, ['hoten', 'hovaten', 'tenhocsinh', 'hotenhocsinh']);
       if (cTen >= 0) {
         cc = { ten: cTen, lop: L.timChiSo_(k, ['nhomlop', 'nhom', 'lop', 'loptoan', 'lophoc']), sdt: L.timChiSo_(k, ['sdtphuhuynh', 'sdt', 'sodienthoai', 'dienthoai', 'sdtph']),
-          ngaySinh: L.timChiSo_(k, ['ngaysinh']), ghiChu: L.timChiSo_(k, ['ghichu']) };
+          ngaySinh: L.timChiSo_(k, ['ngaysinh']), ghiChu: L.timChiSo_(k, ['ghichu']), sbd: L.timChiSo_(k, ['sobaodanh', 'sbd']) };
         batDau = i + 1;
         break;
       }
     }
     const o = (r, j) => (j >= 0 ? (r[j] || '').trim() : '');
     const ds = await c.hocSinh();
-    const them = [], capNhat = [], canXacNhan = [];
+    const them = [], capNhat = [], canXacNhan = [], boSung = {};
     let gop = 0, boQua = 0;
+    const theoSbd = {}, sbdTrongFile = {};
+    ds.forEach((h) => { if (h.sbd) theoSbd[h.sbd] = h; });
+    // em đã có: chỉ điền các thông tin còn trống (SBD, ngày sinh, SĐT) — không ghi đè
+    const ghiBoSung = (h, moi) => {
+      const x = boSung[h.id] || {};
+      if (!h.sbd && moi.sbd && !theoSbd[moi.sbd]) { x.sbd = moi.sbd; theoSbd[moi.sbd] = h; }
+      if (!h.ngaySinh && moi.ngaySinh) x.ngaySinh = moi.ngaySinh;
+      if (!h.sdt && moi.sdt) x.sdt = moi.sdt;
+      if (Object.keys(x).length) boSung[h.id] = x;
+    };
     for (let j = 0; j < bang.length - batDau; j++) {
       const r = bang[batDau + j], dong = batDau + j;
       const ten = o(r, cc.ten).replace(/\s+/g, ' ');
@@ -568,7 +582,19 @@ const HAM = {
       if (!nhom.length && !c.tatCaLop) throw new Loi('Dòng "' + ten + '" chưa có lớp. Hãy chọn lớp trước khi thêm.');
       nhom.forEach((n) => c.kiemTraLop(n));
       const sdt = o(r, cc.sdt);
-      const moi = { hoTen: ten, nhom, ngaySinh: o(r, cc.ngaySinh), sdt, ghiChu: o(r, cc.ghiChu) };
+      const sbdGoc = o(r, cc.sbd), sbd = L.chuanHoaSbd_(sbdGoc);
+      if (sbdGoc && !L.sbdHopLe_(sbd)) throw new Loi('Dòng "' + ten + '": số báo danh "' + sbdGoc + '" phải gồm đúng 8 chữ số.');
+      if (sbd && sbdTrongFile[sbd]) throw new Loi('Số báo danh ' + sbd + ' bị trùng giữa "' + sbdTrongFile[sbd] + '" và "' + ten + '" trong file.');
+      if (sbd) sbdTrongFile[sbd] = ten;
+      const moi = { hoTen: ten, nhom, ngaySinh: o(r, cc.ngaySinh), sdt, ghiChu: o(r, cc.ghiChu), sbd };
+      // SBD cố định cả khóa -> đúng em đã có (dù tên viết khác)
+      if (sbd && theoSbd[sbd] && quyetDinh[dong] !== 'moi') {
+        const x = theoSbd[sbd];
+        if (!c.duocHocSinh(x) && !nhom.length) { boQua++; continue; }
+        ghiBoSung(x, moi);
+        if (nhom.every((n) => L.thuocNhom_(x, n))) { boQua++; continue; }
+        capNhat.push({ hs: x, nhom }); gop++; continue;
+      }
       const cung = ds.filter((h) => L.khongDau_(h.hoTen) === L.khongDau_(ten))
         .concat(them.filter((d) => L.khongDau_(d.hoTen) === L.khongDau_(ten)).map((d) => ({ moiThem: d, hoTen: d.hoTen, nhom: d.nhom, sdt: d.sdt })));
       const qd = quyetDinh[dong];
@@ -576,7 +602,10 @@ const HAM = {
       if (qd === 'boqua') { boQua++; continue; }
       if (qd === 'moi' || !cung.length) { them.push(moi); continue; }
       if (qd) chon = ds.find((h) => h.maHs === qd) || null;
-      if (!chon && nhom.length && cung.some((h) => nhom.every((n) => L.thuocNhom_(h, n)))) { boQua++; continue; }
+      if (!chon && nhom.length) {
+        const daTrongLop = cung.filter((h) => !h.moiThem && nhom.every((n) => L.thuocNhom_(h, n)));
+        if (daTrongLop.length) { if (daTrongLop.length === 1) ghiBoSung(daTrongLop[0], moi); boQua++; continue; }
+      }
       if (!chon && sdt) {
         const theoSdt = cung.filter((h) => L.chuanHoaSdt_(h.sdt) && L.chuanHoaSdt_(h.sdt) === L.chuanHoaSdt_(sdt));
         if (theoSdt.length === 1) chon = theoSdt[0];
@@ -587,10 +616,20 @@ const HAM = {
         continue;
       }
       if (chon.moiThem) { chon.moiThem.nhom = L.tachNhom_(chon.moiThem.nhom.concat(nhom).join(';')); gop++; continue; }
+      ghiBoSung(chon, moi);
       capNhat.push({ hs: chon, nhom });
       gop++;
     }
     if (canXacNhan.length) return { canXacNhan };
+    const idBoSung = Object.keys(boSung);
+    if (idBoSung.length) {
+      await chay(c.db, idBoSung.map((id) => {
+        const x = boSung[id], cot = Object.keys(x);
+        const ten = { sbd: 'sbd', ngaySinh: 'ngay_sinh', sdt: 'sdt' };
+        return c.db.prepare(`UPDATE hoc_sinh SET ${cot.map((k) => ten[k] + ' = ?').join(', ')} WHERE id = ? AND kg = ?`).bind(...cot.map((k) => x[k]), id, c.kg);
+      }));
+      c.xoaBoNho();
+    }
     const theoHs = {};
     for (const x of capNhat) {
       const ids = await c.idLop(x.nhom);
@@ -601,7 +640,8 @@ const HAM = {
     for (const d of them) moiDs.push({ ...d, nhomId: await c.idLop(d.nhom) });
     await c.themHocSinh(moiDs);
     const kq = await HAM.gvTaiDuLieu(c);
-    kq.thongBao = 'Đã thêm ' + them.length + ' học sinh mới' + (gop ? ', thêm lớp cho ' + gop + ' em đã có' : '') + (boQua ? ', bỏ qua ' + boQua + ' em đã có trong lớp' : '') + '.';
+    kq.thongBao = 'Đã thêm ' + them.length + ' học sinh mới' + (gop ? ', thêm lớp cho ' + gop + ' em đã có' : '') + (boQua ? ', ' + boQua + ' em đã có trong lớp' : '') +
+      (idBoSung.length ? ', bổ sung SBD / ngày sinh / SĐT cho ' + idBoSung.length + ' em' : '') + '.';
     return kq;
   },
 
@@ -745,7 +785,7 @@ const HAM = {
     if (!kq.ok) return kq;
     const dsHs = await c.hocSinh();
     const g = ghepNhieuLop(c, kq, dsHs, tuyChon.quyetDinh, tuyChon.quyetDinhLop, tuyChon.themHsMoi !== false);
-    const gon = (x) => ({ maHs: x.maHs, hoTen: x.hoTen, nhom: L.noiNhom_(x.nhom), sdt: c.duocHocSinh(x) ? x.sdt : '' });
+    const gon = (x) => ({ maHs: x.maHs, hoTen: x.hoTen, sbd: x.sbd || '', nhom: L.noiNhom_(x.nhom), sdt: c.duocHocSinh(x) ? x.sdt : '' });
     let dauTien = null;
     const dsXem = kq.hocSinh.map((h, i) => {
       const r = g.dong[i], ld = g.lopDong[i], cham = L.chamBai_(kq, h);
@@ -789,6 +829,7 @@ const HAM = {
     const lt = await c.lanThi(), homNay = ngayVN();
     const lenhLop = [], lenhCuoi = [], keHoach = [], moi = [], chiSoMoi = [];
     const lopHs = {}; // id học sinh -> danh sách id lớp sau khi thêm
+    const sbdDaDung = new Set((await c.hocSinh()).map((h) => h.sbd).filter(Boolean));
     let lopToi = c.tatCaLop ? null : [...c.nd.lop];
     for (const nh of g.nhom) {
       const dongTao = nh.chiSo.filter((i) => g.dong[i].hs || g.dong[i].moi);
@@ -815,9 +856,14 @@ const HAM = {
         const x = g.dong[i], h = kq.hocSinh[i];
         if (x.hs) {
           maTheoDong[i] = x.hs.maHs;
+          const s = L.chuanHoaSbd_(h.sbd);
+          if (!x.hs.sbd && L.sbdHopLe_(s) && !sbdDaDung.has(s)) {
+            sbdDaDung.add(s); x.hs.sbd = s;
+            lenhCuoi.push(c.db.prepare("UPDATE hoc_sinh SET sbd = ? WHERE id = ? AND kg = ? AND sbd = ''").bind(s, x.hs.id, c.kg));
+          }
           const ds = lopHs[x.hs.id] || [...x.hs.nhomId];
           if (!ds.includes(idLop)) { ds.push(idLop); lopHs[x.hs.id] = ds; }
-        } else { moi.push({ hoTen: h.hoTen, nhomId: [idLop], sdt: h.sdt, maHs: h.maHs }); chiSoMoi.push({ i, maTheoDong }); }
+        } else { moi.push({ hoTen: h.hoTen, nhomId: [idLop], sdt: h.sdt, maHs: h.maHs, sbd: h.sbd }); chiSoMoi.push({ i, maTheoDong }); }
       });
       const maDot = taoId();
       lenhCuoi.push(c.db.prepare('INSERT INTO lan_thi (id, kg, lop, bai_thi, lan, ngay_thi, mo_ta, thu_tu, cong_bo, cau_truc, ngay_tao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)')
@@ -975,9 +1021,71 @@ const HAM = {
   async gvDsPhieuLan(c, maDot) {
     const d = (await c.lanThi()).find((x) => x.maDot === maDot);
     if (!d || !c.duocLopId(d.lopId)) throw new Loi('Không tìm thấy lần thi.');
-    return (await c.db.prepare(`SELECT p.id, p.tong_diem, p.diem_toi_da, h.ma_hs, h.ho_ten FROM phieu p JOIN hoc_sinh h ON h.id = p.hoc_sinh
-        WHERE p.lan_thi = ? ORDER BY h.ho_ten`).bind(maDot).all()).results
-      .map((x) => ({ maPhieu: x.id, maHs: x.ma_hs, hoTen: x.ho_ten, tongDiem: x.tong_diem, diemToiDa: x.diem_toi_da }));
+    return (await c.db.prepare(`SELECT p.id, p.tong_diem, p.diem_toi_da, h.ma_hs, h.ho_ten, h.sbd, json_extract(p.du_lieu, '$.suaTay.luc') AS sua_luc
+        FROM phieu p JOIN hoc_sinh h ON h.id = p.hoc_sinh WHERE p.lan_thi = ? ORDER BY h.ho_ten`).bind(maDot).all()).results
+      .map((x) => ({ maPhieu: x.id, maHs: x.ma_hs, sbd: x.sbd || '', hoTen: x.ho_ten, tongDiem: x.tong_diem, diemToiDa: x.diem_toi_da, suaTay: x.sua_luc || '' }));
+  },
+
+  /**
+   * Sửa điểm từng phần của 1 phiếu (giáo viên chấm lại / nhập nhầm). diemMoi: mảng điểm theo thứ tự các phần của phiếu.
+   * Tổng điểm tự cộng; cập nhật "so với lần trước" của phiếu này và bảng "các lần làm" trên phiếu các lần sau của em đó.
+   */
+  async gvSuaDiem(c, maPhieu, diemMoi) {
+    const p = await c.db.prepare('SELECT id, lan_thi, hoc_sinh, du_lieu FROM phieu WHERE id = ? AND kg = ?').bind(String(maPhieu || ''), c.kg).first();
+    if (!p) throw new Loi('Không tìm thấy phiếu.');
+    const lt = await c.lanThi();
+    const dot = lt.find((x) => x.maDot === p.lan_thi);
+    if (!dot || !c.duocLopId(dot.lopId)) throw new Loi('Bạn không phụ trách lớp của phiếu này.', 403);
+    const d = JSON.parse(p.du_lieu), ch = d.cham;
+    const phan = cacPhanCuaPhieu(ch);
+    if (!Array.isArray(diemMoi) || diemMoi.length !== phan.length) throw new Loi('Số phần điểm không khớp với phiếu.');
+    const so = diemMoi.map((v, i) => {
+      const s = L.chuoi_(v).replace(',', '.');
+      const n = Number(s);
+      if (s === '' || isNaN(n) || n < 0) throw new Loi('Điểm ' + phan[i].ten + ' không hợp lệ.');
+      if (phan[i].toiDa > 0 && n > phan[i].toiDa + 1e-9) throw new Loi('Điểm ' + phan[i].ten + ' tối đa ' + L.dinhDangSo_(phan[i].toiDa) + '.');
+      return Math.round(n * 100) / 100;
+    });
+    const cu = phan.map((x) => x.diem);
+    if (so.every((n, i) => Math.abs(n - cu[i]) < 1e-9)) return { ok: true, thongBao: 'Điểm không thay đổi.' };
+    phan.forEach((x, i) => {
+      if (ch.phan && ch.phan[i]) ch.phan[i].diem = L.dinhDangDiem_(so[i]);
+      if (x.khoa) ch.diem[x.khoa] = L.dinhDangDiem_(so[i]);
+    });
+    const tong = so.reduce((a, b) => a + b, 0);
+    ch.diem.tong = L.dinhDangDiem_(tong);
+    const truoc = (d.lichSu || []).length ? d.lichSu[d.lichSu.length - 1] : null;
+    if (truoc) { const chenh = tong - L.soThuc_(truoc.tong, 0); d.chenhLech = (chenh > 0 ? '+' : '') + L.dinhDangDiem_(chenh); d.tangDiem = chenh > 0; d.giamDiem = chenh < 0; }
+    d.suaTay = { luc: new Date().toISOString(), boi: c.nd.email, diemGoc: (d.suaTay && d.suaTay.diemGoc) || cu.map(L.dinhDangDiem_) };
+    const lenh = [c.db.prepare('UPDATE phieu SET du_lieu = ?, tong_diem = ? WHERE id = ?').bind(JSON.stringify(d), ch.diem.tong, p.id)];
+    // phiếu các lần sau của cùng bài, cùng lớp, cùng em: cột "Lần n" trong bảng các lần làm
+    const sau = lt.filter((x) => x.lopId === dot.lopId && x.lan > dot.lan && L.khongDau_(x.baiThi) === L.khongDau_(dot.baiThi)).map((x) => x.maDot);
+    if (sau.length) {
+      const ds = (await c.db.prepare(`SELECT id, du_lieu FROM phieu WHERE hoc_sinh = ? AND lan_thi IN (${sau.map(() => '?').join(',')})`).bind(p.hoc_sinh, ...sau).all()).results;
+      ds.forEach((q) => {
+        const j = JSON.parse(q.du_lieu); let doi = false;
+        (j.lichSu || []).forEach((x) => { if (x.lan === dot.lan) { x.tong = ch.diem.tong; doi = true; } });
+        const ls = j.lichSu || [];
+        if (doi && ls.length && ls[ls.length - 1].lan === dot.lan) {
+          const chenh = L.soThuc_(j.cham.diem.tong, 0) - L.soThuc_(ch.diem.tong, 0);
+          j.chenhLech = (chenh > 0 ? '+' : '') + L.dinhDangDiem_(chenh); j.tangDiem = chenh > 0; j.giamDiem = chenh < 0;
+        }
+        if (doi) lenh.push(c.db.prepare('UPDATE phieu SET du_lieu = ? WHERE id = ?').bind(JSON.stringify(j), q.id));
+      });
+    }
+    await c.db.batch(lenh);
+    return { ok: true, tongDiem: ch.diem.tong, diemToiDa: ch.diem.maxTong,
+      thongBao: 'Đã sửa điểm của ' + d.hoTen + ': ' + L.dinhDangDiem_(cu.reduce((a, b) => a + b, 0)) + ' → ' + ch.diem.tong + '.' };
+  },
+
+  /** Các phần điểm của 1 phiếu (để sửa điểm): theo cấu trúc đề (v2) hoặc 3 phần cố định (phiếu v1). */
+  async gvCacPhanDiem(c, maPhieu) {
+    const p = await c.db.prepare('SELECT lan_thi, du_lieu FROM phieu WHERE id = ? AND kg = ?').bind(String(maPhieu || ''), c.kg).first();
+    const dot = p && (await c.lanThi()).find((x) => x.maDot === p.lan_thi);
+    if (!p || !dot || !c.duocLopId(dot.lopId)) throw new Loi('Không tìm thấy phiếu.');
+    const d = JSON.parse(p.du_lieu);
+    return { phan: cacPhanCuaPhieu(d.cham).map((x) => ({ ten: x.ten, diem: L.dinhDangDiem_(x.diem), toiDa: L.dinhDangSo_(x.toiDa) })),
+      tong: d.cham.diem.tong, suaTay: d.suaTay || null };
   },
 
   async gvXemPhieu(c, maPhieu) {
@@ -997,14 +1105,29 @@ const HAM = {
     if (nhom) { // chỉ 1 lớp
       c.kiemTraLop(nhom);
       const l = c.lopTheoTen(nhom);
-      ds = hs.filter((h) => l && h.nhomId.includes(l.id)).sort(theoTen).map((h) => ({ maHs: h.maHs, hoTen: h.hoTen, lopMau: l.ten }));
+      ds = hs.filter((h) => l && h.nhomId.includes(l.id)).sort(theoTen).map((h) => ({ maHs: h.maHs, hoTen: h.hoTen, sbd: h.sbd, lopMau: l.ten }));
     } else { // tất cả lớp mình phụ trách: mỗi lớp 1 khối, học sinh chưa có lớp ở cuối (cột Lớp để trống)
       c.lop.filter((l) => c.duocLopId(l.id)).sort((a, b) => a.ten.localeCompare(b.ten, 'vi')).forEach((l) => {
-        hs.filter((h) => h.nhomId.includes(l.id)).sort(theoTen).forEach((h) => ds.push({ maHs: h.maHs, hoTen: h.hoTen, lopMau: l.ten }));
+        hs.filter((h) => h.nhomId.includes(l.id)).sort(theoTen).forEach((h) => ds.push({ maHs: h.maHs, hoTen: h.hoTen, sbd: h.sbd, lopMau: l.ten }));
       });
-      hs.filter((h) => !h.nhomId.length).sort(theoTen).forEach((h) => ds.push({ maHs: h.maHs, hoTen: h.hoTen, lopMau: '' }));
+      hs.filter((h) => !h.nhomId.length).sort(theoTen).forEach((h) => ds.push({ maHs: h.maHs, hoTen: h.hoTen, sbd: h.sbd, lopMau: '' }));
     }
     return { ketQua: L.taoMauKetQua(ds, nhom, null, ct), dapAn: L.taoMauDapAn(ct), cauTruc: ct.id };
+  },
+
+  /** Mẫu phiếu nhập lớp (Excel): điền sẵn học sinh hiện có của lớp để bổ sung SBD / ngày sinh; thêm dòng cho em mới. */
+  async gvMauNhapLop(c, nhom) {
+    nhom = L.chuoi_(nhom);
+    let ds = [];
+    if (nhom) {
+      c.kiemTraLop(nhom);
+      const l = c.lopTheoTen(nhom);
+      const tenCuoi = (s) => s.split(' ').pop();
+      ds = (await c.hocSinh()).filter((h) => l && h.nhomId.includes(l.id))
+        .sort((a, b) => tenCuoi(a.hoTen).localeCompare(tenCuoi(b.hoTen), 'vi') || a.hoTen.localeCompare(b.hoTen, 'vi'))
+        .map((h) => ({ sbd: h.sbd, hoTen: h.hoTen, ngaySinh: h.ngaySinh, lop: l.ten, sdt: c.duocHocSinh(h) ? h.sdt : '' }));
+    }
+    return { so: L.taoMauNhapLop(ds, nhom) };
   },
 
   /* ---------- tài khoản trong không gian ---------- */
@@ -1124,6 +1247,8 @@ function xacDinhLop(c, kq, dsHs, quyetDinhLop) {
       return { nhom: ten, lopMoi: true };
     }
     let hs = h.maHs ? theoMa[h.maHs] : null;
+    const sbd = L.chuanHoaSbd_(h.sbd);
+    if (!hs && sbd) hs = dsHs.find((x) => x.sbd === sbd) || null;
     if (!hs) {
       const cung = dsHs.filter((x) => c.duocHocSinh(x) && L.khongDau_(x.hoTen) === L.khongDau_(h.hoTen));
       if (cung.length === 1) hs = cung[0];
@@ -1172,6 +1297,30 @@ async function taoLop(c, ten, mon = '') {
   return id;
 }
 
+/** Danh sách phần điểm của phiếu: [{ ten, diem, toiDa, khoa: 'p1'|'p2'|'p3'|'' }] */
+function cacPhanCuaPhieu(ch) {
+  const khoa = ['p1', 'p2', 'p3'];
+  if (Array.isArray(ch.phan) && ch.phan.length) {
+    return ch.phan.map((x, i) => ({ ten: 'Phần ' + x.ma, diem: L.soThuc_(x.diem, 0), toiDa: L.soThuc_(x.toiDa, 0), khoa: khoa[i] || '' }));
+  }
+  const ds = [];
+  [1, 2, 3].forEach((n) => {
+    const toiDa = L.soThuc_(ch.diem['max' + n], 0);
+    if ((ch['phan' + n] || []).length || toiDa > 0) ds.push({ ten: 'Phần ' + ['I', 'II', 'III'][n - 1], diem: L.soThuc_(ch.diem['p' + n], 0), toiDa, khoa: 'p' + n });
+  });
+  return ds;
+}
+
+/** SBD khi lưu 1 học sinh: trống hoặc đúng 8 số, không trùng em khác trong không gian. */
+function kiemTraSbd(sbdGoc, ds, cu) {
+  const sbd = L.chuanHoaSbd_(sbdGoc);
+  if (!L.chuoi_(sbdGoc)) return '';
+  if (!L.sbdHopLe_(sbd)) throw new Loi('Số báo danh phải gồm đúng 8 chữ số.');
+  const trung = ds.find((h) => h.sbd === sbd && (!cu || h.id !== cu.id));
+  if (trung) throw new Loi('Số báo danh ' + sbd + ' đã là của học sinh ' + trung.hoTen + ' (' + trung.maHs + ').');
+  return sbd;
+}
+
 /** Môn học hợp lệ: 1 trong các môn có sẵn (không phân biệt hoa thường), hoặc tên môn khác do người dùng gõ. */
 function chuanMon(mon) {
   const m = L.chuoi_(mon).replace(/\s+/g, ' ');
@@ -1208,7 +1357,7 @@ function duLieuPhieu(c, kq, h, cham, hs, maPhieu, lanThi) {
   return {
     trungTam: c.nd.tenKg, khauHieu: c.nd.caiDat.khauHieu || '',
     tieuDe: kq.thongTin.tieuDe, moTa: kq.thongTin.moTa, nhanLop: kq.thongTin.nhanLop, tenPhan: kq.thongTin.tenPhan, moTaPhan: kq.thongTin.moTaPhan,
-    stt: h.stt, sbd: h.sbd || '', thuHang: h.thuHang || '', soXepHang: kq.soXepHang || 0,
+    stt: h.stt, sbd: h.sbd || (hs && hs.sbd) || '', thuHang: h.thuHang || '', soXepHang: kq.soXepHang || 0,
     hoTen: hs.hoTen || h.hoTen, lop: lanThi.nhom || h.lop || '', maDe: h.maDe,
     cham, nhanXet: h.nhanXet, maPhieu, lan: lanThi.lan, ngayThi: lanThi.ngayThi, lichSu: lanThi.lichSu,
     chenhLech: truoc ? (chenh > 0 ? '+' : '') + L.dinhDangDiem_(chenh) : '', tangDiem: chenh > 0, giamDiem: chenh < 0,

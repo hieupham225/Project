@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS hoc_sinh (
   sdt        TEXT NOT NULL DEFAULT '',
   ghi_chu    TEXT NOT NULL DEFAULT '',
   ma_tra_cuu TEXT NOT NULL UNIQUE,          -- 8 ký tự ngẫu nhiên, duy nhất trên toàn hệ thống
+  sbd        TEXT NOT NULL DEFAULT '',      -- số báo danh 8 số, cố định cả khóa (duy nhất trong không gian)
   ngay_tao   TEXT NOT NULL,
   UNIQUE (kg, ma_hs)
 );
@@ -103,6 +104,7 @@ CREATE TABLE IF NOT EXISTS gioi_han (
 CREATE INDEX IF NOT EXISTS ix_tv_tk ON thanh_vien(tai_khoan);
 CREATE INDEX IF NOT EXISTS ix_lop_kg ON lop(kg);
 CREATE INDEX IF NOT EXISTS ix_hs_kg ON hoc_sinh(kg);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_hs_sbd ON hoc_sinh(kg, sbd) WHERE sbd <> '';
 CREATE INDEX IF NOT EXISTS ix_hsl_lop ON hoc_sinh_lop(lop);
 CREATE INDEX IF NOT EXISTS ix_lt_kg ON lan_thi(kg, lop);
 CREATE INDEX IF NOT EXISTS ix_phieu_hs ON phieu(hoc_sinh);
