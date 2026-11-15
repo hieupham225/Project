@@ -1397,7 +1397,7 @@
     return ds;
   }
   function tenDang(dang) {
-    return { trac_nghiem: 'Trắc nghiệm ABCD', dung_sai: 'Trắc nghiệm Đúng / Sai', tra_loi_ngan: 'Trả lời ngắn', tu_luan: 'Tự luận (chấm tay)', dien_tu: 'Điền từ / viết lại câu', sap_xep: 'Sắp xếp câu / đoạn', tu_luan: 'Tự luận' }[dang] || dang;
+    return { trac_nghiem: 'Trắc nghiệm ABCD', dung_sai: 'Trắc nghiệm Đúng / Sai', tra_loi_ngan: 'Trả lời ngắn', tu_luan: 'Tự luận (chấm tay)', dien_tu: 'Điền từ / viết lại câu', sap_xep: 'Sắp xếp câu / đoạn' }[dang] || dang;
   }
   function xmlAnToan(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function taoDocxMaTraCuu(tenLop, ds) {
