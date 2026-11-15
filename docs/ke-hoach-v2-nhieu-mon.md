@@ -56,13 +56,32 @@ Ví dụ dữ liệu:
 - Mỗi phiếu **lưu kèm bản chụp cấu trúc** lúc tạo. Sửa cấu trúc sau này không làm đổi phiếu cũ.
 - Chuyển đổi dữ liệu: mọi lớp và lần thi hiện có gắn môn **Toán** và cấu trúc **THPT 2025 – Toán**.
 
+## Quản lý mẫu phiếu (chốt 15/11/2026)
+
+Thầy cô tạo mẫu phiếu bằng cách **tải lên mẫu Word trộn thư đang dùng**; hệ thống đọc và dựng thành mẫu phiếu web. Mỗi lần gửi kết quả: **chọn môn / cấu trúc đề + chọn mẫu phiếu**.
+
+1. **Tải mẫu (.docx trộn thư) lên** → hệ thống đọc:
+   - các trường trộn thư `«Ten_truong»` = chỗ cần điền;
+   - bố cục: đoạn văn, chữ đậm/nghiêng/màu/cỡ, căn lề, bảng (gộp ô, viền, nền), ảnh/logo, khổ giấy, lề;
+   - điều kiện đơn giản (`IF … "…" "…"`) nếu có.
+   → chuyển thành **mẫu phiếu web** giữ bố cục, các trường thành ô chờ điền.
+2. **Ghép trường ↔ dữ liệu**: tự ghép theo tên với
+   - cột của file Excel trộn thư (lấy thẳng giá trị);
+   - dữ liệu hệ thống: họ tên, lớp, SBD, mã tra cứu, điểm từng phần (bộ chấm), đúng/sai từng câu, xếp hạng, điểm lần trước, chênh lệch…
+   Thầy cô chỉnh trường ghép sai; **xem thử** phiếu 1 học sinh trước khi lưu.
+3. **Thư viện mẫu phiếu** (Cài đặt → Mẫu phiếu): xem, đổi tên, tải lại file Word mới, ẩn. Mỗi mẫu gắn 1 cấu trúc đề (hoặc "chỉ trộn dữ liệu Excel, không chấm"). Mẫu "Phân tích bài thi" hiện tại là mẫu mặc định; phiếu cũ giữ nguyên.
+4. **Gửi kết quả**: chọn môn / cấu trúc đề + mẫu phiếu → tải Excel → ghép học sinh (SBD → Mã HS → họ tên) → điền từng phiếu → công bố, tra cứu, PDF như hiện tại. Sửa điểm, Tổng hợp, biểu đồ dùng chung cho mọi mẫu.
+5. **AI hỗ trợ (tùy chọn, làm sau)**: gợi ý ghép tên trường khó hiểu, gợi ý cấu trúc đề từ bảng câu hỏi trong phiếu — cần khóa API, có chi phí mỗi lần phân tích.
+
+Thay cho giai đoạn 3 cũ ("Phiếu tổng quát"). Chờ 2 file Word trộn thư (+ file Excel nguồn) của thầy để kiểm chứng bộ đọc trước khi chốt chi tiết.
+
 ## Lộ trình
 
 | Giai đoạn | Việc | Kiểm chứng |
 |---|---|---|
 | **1. Tách bộ chấm** | Viết các module dạng câu và bộ chấm chung `chamBai_(kq, h, cauTruc)`. Chuyển Toán thành cấu trúc dữ liệu. | Toàn bộ kiểm thử v1 vẫn qua. File thật 117 học sinh ra **đúng điểm như v1**. |
 | **2. Dữ liệu + chọn môn** | Bảng `cau_truc`, môn của lớp, chuyển đổi dữ liệu. Thêm ô chọn **Môn / cấu trúc đề** khi gửi kết quả. File mẫu kết quả và đáp án sinh theo cấu trúc; báo lỗi khi file không khớp cấu trúc. | Gửi được đề Lý (18/4/6) và đề Tiếng Anh 40 câu, ra đúng số câu và tổng 10. |
-| **3. Phiếu tổng quát** | `phieu.js` vẽ phiếu theo từng phần và từng dạng câu. Phiếu cũ vẫn mở bằng đường hiển thị cũ. | Phiếu Toán cũ trước và sau khi đổi giống hệt. |
+| **3. Mẫu phiếu từ Word** | Bộ đọc .docx trộn thư → mẫu phiếu web; ghép trường ↔ dữ liệu; thư viện mẫu phiếu; chọn mẫu khi gửi kết quả. Mẫu "Phân tích bài thi" là mặc định. | 2 file Word của thầy dựng ra phiếu web giống bản Word; phiếu Toán cũ không đổi. |
 | **4. Tiếng Anh đủ dạng + tự luận** | Các dạng `dien_tu`, `sap_xep`, `tu_luan` (tổng điểm hoặc theo tiêu chí). | Gửi được đề Tiếng Anh trung tâm có đủ 4 dạng. |
 | **5. Cài đặt → Cấu trúc đề** | Quản trị xem, nhân bản, sửa, ẩn cấu trúc. Lớp chọn môn mặc định. | Quản trị tự tạo được đề "15 câu trắc nghiệm + 2 câu tự luận" và gửi được. |
 | **6. Báo cáo theo môn** | Tổng hợp lọc theo môn; trang phụ huynh tách biểu đồ theo môn. | — |
