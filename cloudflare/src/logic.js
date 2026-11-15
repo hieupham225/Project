@@ -902,7 +902,8 @@ export function taoMauDapAn(cauTruc) {
   var doi = { A: 'B', B: 'C', C: 'D', D: 'A' };
   var doiCho = function (n) { return n <= 12 ? (n % 2 ? n + 1 : n - 1) : n; }; // câu gốc n <-> câu doiCho(n) của mã 106
   de.forEach(function (r, i) {
-    cauHoi.push([String(i + 1), r[0], CT.TEN_DANG_FILE[dangTheoPhan[r[0]]] || '', r[2], r[3], r[4], String(i + 1), String(doiCho(i + 1))]);
+    // Toán: câu 17–22 ghi "Tự luận" như thầy cô quen gọi (hệ thống xếp vào phần trả lời ngắn của cấu trúc Toán)
+    cauHoi.push([String(i + 1), r[0], r[0] === 'III' ? 'Tự luận' : CT.TEN_DANG_FILE[dangTheoPhan[r[0]]] || '', r[2], r[3], r[4], String(i + 1), String(doiCho(i + 1))]);
     dapAn105.push(r[5]);
   });
   de.forEach(function (r, i) {
