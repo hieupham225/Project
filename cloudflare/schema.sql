@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS lan_thi (
   thu_tu     INTEGER NOT NULL DEFAULT 0,    -- yyyyMMdd để sắp xếp
   cong_bo    INTEGER NOT NULL DEFAULT 0,
   cau_truc   TEXT NOT NULL DEFAULT '',      -- id cấu trúc đề (trống = Toán v1)
+  mau_phieu  TEXT NOT NULL DEFAULT '',      -- id mẫu phiếu Word (trống = mẫu mặc định "Phân tích bài thi")
   ngay_tao   TEXT NOT NULL
 );
 
@@ -93,6 +94,19 @@ CREATE TABLE IF NOT EXISTS phieu (
   ngay_tao   TEXT NOT NULL,
   UNIQUE (lan_thi, hoc_sinh)
 );
+
+-- Mẫu phiếu tạo từ file Word (trộn thư / Word thường): HTML giữ bố cục, trường «Tên» chờ điền
+CREATE TABLE IF NOT EXISTS mau_phieu (
+  id         TEXT PRIMARY KEY,
+  kg         TEXT NOT NULL REFERENCES khong_gian(id) ON DELETE CASCADE,
+  ten        TEXT NOT NULL,
+  html       TEXT NOT NULL,
+  truong     TEXT NOT NULL DEFAULT '[]',    -- JSON: tên các trường trong mẫu
+  trang      TEXT NOT NULL DEFAULT '{}',    -- JSON: khổ giấy, lề (pt)
+  ten_tep    TEXT NOT NULL DEFAULT '',
+  ngay_tao   TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_mp_kg ON mau_phieu(kg);
 
 -- Đếm số lần thử (đăng nhập, tra cứu mã) để chống dò
 CREATE TABLE IF NOT EXISTS gioi_han (

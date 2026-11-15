@@ -23,7 +23,20 @@
 
   function chuDeO(q) { return e(q.chuDe) + (q.mucDo ? '<br>(' + e(q.mucDo) + ')' : ''); }
 
+  /* Phiếu theo mẫu Word: máy chủ đã điền sẵn (d.htmlMau). Bề rộng cố định theo khổ giấy Word -> màn hình hẹp thu nhỏ (zoom) cho vừa. */
+  function renderMauWord(d) {
+    var tr = d.trangMau || {}, rong = Math.round((tr.rongToiDa || ((tr.rong || 595) - (tr.trai || 72) - (tr.phai || 72))) * 96 / 72) + 28; // pt -> px + lề trang web
+    var css = ["body{margin:0;padding:12px;background:#fff;color:#000}", '#phieu{width:max-content;max-width:none}', '.mau-word table{page-break-inside:auto}.mau-word tr{page-break-inside:avoid}',
+      '.ngat-trang{display:block;break-before:page}', '.truong{background:#FFF1B8;border-radius:2px;outline:1px dashed #C9A227}'];
+    // mỗi nấc áp dụng cho bề rộng (w-20, w] -> tính theo cận dưới w-20, trừ lề trang web 24px (padding body) + 4px dư
+    var noi = rong - 28;
+    for (var w = rong; w >= 280; w -= 20) css.push('@media (max-width:' + w + 'px){#phieu{zoom:' + (Math.floor((w - 20 - 28) / noi * 1000) / 1000) + '}}');
+    return '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>' + css.join('\n') +
+      '</style></head><body><div id="phieu">' + d.htmlMau + '</div></body></html>';
+  }
+
   function renderPhieu(d, logo) {
+    if (d.htmlMau) return renderMauWord(d);
     var c = d.cham, dm = c.diem, nx = d.nhanXet || {}, h = [];
     h.push('<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>' + CSS + '</style></head><body>');
     h.push('<div id="phieu">');

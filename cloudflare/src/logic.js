@@ -4,6 +4,7 @@
  */
 
 import * as CT from './cau-truc.js';
+import { tenTruongWord } from './mau-word.js';
 export { CAU_TRUC_CO_SAN, layCauTrucCoSan, kiemTraCauTruc, DANG_CAU, moTaCauTruc, DS_MON, cauTrucCuaMon, diemToiDa } from './cau-truc.js';
 
 export const CAU_HINH = {
@@ -471,6 +472,14 @@ export function docFileKetQua(so) {
     uuNhuoc: timChiSo_(hk, ['uunhuoc', 'uunhuocdiem', 'nhanxet']), uu: timChiSo_(hk, ['uudiem']), nhuoc: timChiSo_(hk, ['nhuocdiem']),
     khacPhuc: timChiSo_(hk, ['huongkhacphuc', 'khacphuc']), loiKhuyen: timChiSo_(hk, ['loikhuyen'])
   };
+  // Tên trường kiểu Word trộn thư của từng cột (dùng cho mẫu phiếu Word): "Họ và tên" -> Họ_và_tên, cột trống -> F<số cột>, "1" -> M_1
+  var tenWord = tieuDe.map(function (h, j) { return tenTruongWord(h, j); });
+  // Trường chứa điểm từng phần (cột điểm + cột không tiêu đề ngay sau nó — thường là bản định dạng "3.00")
+  var truongDiem = {};
+  ['p1', 'p2', 'p3', 'tong'].forEach(function (k) {
+    var j = c[k]; if (j < 0) return;
+    truongDiem[k] = [tenWord[j]].concat(j + 1 < tieuDe.length && !String(tieuDe[j + 1] || '').trim() ? [tenWord[j + 1]] : []);
+  });
   var cotCau = [], cotDapAnDong = [];
   tieuDe.forEach(function (h, j) {
     var n = soCauTuTieuDe_(h);
@@ -494,12 +503,13 @@ export function docFileKetQua(so) {
     hocSinh.push({
       chiSo: hocSinh.length, stt: oChuoi_(r, c.stt), thuHang: oChuoi_(r, c.thuHang), maHs: maHs, hoTen: ten, lop: oChuoi_(r, c.lop),
       sbd: oChuoi_(r, c.sbd), maDe: maDe, sdt: oChuoi_(r, c.sdt), traLoiGoc: traLoiGoc,
+      cot: (function () { var o = {}; tenWord.forEach(function (k, j) { var v = oChuoi_(r, j); if (v !== '') o[k] = v; }); return o; })(),
       diemNhap: { p1: oChuoi_(r, c.p1), p2: oChuoi_(r, c.p2), p3: oChuoi_(r, c.p3), tong: oChuoi_(r, c.tong) },
       nhanXet: { uu: oChuoi_(r, c.uu) || nx.uu, nhuoc: oChuoi_(r, c.nhuoc) || nx.nhuoc, khacPhuc: oChuoi_(r, c.khacPhuc), loiKhuyen: oChuoi_(r, c.loiKhuyen) }
     });
   });
   if (!hocSinh.length) return { ok: false, loi: 'Bảng kết quả chưa có học sinh nào.' };
-  return { ok: true, hocSinh: hocSinh, soCau: cotCau.map(function (x) { return x.n; }), dapAnTrongDong: dapAnTrongDong, soXepHang: xepHang };
+  return { ok: true, hocSinh: hocSinh, soCau: cotCau.map(function (x) { return x.n; }), dapAnTrongDong: dapAnTrongDong, soXepHang: xepHang, tenWord: tenWord, truongDiem: truongDiem };
 }
 
 /** Đọc bảng đáp án theo mã đề. */
@@ -626,6 +636,7 @@ export function ghepHaiFile(kqF, da, thongTinThem, cauTruc) {
     return x;
   });
   var kq = { ok: true, thongTin: thongTin, cauHoi: cauHoi, hocSinh: hocSinh, canhBao: canhBao, soXepHang: kqF.soXepHang, cauTruc: cauTruc || undefined,
+    tenWord: kqF.tenWord || [], truongDiem: kqF.truongDiem || {},
     maDe: Object.keys(dapAn).map(function (m) { return dapAn[m].ten; }) };
   // Đối chiếu: điểm giáo viên nhập so với điểm tính từ đáp án (phát hiện nhầm file đáp án / nhầm mã đề)
   if (Object.keys(dapAn).length) {

@@ -9,6 +9,7 @@
  * Phiếu không lưu dạng PDF: lưu dữ liệu đã chấm, trình duyệt dựng phiếu và tạo PDF.
  */
 import * as L from './logic.js';
+import * as MW from './mau-word.js';
 import TRANG from './trang.js';
 
 const COOKIE = 'kq_phien';
@@ -334,7 +335,9 @@ async function layPhieu(req, db, b) {
   const p = await db.prepare(`SELECT p.du_lieu FROM phieu p JOIN lan_thi lt ON lt.id = p.lan_thi
       WHERE p.id = ? AND p.hoc_sinh = ? AND lt.cong_bo = 1`).bind(String(b.maPhieu || ''), hs.id).first();
   if (!p) return json({ ok: false, loi: 'Không tìm thấy phiếu kết quả.' });
-  return json({ ok: true, d: JSON.parse(p.du_lieu), logo: JSON.parse(hs.cai_dat || '{}').logo || '' });
+  const d = JSON.parse(p.du_lieu);
+  await ganHtmlMau(db, hs.kg, d);
+  return json({ ok: true, d, logo: JSON.parse(hs.cai_dat || '{}').logo || '' });
 }
 
 /* =====================================================================
@@ -447,7 +450,7 @@ class NguCanh {
     this.bo.lt = (await this.db.prepare('SELECT rowid AS stt_tao, * FROM lan_thi WHERE kg = ?').bind(this.kg).all()).results.map((r) => ({
       sttTao: r.stt_tao, // thứ tự ghi (tăng dần theo thời gian tạo) — để sắp xếp mới nhất trước
       maDot: r.id, lopId: r.lop, nhom: (this.lopTheoId(r.lop) || {}).ten || '', baiThi: r.bai_thi, lan: r.lan, ngayThi: r.ngay_thi, moTa: r.mo_ta || '',
-      thuTu: r.thu_tu, congBo: !!r.cong_bo, ngayTao: r.ngay_tao, cauTruc: r.cau_truc || ''
+      thuTu: r.thu_tu, congBo: !!r.cong_bo, ngayTao: r.ngay_tao, cauTruc: r.cau_truc || '', mauPhieu: r.mau_phieu || ''
     }));
     return this.bo.lt;
   }
@@ -472,6 +475,7 @@ const HAM = {
   async gvTaiDuLieu(c) {
     const nd = c.nd;
     const hs = await c.hocSinh(), lt = await c.lanThi();
+    const mau = (await c.db.prepare('SELECT id, ten, truong, ten_tep, ngay_tao FROM mau_phieu WHERE kg = ? ORDER BY ngay_tao DESC, ten').bind(c.kg).all()).results;
     const phieu = (await c.db.prepare('SELECT lan_thi, hoc_sinh, tong_diem, diem_toi_da FROM phieu WHERE kg = ?').bind(c.kg).all()).results;
     const dem = {};
     phieu.forEach((p) => { dem[p.lan_thi] = (dem[p.lan_thi] || 0) + 1; });
@@ -494,6 +498,8 @@ const HAM = {
       nhom: c.lop.filter((l) => c.duocLopId(l.id)).map((l) => l.ten),
       monLop: Object.fromEntries(c.lop.filter((l) => c.duocLopId(l.id)).map((l) => [l.ten, l.mon || ''])),
       dsMon: L.DS_MON,
+      mauPhieu: mau.map((m) => ({ id: m.id, ten: m.ten, soTruong: JSON.parse(m.truong).length, tenTep: m.ten_tep, ngayTao: m.ngay_tao,
+        soLanDung: lt.filter((d) => d.mauPhieu === m.id).length })),
       cauTrucDe: L.CAU_TRUC_CO_SAN.map((ct) => ({ id: ct.id, mon: ct.mon, ten: ct.ten, moTa: L.moTaCauTruc(ct),
         phan: ct.phan.map((p) => ({ ma: p.ma, ten: p.ten, dang: p.dang, soCau: p.soCau })) })),
       tatCaNhom: nd.quanTri ? c.lop.map((l) => l.ten) : [],
@@ -783,6 +789,7 @@ const HAM = {
     const idCauTruc = tuyChon.cauTruc || cauTrucGoiY(c, so);
     const kq = docHaiFile(so, '', idCauTruc);
     if (!kq.ok) return kq;
+    const mau = tuyChon.mauPhieu ? await layMauPhieu(c.db, c.kg, tuyChon.mauPhieu) : null;
     const dsHs = await c.hocSinh();
     const g = ghepNhieuLop(c, kq, dsHs, tuyChon.quyetDinh, tuyChon.quyetDinhLop, tuyChon.themHsMoi !== false);
     const gon = (x) => ({ maHs: x.maHs, hoTen: x.hoTen, sbd: x.sbd || '', nhom: L.noiNhom_(x.nhom), sdt: c.duocHocSinh(x) ? x.sdt : '' });
@@ -803,7 +810,12 @@ const HAM = {
       cauTruc: idCauTruc, phanDe: kq.cauTruc.phan.map((p) => ({ ma: p.ma, ten: p.ten, soCau: (kq.cauHoi[p.ma] || []).length, soCauChuan: p.soCau })),
       canhBao: kq.canhBao, hocSinh: dsXem,
       nhom: g.nhom.map((x) => ({ nhom: x.nhom, lopMoi: x.lopMoi, soDong: x.soDong, siSo: x.siSo, vang: x.vang.map(gon) })),
-      phieuXemTruoc: dauTien ? duLieuPhieu(c, kq, dauTien.h, dauTien.cham, dauTien.hs, '(xem trước)', { lan: 1, ngayThi: kq.thongTin.ngayThi, lichSu: [], nhom: dauTien.nhom }) : null
+      phieuXemTruoc: dauTien ? (() => {
+        const d = duLieuPhieu(c, kq, dauTien.h, dauTien.cham, dauTien.hs, '(xem trước)', { lan: 1, ngayThi: kq.thongTin.ngayThi, lichSu: [], nhom: dauTien.nhom }, mau);
+        if (mau) { d.htmlMau = MW.dienMau(mau.html, giaTriPhieu(d)); d.trangMau = mau.trang; }
+        return d;
+      })() : null,
+      mauPhieu: mau ? { id: mau.id, ten: mau.ten, truongThieu: truongThieu(mau, kq) } : null
     };
   },
 
@@ -817,6 +829,8 @@ const HAM = {
     const idCauTruc = tuyChon.cauTruc || cauTrucGoiY(c, so);
     const kq = docHaiFile(so, baiThiGoc, idCauTruc);
     const monDe = kq.cauTruc ? kq.cauTruc.mon : '';
+    const idMau = L.chuoi_(tuyChon.mauPhieu);
+    if (idMau) await layMauPhieu(c.db, c.kg, idMau); // kiểm tra mẫu tồn tại
     if (!kq.ok) return kq;
     const g = ghepNhieuLop(c, kq, await c.hocSinh(), tuyChon.quyetDinh, tuyChon.quyetDinhLop, tuyChon.themHsMoi !== false);
     const conChon = g.dong.filter((x) => x.canChon || x.canLop).length;
@@ -866,8 +880,8 @@ const HAM = {
         } else { moi.push({ hoTen: h.hoTen, nhomId: [idLop], sdt: h.sdt, maHs: h.maHs, sbd: h.sbd }); chiSoMoi.push({ i, maTheoDong }); }
       });
       const maDot = taoId();
-      lenhCuoi.push(c.db.prepare('INSERT INTO lan_thi (id, kg, lop, bai_thi, lan, ngay_thi, mo_ta, thu_tu, cong_bo, cau_truc, ngay_tao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)')
-        .bind(maDot, c.kg, idLop, baiThi, lan, ngayThi, L.chuoi_(kq.thongTin.moTa), L.soThuTuNgay_(ngayThi), idCauTruc, homNay));
+      lenhCuoi.push(c.db.prepare('INSERT INTO lan_thi (id, kg, lop, bai_thi, lan, ngay_thi, mo_ta, thu_tu, cong_bo, cau_truc, mau_phieu, ngay_tao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)')
+        .bind(maDot, c.kg, idLop, baiThi, lan, ngayThi, L.chuoi_(kq.thongTin.moTa), L.soThuTuNgay_(ngayThi), idCauTruc, idMau, homNay));
       keHoach.push({ maDot, nhom: nh.nhom, lopMoi: nh.lopMoi, baiThi, lan, dongTao, maTheoDong, vang: nh.vang.map((x) => x.hoTen + ' (' + x.maHs + ')') });
     }
     if (!keHoach.length) return { ok: false, loi: 'Không có dòng nào để tạo phiếu (tất cả đều bỏ qua hoặc lỗi).' };
@@ -899,6 +913,7 @@ const HAM = {
     if (!c.duocLopId(dot.lopId)) throw new Loi('Bạn không phụ trách lớp "' + dot.nhom + '".', 403);
     const kq = docHaiFile(so, dot.baiThi, dot.cauTruc);
     if (!kq.ok) throw new Loi(kq.loi);
+    const mau = dot.mauPhieu ? await layMauPhieu(c.db, c.kg, dot.mauPhieu) : null;
     const theoMa = {};
     (await c.hocSinh()).forEach((h) => { theoMa[h.maHs] = h; });
     // các lần trước của cùng bài thi trong lớp -> "so với lần trước"
@@ -916,7 +931,7 @@ const HAM = {
       const lichSu = phieuTruoc.filter((p) => p.hoc_sinh === hs.id)
         .map((p) => ({ lan: lanTruoc[p.lan_thi].lan, ngayThi: lanTruoc[p.lan_thi].ngayThi, tong: p.tong_diem })).sort((a, b) => a.lan - b.lan);
       const maPhieu = maDot.slice(0, 8).toUpperCase() + '-' + hs.maHs;
-      const d = duLieuPhieu(c, kq, h, cham, hs, maPhieu, { lan: dot.lan, ngayThi: dot.ngayThi, lichSu, nhom: dot.nhom });
+      const d = duLieuPhieu(c, kq, h, cham, hs, maPhieu, { lan: dot.lan, ngayThi: dot.ngayThi, lichSu, nhom: dot.nhom }, mau);
       dong.push([taoId(), c.kg, maDot, hs.id, cham.diem.tong, cham.diem.maxTong, JSON.stringify(d), homNay]);
     }
     await chay(c.db, lenhChenNhieu(c.db, 'phieu', ['id', 'kg', 'lan_thi', 'hoc_sinh', 'tong_diem', 'diem_toi_da', 'du_lieu', 'ngay_tao'], dong, 'INSERT OR REPLACE'));
@@ -1054,6 +1069,15 @@ const HAM = {
     });
     const tong = so.reduce((a, b) => a + b, 0);
     ch.diem.tong = L.dinhDangDiem_(tong);
+    if (d.mau && d.giaTri) { // phiếu mẫu Word: các trường lấy từ cột điểm cũng đổi theo
+      const datTruong = (khoa, giaTriMoi) => (d.truongDiem && d.truongDiem[khoa] || []).forEach((t) => {
+        const ten = Object.keys(d.giaTri).find((k) => MW.khoaTruong(k) === MW.khoaTruong(t)) || t;
+        const cu = String(d.giaTri[ten] == null ? '' : d.giaTri[ten]);
+        d.giaTri[ten] = /\.\d{2}$/.test(cu) || !cu ? L.dinhDangDiem_(giaTriMoi) : L.dinhDangSo_(giaTriMoi);
+      });
+      phan.forEach((x, i) => { if (x.khoa) datTruong(x.khoa, so[i]); });
+      datTruong('tong', tong);
+    }
     const truoc = (d.lichSu || []).length ? d.lichSu[d.lichSu.length - 1] : null;
     if (truoc) { const chenh = tong - L.soThuc_(truoc.tong, 0); d.chenhLech = (chenh > 0 ? '+' : '') + L.dinhDangDiem_(chenh); d.tangDiem = chenh > 0; d.giamDiem = chenh < 0; }
     d.suaTay = { luc: new Date().toISOString(), boi: c.nd.email, diemGoc: (d.suaTay && d.suaTay.diemGoc) || cu.map(L.dinhDangDiem_) };
@@ -1091,7 +1115,52 @@ const HAM = {
   async gvXemPhieu(c, maPhieu) {
     const p = await c.db.prepare('SELECT p.du_lieu, lt.lop FROM phieu p JOIN lan_thi lt ON lt.id = p.lan_thi WHERE p.id = ? AND p.kg = ?').bind(String(maPhieu), c.kg).first();
     if (!p || !c.duocLopId(p.lop)) throw new Loi('Không tìm thấy phiếu.');
-    return { d: JSON.parse(p.du_lieu), logo: c.nd.caiDat.logo || '' };
+    const d = JSON.parse(p.du_lieu);
+    await ganHtmlMau(c.db, c.kg, d);
+    return { d, logo: c.nd.caiDat.logo || '' };
+  },
+
+  /* ---------- mẫu phiếu từ Word ---------- */
+
+  /** Lưu mẫu phiếu (giao diện đã đọc file .docx thành HTML). m = { id?, ten, html, truong, trang, tenTep } */
+  async gvLuuMauPhieu(c, m) {
+    c.yeuCauQuanTri();
+    m = m || {};
+    const ten = L.chuoi_(m.ten).replace(/\s+/g, ' ');
+    if (!ten) throw new Loi('Vui lòng đặt tên mẫu phiếu.');
+    if (ten.length > 120) throw new Loi('Tên mẫu quá dài.');
+    const html = lamSachHtml(String(m.html || ''));
+    if (!html) throw new Loi('Mẫu phiếu trống.');
+    if (html.length > 1500000) throw new Loi('Mẫu phiếu quá lớn (ảnh trong file Word quá nặng). Hãy nén ảnh trong Word rồi thử lại.');
+    const truong = (Array.isArray(m.truong) ? m.truong : []).map((x) => L.chuoi_(x)).filter(Boolean).slice(0, 1000);
+    const trang = m.trang && typeof m.trang === 'object' ? m.trang : {};
+    if (m.id) {
+      const r = await c.db.prepare('UPDATE mau_phieu SET ten = ?, html = ?, truong = ?, trang = ?, ten_tep = ? WHERE id = ? AND kg = ?')
+        .bind(ten, html, JSON.stringify(truong), JSON.stringify(trang), L.chuoi_(m.tenTep), m.id, c.kg).run();
+      if (!r.meta.changes) throw new Loi('Không tìm thấy mẫu phiếu.');
+    } else {
+      await c.db.prepare('INSERT INTO mau_phieu (id, kg, ten, html, truong, trang, ten_tep, ngay_tao) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+        .bind(taoId(), c.kg, ten, html, JSON.stringify(truong), JSON.stringify(trang), L.chuoi_(m.tenTep), ngayVN()).run();
+    }
+    const kq = await HAM.gvTaiDuLieu(c);
+    kq.thongBao = 'Đã lưu mẫu phiếu "' + ten + '".';
+    return kq;
+  },
+
+  async gvLayMauPhieu(c, id) {
+    const m = await c.db.prepare('SELECT id, ten, html, truong, trang, ten_tep FROM mau_phieu WHERE id = ? AND kg = ?').bind(String(id || ''), c.kg).first();
+    if (!m) throw new Loi('Không tìm thấy mẫu phiếu.');
+    return { id: m.id, ten: m.ten, html: m.html, truong: JSON.parse(m.truong), trang: JSON.parse(m.trang), tenTep: m.ten_tep };
+  },
+
+  async gvXoaMauPhieu(c, id) {
+    c.yeuCauQuanTri();
+    const dung = (await c.lanThi()).filter((d) => d.mauPhieu === id).length;
+    if (dung) throw new Loi('Mẫu phiếu đang dùng cho ' + dung + ' lần thi — phiếu của các lần thi đó cần mẫu này để hiển thị.');
+    await c.db.prepare('DELETE FROM mau_phieu WHERE id = ? AND kg = ?').bind(String(id || ''), c.kg).run();
+    const kq = await HAM.gvTaiDuLieu(c);
+    kq.thongBao = 'Đã xóa mẫu phiếu.';
+    return kq;
   },
 
   /** File mẫu: bảng kết quả (điền sẵn danh sách lớp) + bảng đáp án theo mã đề. */
@@ -1297,6 +1366,56 @@ async function taoLop(c, ten, mon = '') {
   return id;
 }
 
+/** Mẫu phiếu theo id (trong không gian). */
+async function layMauPhieu(db, kg, id) {
+  const m = await db.prepare('SELECT id, ten, html, truong, trang FROM mau_phieu WHERE id = ? AND kg = ?').bind(String(id), kg).first();
+  if (!m) throw new Loi('Không tìm thấy mẫu phiếu.');
+  return { id: m.id, ten: m.ten, html: m.html, truong: JSON.parse(m.truong), trang: JSON.parse(m.trang) };
+}
+/** Giá trị điền vào mẫu: các trường lưu từ file + trường hệ thống (dùng khi file không có cột tương ứng). */
+function giaTriPhieu(d) {
+  const ch = d.cham || { diem: {} };
+  const heThong = { Họ_và_tên: d.hoTen, Lớp: d.lop, Số_báo_danh: d.sbd, SBD: d.sbd, Mã_đề_thi: d.maDe, Tổng_điểm: ch.diem.tong, Lần: d.lan,
+    Ngày_thi: d.ngayThi, Mã_phiếu: d.maPhieu, Tên_trung_tâm: d.trungTam, Tiêu_đề: d.tieuDe, Mô_tả: d.moTa };
+  return Object.assign(heThong, d.giaTri || {});
+}
+/** Phiếu dùng mẫu Word: điền mẫu thành HTML để trang phụ huynh / giáo viên hiển thị và tạo PDF. */
+async function ganHtmlMau(db, kg, d) {
+  if (!d || !d.mau) return;
+  const m = await db.prepare('SELECT html, trang FROM mau_phieu WHERE id = ? AND kg = ?').bind(d.mau, kg).first();
+  if (!m) return;
+  d.htmlMau = MW.dienMau(m.html, giaTriPhieu(d));
+  d.trangMau = JSON.parse(m.trang || '{}');
+}
+/** Trường của mẫu không có cột tương ứng trong file (và không phải trường hệ thống) -> báo khi xem trước. */
+function truongThieu(mau, kq) {
+  const co = new Set((kq.tenWord || []).map(MW.khoaTruong));
+  Object.keys(giaTriPhieu({ cham: { diem: {} } })).forEach((k) => co.add(MW.khoaTruong(k)));
+  return mau.truong.filter((t) => !co.has(MW.khoaTruong(t)));
+}
+/** Lọc HTML mẫu phiếu: chỉ giữ thẻ / thuộc tính an toàn (mẫu do giáo viên tải lên, hiển thị cho phụ huynh). */
+function lamSachHtml(html) {
+  const THE = new Set(['div', 'p', 'span', 'br', 'b', 'i', 'u', 'table', 'tbody', 'thead', 'tr', 'td', 'th', 'colgroup', 'col', 'img']);
+  const THUOC_TINH = new Set(['style', 'colspan', 'rowspan', 'class', 'data-truong', 'data-truoc', 'data-sau', 'src', 'alt']);
+  html = html.replace(/<!--[\s\S]*?-->/g, '').replace(/<(script|style|iframe|object|embed|svg|math|template)[\s\S]*?<\/\1\s*>/gi, '');
+  return html.replace(/<(\/?)([a-zA-Z0-9]+)([^>]*)>/g, (m, dong, ten, thuocTinh) => {
+    ten = ten.toLowerCase();
+    if (!THE.has(ten)) return '';
+    if (dong) return '</' + ten + '>';
+    let ra = '';
+    thuocTinh.replace(/([a-zA-Z-]+)\s*=\s*"([^"]*)"/g, (_, k, v) => {
+      k = k.toLowerCase();
+      if (!THUOC_TINH.has(k)) return '';
+      if (k === 'src' && (ten !== 'img' || !/^data:image\/(png|jpeg|gif|webp|bmp);base64,[A-Za-z0-9+/=]+$/.test(v))) return '';
+      if (k === 'style' && /expression|url\s*\(|javascript:|@import|behavior/i.test(v.replace(/&[a-z#0-9]+;/gi, ''))) return '';
+      if ((k === 'colspan' || k === 'rowspan') && !/^\d{1,3}$/.test(v)) return '';
+      ra += ' ' + k + '="' + v.replace(/"/g, '&quot;') + '"';
+      return '';
+    });
+    return '<' + ten + ra + '>';
+  }).replace(/<(?![a-zA-Z\/])/g, '&lt;');
+}
+
 /** Danh sách phần điểm của phiếu: [{ ten, diem, toiDa, khoa: 'p1'|'p2'|'p3'|'' }] */
 function cacPhanCuaPhieu(ch) {
   const khoa = ['p1', 'p2', 'p3'];
@@ -1351,10 +1470,20 @@ function docHaiFile(so, baiThi, cauTrucId) {
 }
 
 /** Dữ liệu 1 phiếu (lưu JSON; trình duyệt dựng phiếu từ đây). */
-function duLieuPhieu(c, kq, h, cham, hs, maPhieu, lanThi) {
+function duLieuPhieu(c, kq, h, cham, hs, maPhieu, lanThi, mau) {
   const truoc = lanThi.lichSu.length ? lanThi.lichSu[lanThi.lichSu.length - 1] : null;
   const chenh = truoc ? L.soThuc_(cham.diem.tong, 0) - L.soThuc_(truoc.tong, 0) : 0;
+  const them = {};
+  if (mau) { // mẫu phiếu Word: lưu giá trị các trường của mẫu lấy từ dòng Excel của học sinh
+    const theoKhoa = {};
+    Object.keys(h.cot || {}).forEach((k) => { theoKhoa[MW.khoaTruong(k)] = h.cot[k]; });
+    them.mau = mau.id;
+    them.giaTri = {};
+    mau.truong.forEach((t) => { const v = theoKhoa[MW.khoaTruong(t)]; if (v != null) them.giaTri[t] = v; });
+    them.truongDiem = kq.truongDiem || {};
+  }
   return {
+    ...them,
     trungTam: c.nd.tenKg, khauHieu: c.nd.caiDat.khauHieu || '',
     tieuDe: kq.thongTin.tieuDe, moTa: kq.thongTin.moTa, nhanLop: kq.thongTin.nhanLop, tenPhan: kq.thongTin.tenPhan, moTaPhan: kq.thongTin.moTaPhan,
     stt: h.stt, sbd: h.sbd || (hs && hs.sbd) || '', thuHang: h.thuHang || '', soXepHang: kq.soXepHang || 0,

@@ -294,6 +294,11 @@
   .luoi-sua-diem input { width: 100%; }
   .chan-sua-diem { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
   .chan-sua-diem .gian { flex: 1; }
+  .dau-the-mau { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .ds-mau { display: flex; flex-direction: column; gap: 8px; }
+  .o-mau { display: flex; align-items: center; justify-content: space-between; gap: 8px 14px; flex-wrap: wrap; padding: 12px 14px; border: 1px solid var(--vien); border-radius: var(--r-phan-tu); }
+  .xem-mau-hop { display: flex; flex-direction: column; gap: 10px; width: min(860px, 100%); }
+  iframe.xem-mau { width: 100%; height: 60vh; border: 1px solid var(--vien); border-radius: var(--r-phan-tu); background: #fff; }
   .phan-doan { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--r-tron); background: var(--phu-hover); border: 1px solid var(--vien); flex: none; }
   .phan-doan button { min-height: 30px; width: 40px; padding: 0; background: none; color: var(--phu); border-radius: var(--r-tron); }
   .phan-doan button[aria-pressed=true] { background: var(--be-mat); color: var(--chu); box-shadow: var(--bong-thap); }
@@ -660,6 +665,7 @@
         <h2><span class="buoc">1</span>Tải lên 2 file<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Mẫu bảng kết quả điền sẵn <b>Mã HS</b>, <b>họ tên</b> và <b>lớp</b> của học sinh — xóa dòng của em không làm bài này, <b>không sửa cột Mã HS</b>. Lớp ghi trong file mà chưa có sẽ được tạo mới.</span></button></h2>
         <div class="hang-cau-truc">
           <label class="o">Môn / cấu trúc đề<select id="gCauTruc"></select></label>
+          <label class="o">Mẫu phiếu<select id="gMauPhieu"></select></label>
           <p class="mo-ta-ct" id="moTaCauTruc"></p>
         </div>
         <div class="file-o">
@@ -833,6 +839,11 @@
           </div>
         </div>
       </div>
+      <div class="the">
+        <div class="dau-the-mau"><h2 style="margin:0">Mẫu phiếu<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Tải lên file Word (.docx) đang dùng để trộn thư (mail merge): hệ thống giữ nguyên bố cục, các trường «Tên_cột» lấy dữ liệu từ cột cùng tên trong file Excel kết quả. File Word thường: gõ {{Tên cột}} vào chỗ cần điền. Khi gửi kết quả, chọn mẫu phiếu cho bài thi.</span></button></h2>
+          <label class="nut">⬆ Tải mẫu Word lên<input id="fileMauWord" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="an"></label></div>
+        <div id="dsMauPhieu" class="ds-mau"></div>
+      </div>
     </section>
   </div>
 
@@ -876,6 +887,7 @@
   <div id="thongBao" class="thong-bao an"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script type="module">import * as M from '/mau-word.js'; window.MauWord = M;</script>
   <script src="/phieu.js"></script>
   <script>
   var $ = function (id) { return document.getElementById(id); };
@@ -1146,7 +1158,16 @@
       (DL.cauTrucDe || []).forEach(function (c) { sel.appendChild(the('option', { value: c.id, text: c.ten })); });
     }
     datCauTruc(cu || cauTrucCuaMon(monMacDinh()));
+    veChonMauPhieu();
   }
+  function veChonMauPhieu() {
+    var sel = $('gMauPhieu'), cu = sel.value;
+    sel.textContent = '';
+    sel.appendChild(the('option', { value: '', text: 'Phân tích bài thi (mặc định)' }));
+    (DL.mauPhieu || []).forEach(function (m) { sel.appendChild(the('option', { value: m.id, text: m.ten })); });
+    sel.value = (DL.mauPhieu || []).some(function (m) { return m.id === cu; }) ? cu : '';
+  }
+  $('gMauPhieu').onchange = function () { if (soHienTai && soHienTai.kq) taiXemTruoc(false); };
   function datCauTruc(id) {
     var sel = $('gCauTruc'); if (!id) return;
     sel.value = id;
@@ -1653,7 +1674,7 @@
   function taiXemTruoc(lanDau) {
     if (!soHienTai || !soHienTai.kq) return Promise.resolve(false);
     return goi('gvXemTruoc', soHienTai, { quyetDinh: quyetDinhKq, quyetDinhLop: quyetDinhLop, themHsMoi: $('themHsMoi').checked,
-      cauTruc: cauTrucDaChon ? $('gCauTruc').value : '' }).then(function (kq) {
+      cauTruc: cauTrucDaChon ? $('gCauTruc').value : '', mauPhieu: $('gMauPhieu').value }).then(function (kq) {
       if (!kq.ok) { bao(kq.loi, true); return false; }
       if (kq.cauTruc) datCauTruc(kq.cauTruc); // cấu trúc máy chủ gợi ý theo môn của các lớp trong file
       // Tiêu đề / ngày thi lấy từ file (tab ThongTin) nếu giáo viên chưa nhập
@@ -1679,6 +1700,9 @@
     var phanDe = kq.phanDe || [];
     tt.appendChild(the('p', {}, [the('b', { text: kq.tieuDe || 'Bài thi' }), ' — ' + phanDe.map(function (p) { return 'Phần ' + p.ma + ': ' + p.soCau + ' câu'; }).join(', ') +
       (kq.maDe.length ? ' · ' + kq.maDe.length + ' mã đề: ' + kq.maDe.join(', ') : ' · chưa có đáp án') + '.']));
+    if (kq.mauPhieu) tt.appendChild(the('p', {}, ['Mẫu phiếu: ', the('b', { text: kq.mauPhieu.ten }), kq.mauPhieu.truongThieu.length
+      ? the('span', { class: 'nhan loi', style: 'margin-left:6px', text: kq.mauPhieu.truongThieu.length + ' trường không có cột trong file: ' + kq.mauPhieu.truongThieu.join(', ') })
+      : the('span', { class: 'nhan co', style: 'margin-left:6px', text: 'mọi trường đều có dữ liệu' })]));
     tt.appendChild(the('p', {}, ['File có ' + kq.hocSinh.length + ' dòng · ' + kq.nhom.length + ' lớp. ',
       the('span', { class: 'nhan co', text: dem.co + ' đã ghép' }), ' ',
       dem.moi ? the('span', { class: 'nhan moi', text: dem.moi + ' học sinh mới' }) : null, ' ',
@@ -1962,7 +1986,7 @@
   function chayTaoPhieu(ghiDe) {
     var nt = $('gNgayThi').value.split('-');
     var tuyChon = { baiThi: $('gBaiThi').value, ngayThi: nt.length === 3 ? nt[2] + '/' + nt[1] + '/' + nt[0] : '',
-      themHsMoi: $('themHsMoi').checked, ghiDe: ghiDe, quyetDinh: quyetDinhKq, quyetDinhLop: quyetDinhLop, cauTruc: $('gCauTruc').value };
+      themHsMoi: $('themHsMoi').checked, ghiDe: ghiDe, quyetDinh: quyetDinhKq, quyetDinhLop: quyetDinhLop, cauTruc: $('gCauTruc').value, mauPhieu: $('gMauPhieu').value };
     dangTao = null; veTienDo('Đang tạo lần thi cho các lớp…');
     $('taoNut').textContent = ''; // chưa hủy được ở bước này (đang ghi lần thi)
     // Bước tạo lần thi KHÔNG tự thử lại (gửi lại có thể tạo thêm 1 lần thi)
@@ -2448,7 +2472,66 @@
 
   /* =================== CÀI ĐẶT =================== */
   var logoMoi = null; // undefined = giữ nguyên
+  /* ---- Mẫu phiếu từ Word ---- */
+  function veMauPhieu() {
+    var k = $('dsMauPhieu'); if (!k) return; k.textContent = '';
+    k.appendChild(the('div', { class: 'o-mau' }, [the('div', {}, [the('b', { text: 'Phân tích bài thi' }), ' ', the('span', { class: 'nhan', text: 'Mặc định' }),
+      the('div', { class: 'goi-y', text: 'Mẫu có sẵn: điểm từng phần, bảng phân tích từng câu, nhận xét, các lần làm.' })])]));
+    (DL.mauPhieu || []).forEach(function (m) {
+      k.appendChild(the('div', { class: 'o-mau' }, [
+        the('div', {}, [the('b', { text: m.ten }), the('div', { class: 'goi-y', text: m.soTruong + ' trường · ' + (m.tenTep || 'file Word') + ' · tạo ' + m.ngayTao + (m.soLanDung ? ' · dùng cho ' + m.soLanDung + ' lần thi' : '') })]),
+        the('div', { class: 'cum-thao-tac' }, [
+          the('button', { class: 'phu nho', text: 'Xem', onclick: function () { goi('gvLayMauPhieu', m.id).then(function (mp) { xemMauPhieu(mp); }).catch(baoLoi); } }),
+          the('button', { class: 'phu nho', text: 'Thay file Word', onclick: function () { mauDangThay = m; $('fileMauWord').click(); } }),
+          the('button', { class: 'nguy nho', text: 'Xóa', onclick: function () {
+            hoi('Xóa mẫu phiếu "' + m.ten + '"?', { nut: 'Xóa', nguyHiem: true }).then(function (ok) { if (ok) goi('gvXoaMauPhieu', m.id).then(capNhat).catch(baoLoi); });
+          } })])]));
+    });
+  }
+  var mauDangThay = null;
+  /** Khung xem mẫu: trường chờ điền tô vàng. */
+  function khungXemMau(html, trang) {
+    var f = the('iframe', { class: 'xem xem-mau', sandbox: '' });
+    f.srcdoc = renderPhieu({ htmlMau: window.MauWord ? window.MauWord.dienMau(html, {}, { giuTrong: true }) : html, trangMau: trang });
+    return f;
+  }
+  function xemMauPhieu(mp) {
+    moHop('Mẫu phiếu · ' + mp.ten, the('div', { class: 'xem-mau-hop' }, [
+      the('p', { class: 'goi-y', style: 'margin-top:0', text: mp.truong.length + ' trường (tô vàng): ' + mp.truong.join(', ') }), khungXemMau(mp.html, mp.trang)]));
+  }
+  $('fileMauWord').onchange = function () {
+    var f = this.files[0], thay = mauDangThay; this.value = ''; mauDangThay = null;
+    if (!f) return;
+    if (!/\.docx$/i.test(f.name)) return bao('Hãy chọn file Word dạng .docx (file .doc cũ: mở bằng Word rồi Lưu thành .docx).', true);
+    if (!window.XLSX || !window.MauWord) return bao('Chưa tải xong công cụ đọc file. Kiểm tra kết nối mạng rồi thử lại.', true);
+    var fr = new FileReader();
+    fr.onload = function () {
+      var kq;
+      try {
+        var z = XLSX.CFB.read(new Uint8Array(fr.result), { type: 'array' }), tep = {};
+        z.FullPaths.forEach(function (p, i) { if (z.FileIndex[i].type === 2) tep[p.replace(/^[^/]*\//, '')] = new Uint8Array(z.FileIndex[i].content); });
+        kq = window.MauWord.docMauWord(tep);
+      } catch (e) { kq = { ok: false, loi: 'Không đọc được file Word này (' + (e && e.message || e) + ').' }; }
+      if (!kq.ok) return bao(kq.loi, true);
+      var oTen = the('input', { type: 'text', maxlength: 120 }); oTen.value = thay ? thay.ten : f.name.replace(/\.docx$/i, '').replace(/[_]+/g, ' ');
+      var nut = the('button', { text: thay ? 'Lưu thay mẫu' : 'Lưu mẫu phiếu', onclick: function () {
+        nut.disabled = true;
+        goi('gvLuuMauPhieu', { id: thay ? thay.id : '', ten: oTen.value, html: kq.html, truong: kq.truong, trang: kq.trang, tenTep: f.name })
+          .then(function (dl) { $('hop').classList.add('an'); capNhat(dl); }).catch(function (e) { nut.disabled = false; baoLoi(e); });
+      } });
+      moHop(thay ? 'Thay file Word cho mẫu "' + thay.ten + '"' : 'Mẫu phiếu mới từ Word', the('div', { class: 'xem-mau-hop' }, [
+        the('label', { class: 'o' }, ['Tên mẫu phiếu', oTen]),
+        the('p', { class: 'goi-y' }, [kq.truong.length ? kq.truong.length + ' trường chờ điền (tô vàng): ' + kq.truong.join(', ') + '. Khi gửi kết quả, mỗi trường lấy dữ liệu từ cột cùng tên trong file Excel.'
+          : 'Chưa thấy trường nào. File trộn thư: kiểm tra đã chèn trường (Insert Merge Field). File Word thường: gõ {{Tên cột}} vào chỗ cần điền rồi tải lại.']),
+        kq.canhBao.length ? the('ul', { class: 'canh-bao' }, kq.canhBao.map(function (c) { return the('li', { text: c }); })) : null,
+        khungXemMau(kq.html, kq.trang),
+        the('div', { class: 'chan-hop' }, [the('button', { class: 'phu', text: 'Hủy', onclick: function () { $('hop').classList.add('an'); } }), nut])]));
+    };
+    fr.readAsArrayBuffer(f);
+  };
+
   function veCaiDat() {
+    veMauPhieu();
     var c = DL.caiDat || {};
     $('cdLinkPh').textContent = DL.linkTraCuu || '';
     $('cdLinkGv').textContent = DL.linkGiaoVien || '';
