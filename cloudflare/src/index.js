@@ -1218,6 +1218,30 @@ const HAM = {
     return kq;
   },
 
+  /**
+   * Xóa toàn bộ dữ liệu học tập của không gian (chỉ chủ): lớp, học sinh, bài thi, phiếu.
+   * Giữ: tài khoản, giáo viên (bỏ danh sách lớp phụ trách), cài đặt, mẫu phiếu, cấu trúc đề.
+   * xacNhan: phải gõ đúng tên trung tâm.
+   */
+  async gvXoaToanBo(c, xacNhan) {
+    if (c.nd.vaiTro !== 'chu') throw new Loi('Chỉ chủ không gian mới xóa được toàn bộ dữ liệu.', 403);
+    if (!L.chuoi_(xacNhan) || L.khongDau_(xacNhan) !== L.khongDau_(c.nd.tenKg)) throw new Loi('Tên trung tâm gõ chưa đúng — chưa xóa gì.');
+    const dem = await c.db.prepare(`SELECT (SELECT count(*) FROM lop WHERE kg = ?1) lop, (SELECT count(*) FROM hoc_sinh WHERE kg = ?1) hs,
+        (SELECT count(*) FROM lan_thi WHERE kg = ?1) lt, (SELECT count(*) FROM phieu WHERE kg = ?1) ph`).bind(c.kg).first();
+    await c.db.batch([
+      c.db.prepare('DELETE FROM phieu WHERE kg = ?').bind(c.kg),
+      c.db.prepare('DELETE FROM lan_thi WHERE kg = ?').bind(c.kg),
+      c.db.prepare('DELETE FROM hoc_sinh_lop WHERE lop IN (SELECT id FROM lop WHERE kg = ?)').bind(c.kg),
+      c.db.prepare('DELETE FROM hoc_sinh WHERE kg = ?').bind(c.kg),
+      c.db.prepare('DELETE FROM lop WHERE kg = ?').bind(c.kg),
+      c.db.prepare("UPDATE thanh_vien SET lop = '[]' WHERE kg = ? AND lop <> '*'").bind(c.kg)
+    ]);
+    c.xoaBoNho(); await c.napLop();
+    const kq = await HAM.gvTaiDuLieu(c);
+    kq.thongBao = 'Đã xóa ' + dem.lop + ' lớp, ' + dem.hs + ' học sinh, ' + dem.lt + ' lần thi, ' + dem.ph + ' phiếu. Có thể bắt đầu nhập lại từ đầu.';
+    return kq;
+  },
+
   async gvXoaMauPhieu(c, id) {
     c.yeuCauQuanTri();
     const dung = (await c.lanThi()).filter((d) => d.mauPhieu === id).length;

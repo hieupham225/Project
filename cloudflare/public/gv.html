@@ -326,6 +326,8 @@
   .o-buoc.xong { color: var(--phu); } .o-buoc.xong b { background: var(--xanh-nen); color: var(--xanh-chu); }
   .than-mau { flex: 1 1 auto; overflow: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
   .chan-mau { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; padding: 12px 20px calc(12px + env(safe-area-inset-bottom)); background: var(--be-mat); border-top: 1px solid var(--vien); }
+  .the.vung-nguy { border: 1px solid #F3B4BF; background: #FFF7F8; }
+  .the.vung-nguy h2 { color: var(--do); }
   .nhom-ct { font-size: 13px; text-transform: uppercase; letter-spacing: .03em; color: var(--phu); margin: 18px 0 6px; }
   .form-ct { display: flex; flex-direction: column; gap: 10px; }
   .ds-phan-ct { display: flex; flex-direction: column; gap: 10px; }
@@ -981,6 +983,12 @@
               <button id="cLogoXoa" class="phu nho">Bỏ logo</button></div>
           </div>
         </div>
+      </div>
+      <div class="the vung-nguy chi-chu an" id="theXoaToanBo">
+        <h2>Làm lại từ đầu</h2>
+        <p class="goi-y">Xóa <b>toàn bộ</b> lớp, học sinh, bài thi và phiếu điểm của trung tâm để nhập lại từ đầu. Mã tra cứu cũ sẽ không dùng được nữa (học sinh nhập lại nhận mã mới). Giữ nguyên: tài khoản, giáo viên, cài đặt, mẫu phiếu, cấu trúc đề. <b>Không hoàn tác được.</b></p>
+        <p class="goi-y" id="demXoaToanBo"></p>
+        <button id="nutXoaToanBo" type="button" class="nguy">Xóa toàn bộ dữ liệu…</button>
       </div>
     </section>
   </div>
@@ -2654,6 +2662,23 @@
   }
   $('nutTaoMau').onclick = function () { manMau().chonCach(); };
 
+  /* Cài đặt → Làm lại từ đầu (chỉ chủ không gian) */
+  function veXoaToanBo() {
+    var laChu = DL.toi && DL.toi.vaiTro === 'Chủ';
+    $('theXoaToanBo').classList.toggle('an', !laChu);
+    if (!laChu) return;
+    $('demXoaToanBo').textContent = 'Hiện có: ' + (DL.nhom || []).length + ' lớp · ' + (DL.hocSinh || []).length + ' học sinh · ' + (DL.dot || []).length + ' lần thi · ' +
+      (DL.dot || []).reduce(function (s, d) { return s + (d.soPhieu || 0); }, 0) + ' phiếu.';
+  }
+  $('nutXoaToanBo').onclick = function () {
+    var ten = (DL.caiDat && DL.caiDat.tenTrungTam) || '';
+    hoi('Thao tác này XÓA toàn bộ lớp, học sinh, bài thi và phiếu điểm (' + $('demXoaToanBo').textContent.replace('Hiện có: ', '') + ') và không hoàn tác được.\n\nGõ đúng tên trung tâm "' + ten + '" để xác nhận:',
+      { tieuDe: 'Xóa toàn bộ dữ liệu?', nhap: '', goiY: ten, nut: 'Xóa toàn bộ', nguyHiem: true }).then(function (go) {
+      if (go == null) return;
+      goi('gvXoaToanBo', go).then(function (dl) { capNhat(dl); }).catch(baoLoi);
+    });
+  };
+
   /* ---- Cấu trúc đề ---- */
   var DANG_CHON = [['trac_nghiem', 'Trắc nghiệm ABCD'], ['dung_sai', 'Trắc nghiệm Đúng / Sai'], ['tra_loi_ngan', 'Trả lời ngắn (hệ thống tự chấm đáp số)'], ['tu_luan', 'Tự luận (giáo viên chấm, nhập điểm)'], ['dien_tu', 'Điền từ / viết lại câu'], ['sap_xep', 'Sắp xếp câu / đoạn']];
   function soVN(n) { return String(Math.round(n * 100) / 100).replace('.', ','); }
@@ -3348,6 +3373,7 @@
   function veCaiDat() {
     veMauPhieu();
     veDsCauTruc();
+    veXoaToanBo();
     var c = DL.caiDat || {};
     $('cdLinkPh').textContent = DL.linkTraCuu || '';
     $('cdLinkGv').textContent = DL.linkGiaoVien || '';

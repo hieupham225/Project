@@ -121,3 +121,19 @@ test('cấu trúc đề tự tạo: nhân bản, chấm theo cấu trúc mới, 
   dl = await A.rpc('gvXoaCauTruc', tam.id);
   assert.ok(!dl.cauTrucDe.some((c) => c.id === tam.id));
 });
+
+test('Cài đặt → Làm lại từ đầu: chỉ chủ, phải gõ đúng tên trung tâm; xóa lớp / học sinh / bài thi / phiếu, giữ cấu trúc đề và tài khoản', async () => {
+  let dl = await A.rpc('gvTaiDuLieu');
+  assert.ok(dl.hocSinh.length > 0 && dl.dot.length > 0);
+  await assert.rejects(A.rpc('gvXoaToanBo', 'tên sai'), /chưa đúng/);
+  assert.equal((await A.rpc('gvTaiDuLieu')).hocSinh.length, dl.hocSinh.length, 'gõ sai thì không xóa gì');
+  const ctRieng = dl.cauTrucDe.filter((c) => !c.coSan).length;
+  dl = await A.rpc('gvXoaToanBo', 'trung tâm THỬ v2');
+  assert.match(dl.thongBao, /Đã xóa \d+ lớp, \d+ học sinh, \d+ lần thi, \d+ phiếu/);
+  assert.deepEqual([dl.nhom.length, dl.hocSinh.length, dl.dot.length], [0, 0, 0]);
+  assert.equal(dl.cauTrucDe.filter((c) => !c.coSan).length, ctRieng, 'giữ cấu trúc đề tự tạo');
+  assert.equal(dl.toi.vaiTro, 'Chủ');
+  // nhập lại được ngay
+  dl = await A.rpc('gvTaoNhom', 'Lý mới', 'Vật lí');
+  assert.ok(dl.nhom.includes('Lý mới'));
+});

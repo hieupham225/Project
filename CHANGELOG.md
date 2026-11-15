@@ -26,6 +26,8 @@
 - Nhận các tên cột điểm không có chữ "Điểm" ("Tự luận", "Tổng"…), cột "Ưu và nhược điểm" và nhãn "Điểm cần lưu ý".
 - File mẫu tải về: tab **HuongDan** đứng đầu; cột "Điểm tự luận".
 
+- **Cài đặt → Làm lại từ đầu** (chỉ chủ không gian, gõ tên trung tâm để xác nhận): xóa toàn bộ lớp, học sinh, bài thi, phiếu; giữ tài khoản, giáo viên, cài đặt, mẫu phiếu, cấu trúc đề.
+
 **Sửa lỗi**
 - Popup danh sách phiếu: tiêu đề bảng dính sát mép trên khi cuộn.
 - Trình duyệt dùng bản script cũ trong bộ nhớ đệm (đường dẫn script gắn phiên bản).
