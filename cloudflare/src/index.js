@@ -345,7 +345,7 @@ class NguCanh {
   constructor(db, nd, url) { this.db = db; this.nd = nd; this.kg = nd.kg; this.url = url; this.bo = {}; }
 
   async napLop() {
-    this.lop = (await this.db.prepare('SELECT id, ten, khoa, ngay_tao FROM lop WHERE kg = ? ORDER BY ten').bind(this.kg).all()).results;
+    this.lop = (await this.db.prepare('SELECT id, ten, khoa, mon, ngay_tao FROM lop WHERE kg = ? ORDER BY ten').bind(this.kg).all()).results;
     return this.lop;
   }
   lopTheoTen(ten) { const k = L.khongDau_(ten); return this.lop.find((l) => l.khoa === k) || null; }
@@ -444,7 +444,7 @@ class NguCanh {
     this.bo.lt = (await this.db.prepare('SELECT rowid AS stt_tao, * FROM lan_thi WHERE kg = ?').bind(this.kg).all()).results.map((r) => ({
       sttTao: r.stt_tao, // thứ tự ghi (tăng dần theo thời gian tạo) — để sắp xếp mới nhất trước
       maDot: r.id, lopId: r.lop, nhom: (this.lopTheoId(r.lop) || {}).ten || '', baiThi: r.bai_thi, lan: r.lan, ngayThi: r.ngay_thi, moTa: r.mo_ta || '',
-      thuTu: r.thu_tu, congBo: !!r.cong_bo, ngayTao: r.ngay_tao
+      thuTu: r.thu_tu, congBo: !!r.cong_bo, ngayTao: r.ngay_tao, cauTruc: r.cau_truc || ''
     }));
     return this.bo.lt;
   }
@@ -489,6 +489,10 @@ const HAM = {
       dot,
       diem: phieu.filter((p) => coDot.has(p.lan_thi)).map((p) => [p.lan_thi, maHsTheoId[p.hoc_sinh], p.tong_diem, p.diem_toi_da]),
       nhom: c.lop.filter((l) => c.duocLopId(l.id)).map((l) => l.ten),
+      monLop: Object.fromEntries(c.lop.filter((l) => c.duocLopId(l.id)).map((l) => [l.ten, l.mon || ''])),
+      dsMon: L.DS_MON,
+      cauTrucDe: L.CAU_TRUC_CO_SAN.map((ct) => ({ id: ct.id, mon: ct.mon, ten: ct.ten, moTa: L.moTaCauTruc(ct),
+        phan: ct.phan.map((p) => ({ ma: p.ma, ten: p.ten, dang: p.dang, soCau: p.soCau })) })),
       tatCaNhom: nd.quanTri ? c.lop.map((l) => l.ten) : [],
       taiKhoan: nd.quanTri ? await dsThanhVien(c) : [],
       caiDat: { tenTrungTam: nd.tenKg, khauHieu: nd.caiDat.khauHieu || '', logo: nd.caiDat.logo || '' },
@@ -656,14 +660,28 @@ const HAM = {
     return kq;
   },
 
-  async gvTaoNhom(c, ten) {
+  async gvTaoNhom(c, ten, mon) {
     ten = L.chuoi_(ten).replace(/[;,]/g, ' ').replace(/\s+/g, ' ').trim();
+    mon = chuanMon(mon);
     if (!ten) throw new Loi('Vui lòng nhập tên lớp.');
     if (c.lopTheoTen(ten)) throw new Loi('Đã có lớp "' + ten + '"' + (c.duocLop(ten) ? '.' : ' (do giáo viên khác phụ trách — nhờ quản trị giao lớp này cho bạn).'));
-    await taoLop(c, ten); // giáo viên tự tạo lớp -> tự giao cho mình
+    await taoLop(c, ten, mon); // giáo viên tự tạo lớp -> tự giao cho mình
     const kq = await HAM.gvTaiDuLieu(c);
     kq.thongBao = 'Đã tạo lớp "' + ten + '".';
     kq.nhomMoi = ten;
+    return kq;
+  },
+
+  /** Đặt môn học cho lớp (gợi ý cấu trúc đề khi gửi kết quả). */
+  async gvDatMonLop(c, ten, mon) {
+    c.kiemTraLop(ten);
+    const l = c.lopTheoTen(ten);
+    if (!l) throw new Loi('Không tìm thấy lớp.');
+    mon = chuanMon(mon);
+    await c.db.prepare('UPDATE lop SET mon = ? WHERE id = ? AND kg = ?').bind(mon, l.id, c.kg).run();
+    await c.napLop();
+    const kq = await HAM.gvTaiDuLieu(c);
+    kq.thongBao = mon ? 'Lớp "' + l.ten + '" học môn ' + mon + '.' : 'Đã bỏ môn học của lớp "' + l.ten + '".';
     return kq;
   },
 
@@ -721,7 +739,9 @@ const HAM = {
    */
   async gvXemTruoc(c, so, tuyChon) {
     tuyChon = tuyChon || {};
-    const kq = docHaiFile(so);
+    if (!so || !so.kq) return { ok: false, loi: 'Chưa có bảng kết quả học sinh.' };
+    const idCauTruc = tuyChon.cauTruc || cauTrucGoiY(c, so);
+    const kq = docHaiFile(so, '', idCauTruc);
     if (!kq.ok) return kq;
     const dsHs = await c.hocSinh();
     const g = ghepNhieuLop(c, kq, dsHs, tuyChon.quyetDinh, tuyChon.quyetDinhLop, tuyChon.themHsMoi !== false);
@@ -739,7 +759,8 @@ const HAM = {
     });
     return {
       ok: true, tieuDe: kq.thongTin.tieuDe === 'PHIẾU KẾT QUẢ KIỂM TRA' ? '' : kq.thongTin.tieuDe, ngayThi: kq.thongTin.ngayThi,
-      soCau: { I: kq.cauHoi.I.length, II: kq.cauHoi.II.length, III: kq.cauHoi.III.length }, maDe: kq.maDe, coDapAn: !!so.da,
+      soCau: { I: (kq.cauHoi.I || []).length, II: (kq.cauHoi.II || []).length, III: (kq.cauHoi.III || []).length }, maDe: kq.maDe, coDapAn: !!so.da,
+      cauTruc: idCauTruc, phanDe: kq.cauTruc.phan.map((p) => ({ ma: p.ma, ten: p.ten, soCau: (kq.cauHoi[p.ma] || []).length, soCauChuan: p.soCau })),
       canhBao: kq.canhBao, hocSinh: dsXem,
       nhom: g.nhom.map((x) => ({ nhom: x.nhom, lopMoi: x.lopMoi, soDong: x.soDong, siSo: x.siSo, vang: x.vang.map(gon) })),
       phieuXemTruoc: dauTien ? duLieuPhieu(c, kq, dauTien.h, dauTien.cham, dauTien.hs, '(xem trước)', { lan: 1, ngayThi: kq.thongTin.ngayThi, lichSu: [], nhom: dauTien.nhom }) : null
@@ -752,7 +773,10 @@ const HAM = {
     let baiThiGoc = L.chuoi_(tuyChon.baiThi).replace(/\s+/g, ' ');
     const ngayThi = L.chuanHoaNgay_(tuyChon.ngayThi) || ngayVN();
     if (!baiThiGoc) throw new Loi('Vui lòng nhập tên bài thi.');
-    const kq = docHaiFile(so, baiThiGoc);
+    if (!so || !so.kq) return { ok: false, loi: 'Chưa có bảng kết quả học sinh.' };
+    const idCauTruc = tuyChon.cauTruc || cauTrucGoiY(c, so);
+    const kq = docHaiFile(so, baiThiGoc, idCauTruc);
+    const monDe = kq.cauTruc ? kq.cauTruc.mon : '';
     if (!kq.ok) return kq;
     const g = ghepNhieuLop(c, kq, await c.hocSinh(), tuyChon.quyetDinh, tuyChon.quyetDinhLop, tuyChon.themHsMoi !== false);
     const conChon = g.dong.filter((x) => x.canChon || x.canLop).length;
@@ -772,9 +796,13 @@ const HAM = {
       let idLop;
       if (nh.lopMoi) {
         idLop = taoId();
-        lenhLop.push(c.db.prepare('INSERT INTO lop (id, kg, ten, khoa, ngay_tao) VALUES (?, ?, ?, ?, ?)').bind(idLop, c.kg, nh.nhom, L.khongDau_(nh.nhom), homNay));
+        lenhLop.push(c.db.prepare('INSERT INTO lop (id, kg, ten, khoa, mon, ngay_tao) VALUES (?, ?, ?, ?, ?, ?)').bind(idLop, c.kg, nh.nhom, L.khongDau_(nh.nhom), monDe, homNay));
         if (lopToi) lopToi.push(idLop); // giáo viên tự tạo lớp -> tự giao cho mình
-      } else idLop = c.lopTheoTen(nh.nhom).id;
+      } else {
+        const l = c.lopTheoTen(nh.nhom);
+        idLop = l.id;
+        if (!l.mon && monDe) lenhCuoi.push(c.db.prepare('UPDATE lop SET mon = ? WHERE id = ? AND kg = ?').bind(monDe, idLop, c.kg)); // lớp chưa có môn -> nhận môn của đề
+      }
       const cacLan = lt.filter((d) => d.lopId === idLop && L.khongDau_(d.baiThi) === L.khongDau_(baiThiGoc));
       let lan = 1, baiThi = baiThiGoc;
       if (cacLan.length) {
@@ -792,8 +820,8 @@ const HAM = {
         } else { moi.push({ hoTen: h.hoTen, nhomId: [idLop], sdt: h.sdt, maHs: h.maHs }); chiSoMoi.push({ i, maTheoDong }); }
       });
       const maDot = taoId();
-      lenhCuoi.push(c.db.prepare('INSERT INTO lan_thi (id, kg, lop, bai_thi, lan, ngay_thi, mo_ta, thu_tu, cong_bo, ngay_tao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)')
-        .bind(maDot, c.kg, idLop, baiThi, lan, ngayThi, L.chuoi_(kq.thongTin.moTa), L.soThuTuNgay_(ngayThi), homNay));
+      lenhCuoi.push(c.db.prepare('INSERT INTO lan_thi (id, kg, lop, bai_thi, lan, ngay_thi, mo_ta, thu_tu, cong_bo, cau_truc, ngay_tao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)')
+        .bind(maDot, c.kg, idLop, baiThi, lan, ngayThi, L.chuoi_(kq.thongTin.moTa), L.soThuTuNgay_(ngayThi), idCauTruc, homNay));
       keHoach.push({ maDot, nhom: nh.nhom, lopMoi: nh.lopMoi, baiThi, lan, dongTao, maTheoDong, vang: nh.vang.map((x) => x.hoTen + ' (' + x.maHs + ')') });
     }
     if (!keHoach.length) return { ok: false, loi: 'Không có dòng nào để tạo phiếu (tất cả đều bỏ qua hoặc lỗi).' };
@@ -810,7 +838,7 @@ const HAM = {
     ids.forEach((h) => lopHs[h].forEach((l, k) => dongLop.push([h, l, k])));
     await chay(c.db, [...lenhXoaTheo(c.db, 'hoc_sinh_lop', 'hoc_sinh', ids),
       ...lenhChenNhieu(c.db, 'hoc_sinh_lop', ['hoc_sinh', 'lop', 'thu_tu'], dongLop, 'INSERT OR IGNORE'), ...lenhCuoi]);
-    c.xoaBoNho();
+    c.xoaBoNho(); await c.napLop();
     const dsDot = keHoach.map((k) => ({ maDot: k.maDot, nhom: k.nhom, lopMoi: k.lopMoi, baiThi: k.baiThi, lan: k.lan,
       canTao: k.dongTao.map((i) => ({ i, maHs: k.maTheoDong[i] })), vang: k.vang }));
     if (!dsDot.length) return { ok: false, loi: 'Không có dòng nào để tạo phiếu (tất cả đều bỏ qua hoặc lỗi).' };
@@ -823,7 +851,7 @@ const HAM = {
     const dot = lt.find((d) => d.maDot === maDot);
     if (!dot) throw new Loi('Không tìm thấy lần thi.');
     if (!c.duocLopId(dot.lopId)) throw new Loi('Bạn không phụ trách lớp "' + dot.nhom + '".', 403);
-    const kq = docHaiFile(so, dot.baiThi);
+    const kq = docHaiFile(so, dot.baiThi, dot.cauTruc);
     if (!kq.ok) throw new Loi(kq.loi);
     const theoMa = {};
     (await c.hocSinh()).forEach((h) => { theoMa[h.maHs] = h; });
@@ -959,8 +987,9 @@ const HAM = {
   },
 
   /** File mẫu: bảng kết quả (điền sẵn danh sách lớp) + bảng đáp án theo mã đề. */
-  async gvLayMau(c, nhom) {
+  async gvLayMau(c, nhom, idCauTruc) {
     nhom = L.chuoi_(nhom);
+    const ct = cauTrucTheoId(idCauTruc || (nhom && c.lopTheoTen(nhom) && L.cauTrucCuaMon(c.lopTheoTen(nhom).mon)) || 'thpt2025-toan');
     const tenCuoi = (s) => s.split(' ').pop();
     const theoTen = (a, b) => tenCuoi(a.hoTen).localeCompare(tenCuoi(b.hoTen), 'vi') || a.hoTen.localeCompare(b.hoTen, 'vi');
     const hs = (await c.hocSinh()).filter((h) => c.duocHocSinh(h));
@@ -975,7 +1004,7 @@ const HAM = {
       });
       hs.filter((h) => !h.nhomId.length).sort(theoTen).forEach((h) => ds.push({ maHs: h.maHs, hoTen: h.hoTen, lopMau: '' }));
     }
-    return { ketQua: L.taoMauKetQua(ds, nhom), dapAn: L.taoMauDapAn() };
+    return { ketQua: L.taoMauKetQua(ds, nhom, null, ct), dapAn: L.taoMauDapAn(ct), cauTruc: ct.id };
   },
 
   /* ---------- tài khoản trong không gian ---------- */
@@ -1132,9 +1161,9 @@ function ghepNhieuLop(c, kq, dsHs, quyetDinh, quyetDinhLop, tuThemMoi) {
 }
 
 /** Tạo lớp mới (giáo viên không phải quản trị: tự giao lớp cho mình). Trả về id lớp. */
-async function taoLop(c, ten) {
+async function taoLop(c, ten, mon = '') {
   const id = taoId();
-  await c.db.prepare('INSERT INTO lop (id, kg, ten, khoa, ngay_tao) VALUES (?, ?, ?, ?, ?)').bind(id, c.kg, ten, L.khongDau_(ten), ngayVN()).run();
+  await c.db.prepare('INSERT INTO lop (id, kg, ten, khoa, mon, ngay_tao) VALUES (?, ?, ?, ?, ?, ?)').bind(id, c.kg, ten, L.khongDau_(ten), mon, ngayVN()).run();
   if (!c.tatCaLop) {
     c.nd.lop = [...c.nd.lop, id];
     await c.db.prepare('UPDATE thanh_vien SET lop = ? WHERE kg = ? AND tai_khoan = ?').bind(JSON.stringify(c.nd.lop), c.kg, c.nd.tkId).run();
@@ -1143,10 +1172,33 @@ async function taoLop(c, ten) {
   return id;
 }
 
-/** Đọc 2 file tải lên (dạng sổ { tênTab: [[ô…]] }). */
-function docHaiFile(so, baiThi) {
+/** Môn học hợp lệ: 1 trong các môn có sẵn (không phân biệt hoa thường), hoặc tên môn khác do người dùng gõ. */
+function chuanMon(mon) {
+  const m = L.chuoi_(mon).replace(/\s+/g, ' ');
+  if (m.length > 40) throw new Loi('Tên môn quá dài.');
+  return L.DS_MON.find((x) => x.toLowerCase() === m.toLowerCase()) || m;
+}
+
+/** Cấu trúc đề theo id (trống -> cách chấm Toán v1). */
+function cauTrucTheoId(id) {
+  if (!id) return null;
+  const ct = L.layCauTrucCoSan(id);
+  if (!ct) throw new Loi('Không tìm thấy cấu trúc đề "' + id + '".');
+  return ct;
+}
+
+/** Gợi ý cấu trúc đề theo môn của các lớp trong file: các lớp cùng 1 môn -> cấu trúc của môn đó; còn lại -> Toán. */
+function cauTrucGoiY(c, so) {
+  const kqF = L.docFileKetQua(so.kq);
+  const mon = new Set();
+  if (kqF.ok) kqF.hocSinh.forEach((h) => { const l = h.lop && c.lopTheoTen(h.lop); if (l && l.mon) mon.add(l.mon); });
+  return (mon.size === 1 && L.cauTrucCuaMon([...mon][0])) || 'thpt2025-toan';
+}
+
+/** Đọc 2 file tải lên (dạng sổ { tênTab: [[ô…]] }) theo cấu trúc đề. */
+function docHaiFile(so, baiThi, cauTrucId) {
   if (!so || !so.kq) return { ok: false, loi: 'Chưa có bảng kết quả học sinh.' };
-  return L.ghepHaiFile(L.docFileKetQua(so.kq), so.da ? L.docFileDapAn(so.da) : null, { tieuDe: baiThi ? baiThi.toUpperCase() : '' });
+  return L.ghepHaiFile(L.docFileKetQua(so.kq), so.da ? L.docFileDapAn(so.da) : null, { tieuDe: baiThi ? baiThi.toUpperCase() : '' }, cauTrucTheoId(cauTrucId));
 }
 
 /** Dữ liệu 1 phiếu (lưu JSON; trình duyệt dựng phiếu từ đây). */

@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS lop (
   kg         TEXT NOT NULL REFERENCES khong_gian(id) ON DELETE CASCADE,
   ten        TEXT NOT NULL,
   khoa       TEXT NOT NULL,                 -- tên bỏ dấu, chữ thường, để chống trùng
+  mon        TEXT NOT NULL DEFAULT '',      -- môn học (gợi ý cấu trúc đề khi gửi kết quả)
   ngay_tao   TEXT NOT NULL,
   UNIQUE (kg, khoa)
 );
@@ -75,6 +76,7 @@ CREATE TABLE IF NOT EXISTS lan_thi (
   mo_ta      TEXT NOT NULL DEFAULT '',      -- dòng mô tả dưới tiêu đề phiếu
   thu_tu     INTEGER NOT NULL DEFAULT 0,    -- yyyyMMdd để sắp xếp
   cong_bo    INTEGER NOT NULL DEFAULT 0,
+  cau_truc   TEXT NOT NULL DEFAULT '',      -- id cấu trúc đề (trống = Toán v1)
   ngay_tao   TEXT NOT NULL
 );
 

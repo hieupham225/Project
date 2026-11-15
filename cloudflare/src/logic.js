@@ -4,7 +4,7 @@
  */
 
 import * as CT from './cau-truc.js';
-export { CAU_TRUC_CO_SAN, layCauTrucCoSan, kiemTraCauTruc, DANG_CAU } from './cau-truc.js';
+export { CAU_TRUC_CO_SAN, layCauTrucCoSan, kiemTraCauTruc, DANG_CAU, moTaCauTruc, DS_MON, cauTrucCuaMon, diemToiDa } from './cau-truc.js';
 
 export const CAU_HINH = {
   DO_DAI_MA: 8,
@@ -561,6 +561,7 @@ export function ghepHaiFile(kqF, da, thongTinThem, cauTruc) {
     moTaPhan: { I: tt.motaphani || '', II: tt.motaphanii || '', III: tt.motaphaniii || '' },
     tenPhan: { I: tt.tenphani || 'Câu trắc nghiệm nhiều phương án lựa chọn.', II: tt.tenphanii || 'Câu trắc nghiệm đúng sai.', III: tt.tenphaniii || 'Tự luận' }
   };
+  if (cauTruc) cauTruc.phan.forEach(function (p) { if (!tt['tenphan' + p.ma.toLowerCase()]) thongTin.tenPhan[p.ma] = p.ten; });
   // Danh sách câu: từ file đáp án, bảng kết quả, và thông tin câu hỏi
   var soCau = {};
   kqF.soCau.forEach(function (n) { soCau[n] = 1; });
@@ -575,13 +576,24 @@ export function ghepHaiFile(kqF, da, thongTinThem, cauTruc) {
     phanTheoThuTu = [];
     cauTruc.phan.forEach(function (p) { for (var i = 0; i < p.soCau; i++) phanTheoThuTu.push(p.ma); });
     var tongCau = phanTheoThuTu.length;
-    if (dsCau.length > tongCau) canhBao.push('File có ' + dsCau.length + ' câu, nhiều hơn cấu trúc "' + cauTruc.ten + '" (' + tongCau + ' câu): các câu thừa được tính vào phần cuối.');
-    if (dsCau.length && dsCau.length < tongCau) canhBao.push('File có ' + dsCau.length + ' câu, ít hơn cấu trúc "' + cauTruc.ten + '" (' + tongCau + ' câu).');
+    if (dsCau.length !== tongCau) {
+      // số câu khác cấu trúc: không chia theo thứ tự được -> đoán phần theo dạng đáp án (như v1)
+      canhBao.push('File có ' + dsCau.length + ' câu, cấu trúc "' + cauTruc.ten + '" có ' + tongCau + ' câu: hệ thống chia phần theo dạng đáp án — kiểm tra lại số câu từng phần.');
+      phanTheoThuTu = null;
+    }
   }
+  var doanTheoCauTruc = function (n) {
+    var mau = Object.keys(dapAn).map(function (m) { return dapAn[m].dapAn[n]; }).filter(Boolean);
+    if (!mau.length) mau = kqF.hocSinh.map(function (h) { return h.traLoiGoc[n]; }).filter(Boolean);
+    var p = mau.length && cauTruc.phan.filter(function (x) {
+      return mau.every(function (v) { return CT.DANG_CAU[x.dang].nhanDang(v, x); });
+    })[0];
+    return p ? p.ma : cauTruc.phan[cauTruc.phan.length - 1].ma;
+  };
   dsCau.forEach(function (n, k) {
     var meta = (da && da.cauHoi[n]) || {};
-    var phan = phanTheoThuTu
-      ? (meta.phan && cauHoi[meta.phan] ? meta.phan : phanTheoThuTu[Math.min(k, phanTheoThuTu.length - 1)])
+    var phan = cauTruc
+      ? (meta.phan && cauHoi[meta.phan] ? meta.phan : phanTheoThuTu ? phanTheoThuTu[k] : doanTheoCauTruc(n))
       : meta.phan || doanPhan_(Object.keys(dapAn).map(function (m) { return dapAn[m].dapAn[n]; })) ||
         doanPhan_(kqF.hocSinh.map(function (h) { return h.traLoiGoc[n]; })) || 'III';
     var q = { cau: cauHoi[phan].length + 1, cauGoc: n, chuDe: meta.chuDe || '', mucDo: meta.mucDo || '', noiDung: meta.noiDung || '', dapAn: { '': '' } };
@@ -623,7 +635,8 @@ export function ghepHaiFile(kqF, da, thongTinThem, cauTruc) {
  * ===================================================================== */
 
 /** Mẫu bảng kết quả: cột giống bảng giáo viên đang dùng để trộn thư; điền sẵn danh sách lớp nếu có. */
-export function taoMauKetQua(dsHocSinh, tenLop, soCau) {
+export function taoMauKetQua(dsHocSinh, tenLop, soCau, cauTruc) {
+  if (cauTruc && cauTruc.id !== 'thpt2025-toan') return taoMauKetQuaTheoCauTruc_(dsHocSinh, tenLop, cauTruc);
   soCau = soCau || 22;
   var cau = []; for (var i = 1; i <= soCau; i++) cau.push('Câu ' + i);
   var tieuDe = ['STT', 'Mã HS', 'Họ và tên', 'Lớp', 'Số báo danh', 'Mã đề thi'].concat(cau,
@@ -658,8 +671,111 @@ export function taoMauKetQua(dsHocSinh, tenLop, soCau) {
   };
 }
 
+/* ---------- mẫu theo cấu trúc đề (môn khác Toán) ---------- */
+
+var TEN_DANG_HD = {
+  trac_nghiem: function (p) { return 'trắc nghiệm, ghi ' + (p.phuongAn || 'ABCD').split('').join('/') + ', ' + soVN_(p.diemMoiCau) + 'đ/câu'; },
+  dung_sai: function () { return 'đúng/sai 4 ý, ghi "Đ,S,Đ,S"; 1 ý 0,1 – 2 ý 0,25 – 3 ý 0,5 – 4 ý 1đ'; },
+  tra_loi_ngan: function (p) { return 'trả lời ngắn, ghi số (VD 1,5), ' + soVN_(p.diemMoiCau) + 'đ/câu'; },
+  dien_tu: function (p) { return 'điền từ / viết lại câu, ' + soVN_(p.diemMoiCau) + 'đ/câu'; },
+  sap_xep: function (p) { return 'sắp xếp, ghi thứ tự VD "a-c-b-d", ' + soVN_(p.diemMoiCau) + 'đ/câu'; }
+};
+function soVN_(n) { return String(Math.round(n * 100) / 100).replace('.', ','); }
+/** Đáp án mẫu (minh họa) cho câu thứ k của 1 phần. */
+function dapAnMau_(p, k, lech) {
+  if (p.dang === 'trac_nghiem') { var pa = p.phuongAn || 'ABCD'; return pa.charAt((k + lech) % pa.length); }
+  if (p.dang === 'dung_sai') return ['Đ,Đ,S,S', 'Đ,S,Đ,S', 'S,Đ,Đ,S', 'Đ,S,S,Đ'][(k + lech) % 4];
+  if (p.dang === 'tra_loi_ngan') return ['1,5', '2', '0,25', '12', '3', '7'][(k + lech) % 6];
+  if (p.dang === 'sap_xep') return ['a-c-b-d', 'b-a-d-c', 'c-a-b-d'][(k + lech) % 3];
+  return '';
+}
+/** Các phần của cấu trúc: [{ p, tu, den }] (số câu đánh liên tục Câu 1…N). */
+function khoangCau_(ct) {
+  var tu = 1;
+  return ct.phan.map(function (p) { var x = { p: p, tu: tu, den: tu + p.soCau - 1 }; tu += p.soCau; return x; });
+}
+function cotDiemPhan_(p) { return 'Điểm phần ' + p.ma; }
+
+function taoMauKetQuaTheoCauTruc_(dsHocSinh, tenLop, ct) {
+  var kc = khoangCau_(ct), soCau = kc.length ? kc[kc.length - 1].den : 0;
+  var cau = []; for (var i = 1; i <= soCau; i++) cau.push('Câu ' + i);
+  var cotDiem = ct.phan.map(cotDiemPhan_);
+  var tieuDe = ['STT', 'Mã HS', 'Họ và tên', 'Lớp', 'Số báo danh', 'Mã đề thi'].concat(cau, cotDiem,
+    ['Tổng điểm', 'Thứ hạng', 'Ưu điểm', 'Nhược điểm', 'Hướng khắc phục', 'Lời khuyên']);
+  var dong = (dsHocSinh || []).map(function (h, j) {
+    var r = tieuDe.map(function () { return ''; });
+    r[0] = String(j + 1); r[1] = h.maHs; r[2] = h.hoTen; r[3] = h.lopMau != null ? h.lopMau : (tenLop || '');
+    return r;
+  });
+  if (!dong.length) {
+    var vd = tieuDe.map(function () { return ''; });
+    vd[0] = '1'; vd[2] = 'Nguyễn Văn An'; vd[3] = tenLop || (ct.mon + ' 1'); vd[4] = '210101'; vd[5] = '101';
+    kc.forEach(function (x) { for (var n = x.tu; n <= x.den; n++) vd[5 + n] = dapAnMau_(x.p, n - x.tu, 0); });
+    var c0 = 6 + soCau + cotDiem.length + 2;
+    vd[c0] = 'Nắm vững kiến thức cơ bản.'; vd[c0 + 1] = 'Còn nhầm lẫn ở một số câu vận dụng.'; vd[c0 + 2] = 'Luyện thêm các dạng bài vận dụng.';
+    dong.push(vd);
+  }
+  return {
+    KetQua: [tieuDe].concat(dong),
+    HuongDan: [
+      ['HƯỚNG DẪN — BẢNG KẾT QUẢ HỌC SINH · ' + ct.ten.toUpperCase()],
+      ['• Mỗi học sinh 1 dòng. KHÔNG sửa cột "Mã HS" (đã điền sẵn khi tải mẫu của lớp) — đó là mã để nhận đúng học sinh.'],
+      ['• Cột "Lớp": hệ thống tự đưa kết quả vào đúng lớp. Một file có thể gồm nhiều lớp; xóa các dòng của học sinh không làm bài này.'],
+      ['• "Mã đề thi": mã đề học sinh làm. Đáp án đúng của từng mã đề nằm ở file đáp án riêng.'],
+      ['• "Câu 1" … "Câu ' + soCau + '": đáp án học sinh làm, đánh số liên tục qua các phần:']
+    ].concat(kc.map(function (x) {
+      return ['    – Câu ' + x.tu + (x.den > x.tu ? '–' + x.den : '') + ': Phần ' + x.p.ma + ' (' + x.p.ten.replace(/\.$/, '') + ') — ' + TEN_DANG_HD[x.p.dang](x.p) + '.'];
+    }), [
+      ['• Cột "Điểm phần …" và "Tổng điểm" để trống thì hệ thống tự tính từ đáp án; có điền thì phiếu dùng điểm giáo viên nhập.'],
+      ['• Nhận xét: dùng 2 cột "Ưu điểm", "Nhược điểm", hoặc 1 cột "Ưu, nhược" dạng "+ Ưu điểm: …  + Nhược điểm: …".']
+    ])
+  };
+}
+
+function taoMauDapAnTheoCauTruc_(ct) {
+  var kc = khoangCau_(ct), soCau = kc.length ? kc[kc.length - 1].den : 0;
+  var tieuDe = ['Mã đề'];
+  for (var i = 1; i <= soCau; i++) tieuDe.push('Câu ' + i);
+  var hai = [0, 1].map(function (lech) {
+    var r = [String(101 + lech)];
+    kc.forEach(function (x) { for (var n = x.tu; n <= x.den; n++) r.push(dapAnMau_(x.p, n - x.tu, lech)); });
+    return r;
+  });
+  var cauHoi = [['Câu', 'Phần', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể']];
+  kc.forEach(function (x) { for (var n = x.tu; n <= x.den; n++) cauHoi.push([String(n), x.p.ma, '', '', '']); });
+  return {
+    DapAn: [tieuDe].concat(hai),
+    CauHoi: cauHoi,
+    ThongTin: [
+      ['Mục', 'Giá trị', 'Ghi chú'],
+      ['Tiêu đề phiếu', '', 'Dòng tiêu đề lớn trên phiếu (để trống: dùng tên bài thi)'],
+      ['Mô tả', '', 'Dòng ngay dưới tiêu đề'],
+      ['Ngày thi', '', 'dd/mm/yyyy'],
+      ['Nhãn lớp', 'Lớp', 'Chữ hiển thị trước tên lớp trên phiếu']
+    ].concat(ct.phan.map(function (p) { return ['Mô tả phần ' + p.ma, '', 'Đoạn giới thiệu phần ' + p.ma + ' trên phiếu (tùy chọn)']; })),
+    HuongDan: [
+      ['HƯỚNG DẪN — BẢNG ĐÁP ÁN THEO MÃ ĐỀ · ' + ct.ten.toUpperCase()],
+      ['• Tab DapAn: mỗi mã đề 1 dòng; cột "Câu 1" … "Câu ' + soCau + '" là đáp án đúng (2 dòng 101, 102 là ví dụ — thay bằng mã đề thật).'],
+      ['• Câu đánh số liên tục qua các phần:']
+    ].concat(kc.map(function (x) {
+      return ['    – Câu ' + x.tu + (x.den > x.tu ? '–' + x.den : '') + ': Phần ' + x.p.ma + ' — ' + TEN_DANG_HD[x.p.dang](x.p) + '.'];
+    }), [
+      x_dt_(ct),
+      ['• Tab CauHoi (tùy chọn): chủ đề, mức độ, nội dung từng câu — hiện trên phiếu. Cột "Phần" đã điền sẵn theo cấu trúc đề.'],
+      ['• Nếu các mã đề đảo thứ tự câu hỏi: thêm cột "Mã đề" vào tab CauHoi và ghi chủ đề riêng cho từng mã đề.'],
+      ['• Tab ThongTin (tùy chọn): tiêu đề phiếu, mô tả, ngày thi, mô tả từng phần.']
+    ])
+  };
+}
+function x_dt_(ct) {
+  return ct.phan.some(function (p) { return p.dang === 'dien_tu'; })
+    ? ['• Điền từ / viết lại câu: nhiều đáp án đúng thì ngăn bằng dấu " / " (VD: "has been built / was built"); không phân biệt chữ hoa, bỏ qua dấu chấm cuối câu.']
+    : ['• Đúng/sai viết "ĐSĐS" hoặc "Đ,S,Đ,S"; trả lời ngắn viết số, dấu phẩy hay dấu chấm thập phân đều được.'];
+}
+
 /** Mẫu bảng đáp án theo mã đề. */
-export function taoMauDapAn() {
+export function taoMauDapAn(cauTruc) {
+  if (cauTruc && cauTruc.id !== 'thpt2025-toan') return taoMauDapAnTheoCauTruc_(cauTruc);
   var de = MAU_FILE_KET_QUA.DeThi.slice(1); // Phần | Câu | Chủ đề | Mức độ | Nội dung | Đáp án (mã 105)
   var cauHoi = [['Câu', 'Phần', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể']];
   var dapAn105 = [], dapAn106 = [];

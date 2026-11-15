@@ -107,17 +107,17 @@ var BANG_DUNG_SAI = [0, 0.1, 0.25, 0.5, 1]; // 0..4 ý đúng
 var TEN = {
   I: 'Câu trắc nghiệm nhiều phương án lựa chọn.', II: 'Câu trắc nghiệm đúng sai.', III: 'Tự luận'
 };
-function baPhan(soI, soII, soIII, diemIII) {
+function baPhan(soI, soII, soIII, diemIII, tenIII) {
   var ds = [
     { ma: 'I', ten: TEN.I, dang: 'trac_nghiem', soCau: soI, diemMoiCau: 0.25, phuongAn: 'ABCD' },
     { ma: 'II', ten: TEN.II, dang: 'dung_sai', soCau: soII, soY: 4, diemMoiCau: 1, bangDiem: BANG_DUNG_SAI }
   ];
-  if (soIII) ds.push({ ma: 'III', ten: TEN.III, dang: 'tra_loi_ngan', soCau: soIII, diemMoiCau: diemIII });
+  if (soIII) ds.push({ ma: 'III', ten: tenIII || 'Câu trắc nghiệm trả lời ngắn.', dang: 'tra_loi_ngan', soCau: soIII, diemMoiCau: diemIII });
   return ds;
 }
 
 export const CAU_TRUC_CO_SAN = [
-  { id: 'thpt2025-toan', mon: 'Toán', ten: 'THPT 2025 – Toán', phan: baPhan(12, 4, 6, 0.5) },
+  { id: 'thpt2025-toan', mon: 'Toán', ten: 'THPT 2025 – Toán', phan: baPhan(12, 4, 6, 0.5, TEN.III) },
   { id: 'thpt2025-vat-li', mon: 'Vật lí', ten: 'THPT 2025 – Vật lí', phan: baPhan(18, 4, 6, 0.25) },
   { id: 'thpt2025-hoa-hoc', mon: 'Hóa học', ten: 'THPT 2025 – Hóa học', phan: baPhan(18, 4, 6, 0.25) },
   { id: 'thpt2025-sinh-hoc', mon: 'Sinh học', ten: 'THPT 2025 – Sinh học', phan: baPhan(18, 4, 6, 0.25) },
@@ -141,6 +141,23 @@ export function cauTrucToanV1(thongTin) {
     ['I', 'II', 'III'].forEach(function (m, i) { if (thongTin.tenPhan && thongTin.tenPhan[m]) ct.phan[i].ten = thongTin.tenPhan[m]; });
   }
   return ct;
+}
+
+function so(n) { return String(Math.round(n * 100) / 100).replace('.', ','); }
+/** Mô tả ngắn: "I: 18 câu trắc nghiệm × 0,25 · II: 4 câu đúng/sai · III: 6 câu trả lời ngắn × 0,25 — tổng 10 điểm" */
+export function moTaCauTruc(ct) {
+  var ngan = { trac_nghiem: 'trắc nghiệm', dung_sai: 'đúng/sai', tra_loi_ngan: 'trả lời ngắn', dien_tu: 'điền từ', sap_xep: 'sắp xếp' };
+  return ct.phan.map(function (p) {
+    return p.ma + ': ' + p.soCau + ' câu ' + (ngan[p.dang] || p.dang) + (p.dang === 'dung_sai' ? '' : ' × ' + so(p.diemMoiCau));
+  }).join(' · ') + ' — tổng ' + so(diemToiDa(ct)) + ' điểm';
+}
+/** Danh sách môn của các cấu trúc có sẵn (giữ thứ tự). */
+export const DS_MON = CAU_TRUC_CO_SAN.map(function (c) { return c.mon; }).filter(function (m, i, a) { return a.indexOf(m) === i; });
+/** Cấu trúc mặc định của 1 môn (cấu trúc có sẵn đầu tiên của môn đó). */
+export function cauTrucCuaMon(mon) {
+  var k = String(mon || '').normalize('NFC').toLowerCase().trim();
+  var x = CAU_TRUC_CO_SAN.filter(function (c) { return c.mon.toLowerCase() === k; })[0];
+  return x ? x.id : '';
 }
 
 /** Điểm tối đa của cả đề. */
