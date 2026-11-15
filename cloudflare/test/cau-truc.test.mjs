@@ -137,9 +137,9 @@ test('khối phân tích theo từng phần: data-phan chọn phần, data-ten �
   const d = KP.phieuMinhHoa();
   const html = '<div class="khoi" data-khoi="phan-tich" data-phan="II" data-ten="Đúng &amp; sai">x</div><p>giữa</p><div class="khoi" data-khoi="phan-tich" data-phan="I">y</div><div class="khoi" data-khoi="phan-tich" data-phan="IV">z</div>';
   const out = KP.dungKhoi(html, d);
-  assert.match(out, /PHẦN II: Đúng &amp; sai/);
-  assert.ok(out.indexOf('PHẦN II') < out.indexOf('giữa') && out.indexOf('giữa') < out.indexOf('PHẦN I:'), 'phần II đứng trước phần I');
-  assert.equal((out.match(/PHẦN /g) || []).length, 2, 'phần IV không có thì để trống');
+  assert.match(out, /<b>Đúng &amp; sai<\/b>/);
+  assert.ok(out.indexOf("Đúng &amp; sai") < out.indexOf("giữa") && out.indexOf('giữa') < out.indexOf('PHẦN I:'), 'phần II đứng trước phần I');
+  assert.equal((out.match(/<table/g) || []).length, 2, 'phần IV không có thì để trống');
   assert.equal(L.chuanHoaPhan_('Phần 4'), 'IV');
 });
 
