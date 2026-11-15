@@ -1173,6 +1173,7 @@ const HAM = {
     const id = L.chuoi_(ct.id);
     if (id && L.layCauTrucCoSan(id)) throw new Loi('Cấu trúc có sẵn không sửa được — hãy nhân bản rồi sửa bản sao.');
     const ten = L.chuoi_(ct.ten).slice(0, 120), mon = L.chuoi_(ct.mon).slice(0, 40);
+    if (!mon) throw new Loi('Chọn môn cho cấu trúc đề.');
     const LA_MA = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
     const so = (v) => Number(String(v == null ? '' : v).replace(',', '.'));
     const phan = (Array.isArray(ct.phan) ? ct.phan : []).slice(0, LA_MA.length).map((p, i) => {
