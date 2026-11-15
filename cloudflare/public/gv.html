@@ -354,6 +354,32 @@
   .cong-cu-mau { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; align-items: center; }
   .cong-cu-mau select { height: var(--cao-nho); max-width: 260px; }
   .huong-dan-mau { margin: 0; font-size: 13px; color: var(--phu); }
+  .nut-dau-mau:empty { display: none; }
+  .than-mau.ba-cot { display: grid; grid-template-columns: 270px minmax(0, 1fr) 340px; gap: 14px; overflow: hidden; }
+  .ba-cot .cot-trai, .ba-cot .cot-phai { min-height: 0; overflow: auto; background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-phan-tu); padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+  .ba-cot .cot-giua { min-height: 0; display: flex; flex-direction: column; }
+  .ba-cot .cot-giua iframe.khung-mau { flex: 1 1 auto; min-height: 0; }
+  .ba-cot h3 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--phu); }
+  .nhom-trai { display: flex; flex-direction: column; gap: 8px; }
+  .nhom-trai select, .nhom-trai input, .nhom-trai .nut, .nhom-trai button { width: 100%; max-width: none; }
+  .nhom-trai .canh-bao { margin: 0; font-size: 12px; }
+  .cot-phai .ds-muc { display: flex; flex-direction: column; gap: 2px; }
+  .cot-phai .muc-phieu { justify-content: flex-start; text-align: left; gap: 8px; min-height: 34px; height: auto; padding: 6px 10px; background: none; color: var(--chu); border-radius: var(--r-trong); font-weight: 500; white-space: normal; }
+  .cot-phai .muc-phieu:hover:not(:disabled) { background: var(--phu-nhan); }
+  .cot-phai .muc-phieu .loai-muc { flex: none; width: 20px; height: 20px; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; background: #FFF1B8; color: #8A6A00; }
+  .cot-phai .muc-phieu.khoi .loai-muc { background: #E3EAFF; color: #2A4AA8; }
+  .pop-mau.tinh { position: static; width: auto; max-height: none; padding: 0; border: 0; box-shadow: none; background: none; }
+  .pop-mau.tinh .ds-chon-truong { max-height: none; }
+  @media (max-width: 1099px) {
+    .than-mau.ba-cot { display: flex; flex-direction: column; overflow: auto; }
+    .ba-cot .cot-phai { display: none; }
+    .than-mau.ba-cot > * { flex: none; min-height: auto; }
+    .ba-cot .cot-trai { flex-direction: row; flex-wrap: wrap; align-items: flex-start; overflow: visible; padding: 10px 12px; gap: 10px 16px; }
+    .ba-cot .cot-trai > button { width: auto; flex: none; }
+    .ba-cot .cot-trai .nhom-trai { flex: 1 1 220px; }
+    .ba-cot .cot-giua { min-height: 70vh; }
+    .ba-cot .cot-giua iframe.khung-mau { min-height: 70vh; }
+  }
   iframe.khung-mau { flex: 1 1 auto; min-height: 360px; width: 100%; border: 1px solid var(--vien-dam); border-radius: var(--r-phan-tu); background: #E9E6E0; }
   .pop-mau { position: fixed; z-index: 40; width: min(360px, calc(100vw - 16px)); max-height: min(440px, 70vh); display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--be-mat); border: 1px solid var(--vien-dam); border-radius: var(--r-phan-tu); box-shadow: var(--bong-cao); }
   .pop-mau .dau-pop { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; font-size: 13px; }
@@ -2771,17 +2797,30 @@
   function manMau() {
     if (_manMau) return _manMau;
     var nen = the('div', { class: 'phu-trang man-mau-nen an', 'data-khong-dong': '', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Mẫu phiếu' });
-    var tieuDe = the('h2'), buoc = the('div', { class: 'buoc-mau' }), than = the('div', { class: 'than-mau' }), chan = the('div', { class: 'chan-mau' });
+    var tieuDe = the('h2'), buoc = the('div', { class: 'buoc-mau' }), than = the('div', { class: 'than-mau' }), chan = the('div', { class: 'chan-mau' }), nutLuuDau = the('span', { class: 'nut-dau-mau' });
     var dong = function () { nen.classList.add('an'); than.textContent = ''; chan.textContent = ''; anPop(); };
     nen.appendChild(the('div', { class: 'man-mau' }, [
-      the('div', { class: 'dau-mau' }, [tieuDe, buoc, the('button', { type: 'button', class: 'phu', text: 'Đóng', onclick: function () {
+      the('div', { class: 'dau-mau' }, [tieuDe, buoc, nutLuuDau, the('button', { type: 'button', class: 'phu', text: 'Đóng', onclick: function () {
         if (!than.dataset.daSua || confirm('Đóng mà không lưu? Các chỉnh sửa sẽ mất.')) dong();
       } })]), than, chan]));
     document.body.appendChild(nen);
     var pop = the('div', { class: 'pop-mau an' }); document.body.appendChild(pop);
-    var anPop = function () { pop.classList.add('an'); pop.textContent = ''; };
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !pop.classList.contains('an')) anPop(); });
-    var moPop = function (noi, rect) { // rect: toạ độ trên màn hình
+    // Bố cục 3 cột (màn rộng): trình sửa mục nằm ở cột phải thay cho ô nổi; không chọn gì -> cột phải hiện danh sách mục
+    var cotPhai = null, veDsMuc = null;
+    var laBaCot = function () { return !!cotPhai && matchMedia('(min-width: 1100px)').matches; };
+    var anPop = function () {
+      pop.classList.add('an'); pop.textContent = '';
+      if (cotPhai) { cotPhai.textContent = ''; if (veDsMuc) veDsMuc(); }
+    };
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && (!pop.classList.contains('an') || laBaCot())) anPop(); });
+    var moPop = function (noi, rect) { // rect: toạ độ trên màn hình (bỏ qua khi sửa ở cột phải)
+      if (laBaCot()) {
+        cotPhai.textContent = '';
+        var hop = the('div', { class: 'pop-mau tinh' }); noi.forEach(function (x) { if (x) hop.appendChild(x); });
+        cotPhai.appendChild(hop); cotPhai.scrollTop = 0;
+        var o = hop.querySelector('input[type=search]'); if (o && !laCamUng()) setTimeout(function () { o.focus(); }, 30);
+        return;
+      }
       pop.textContent = ''; noi.forEach(function (x) { if (x) pop.appendChild(x); }); pop.classList.remove('an');
       var w = pop.offsetWidth, h = pop.offsetHeight, x = Math.min(Math.max(8, rect.left), innerWidth - w - 8);
       var y = rect.bottom + 8 + h > innerHeight - 8 ? Math.max(8, rect.top - h - 8) : rect.bottom + 8;
@@ -2794,6 +2833,7 @@
       (cacBuoc || ['Chọn cách tạo', 'Tải file', 'Kiểm tra phiếu']).forEach(function (x, i) {
         buoc.appendChild(the('span', { class: 'o-buoc' + (i + 1 === so ? ' dang' : i + 1 < so ? ' xong' : '') }, [the('b', { text: i + 1 < so ? '✓' : String(i + 1) }), x]));
       });
+      cotPhai = null; veDsMuc = null; than.className = 'than-mau'; chan.classList.remove('an'); nutLuuDau.textContent = ''; 
       than.textContent = ''; chan.textContent = ''; delete than.dataset.daSua; anPop();
       nen.classList.remove('an'); than.scrollTop = 0;
     };
@@ -2893,6 +2933,7 @@
           k.innerHTML = (k.tagName === 'SPAN' ? '' : '<span class="nhan-khoi">⚙ Phần tự động: ' + kk.ten + xmlAnToan(moTaPhan) + ' — hệ thống tự điền cho từng học sinh</span>') + noi;
         });
         demCho();
+        if (laBaCot() && !cotPhai.querySelector('.pop-mau')) veDsMuc();
       };
       var demCho = function () {
         var n = vung() ? truongTrongHtml(vung().innerHTML).length : 0, nk = vung() ? vung().querySelectorAll('.khoi').length : 0;
@@ -3112,7 +3153,7 @@
         var co = doc().documentElement.clientWidth - 16, rong = vung().offsetWidth;
         if (rong > co) vung().style.zoom = Math.max(0.35, co / rong).toFixed(3);
       };
-      window.addEventListener('resize', function () { if (!nen.classList.contains('an')) vuaKhung(); });
+      window.addEventListener('resize', function () { if (!nen.classList.contains('an')) { vuaKhung(); if (!laBaCot()) pop.classList.add('an'); } });
       khung.onload = function () {
         var d = doc();
         trinhBay(); vuaKhung();
@@ -3130,7 +3171,7 @@
           if (td && vung().contains(td)) return chonO(td);
           anPop();
         });
-        d.addEventListener('scroll', anPop, true);
+        d.addEventListener('scroll', function () { if (!laBaCot()) anPop(); }, true);
         d.addEventListener('input', function () { daSua(); });
         d.addEventListener('keydown', function (e) {
           if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && lichSu.length) { e.preventDefault(); nutHoanTac.click(); }
@@ -3148,17 +3189,42 @@
         'td:focus-within{box-shadow:inset 0 0 0 2px rgba(34,91,255,.25)}::selection{background:#B9CCFF}</style></head><body><div id="vung" contenteditable="true" spellcheck="false">' +
         m.html + '</div></body></html>';
       veChonHs();
-      than.appendChild(the('div', { class: 'cong-cu-mau' }, [
-        the('div', { class: 'nhom-cc' }, [the('span', { class: 'goi-y', text: 'Xem thử:' }), chonHs, nutExcel]),
-        the('div', { class: 'nhom-cc' }, [chonKhoiChen, nutHoanTac])]));
-      if ((m.canhBao || []).length) than.appendChild(the('ul', { class: 'canh-bao' }, m.canhBao.map(function (c) { return the('li', { text: c }); })));
-      than.appendChild(huongDan);
-      than.appendChild(khung);
-      chan.appendChild(the('label', { class: 'o ten-mau' }, ['Tên mẫu phiếu', oTen]));
-      chan.appendChild(the('label', { class: 'o mon-mau' }, ['Môn học', chonMon]));
-      chan.appendChild(the('span', { class: 'gian' }));
-      if (!m.id && !m.tep) chan.appendChild(the('button', { class: 'phu', text: '← Chọn cách khác', onclick: function () { if (!than.dataset.daSua || confirm('Bỏ các chỉnh sửa?')) chonCach(); } }));
-      chan.appendChild(nutLuu);
+      // ---- 3 cột: trái = thông tin chung · giữa = phiếu · phải = sửa mục đang chọn / danh sách mục ----
+      than.className = 'than-mau ba-cot';
+      var nhom = function (ten, con) { return the('section', { class: 'nhom-trai' }, [the('h3', { text: ten })].concat(con)); };
+      var cotTrai = the('aside', { class: 'cot-trai' }, [
+        nhom('Thông tin mẫu', [the('label', { class: 'o' }, ['Tên mẫu phiếu', oTen]), the('label', { class: 'o' }, ['Môn học', chonMon])]),
+        nhom('Xem thử', [chonHs, nutExcel]),
+        nhom('Chỉnh sửa', [chonKhoiChen, nutHoanTac, huongDan]),
+        (m.canhBao || []).length ? nhom('Lưu ý khi đọc file', [the('ul', { class: 'canh-bao' }, m.canhBao.map(function (c) { return the('li', { text: c }); }))]) : null,
+        !m.id && !m.tep ? the('button', { class: 'phu nho', text: '← Chọn cách khác', onclick: function () { if (!than.dataset.daSua || confirm('Bỏ các chỉnh sửa?')) chonCach(); } }) : null
+      ].filter(Boolean));
+      cotPhai = the('aside', { class: 'cot-phai' });
+      than.appendChild(cotTrai);
+      than.appendChild(the('div', { class: 'cot-giua' }, [khung]));
+      than.appendChild(cotPhai);
+      chan.classList.add('an');
+      nutLuuDau.textContent = ''; nutLuuDau.appendChild(nutLuu);
+      // danh sách các mục của phiếu (cột phải khi chưa chọn mục nào)
+      veDsMuc = function () {
+        if (!cotPhai || !vung()) return;
+        cotPhai.textContent = '';
+        var ds = [].slice.call(vung().querySelectorAll('.truong, .khoi'));
+        cotPhai.appendChild(the('h3', { text: 'Các mục của phiếu (' + ds.length + ')' }));
+        cotPhai.appendChild(the('p', { class: 'goi-y', text: xemThu ? 'Đang xem thử — chọn "Đang chỉnh sửa" ở cột trái để sửa.' : 'Bấm vào một mục (ở đây hoặc trên phiếu) để sửa. Tô vàng: chỗ điền theo học sinh · khung xanh: phần tự động.' }));
+        var dsEl = the('div', { class: 'ds-muc' });
+        ds.forEach(function (el) {
+          var laKhoi = el.classList.contains('khoi'), ma = el.getAttribute('data-khoi');
+          var ten = laKhoi ? tenKhoi(ma).ten + (el.getAttribute('data-dang') ? ' · ' + tenDang(el.getAttribute('data-dang')) : '') : nhanTruong(el.getAttribute('data-truong'), bang);
+          dsEl.appendChild(the('button', { type: 'button', class: 'muc-phieu' + (laKhoi ? ' khoi' : ''), disabled: xemThu ? 'disabled' : null, onclick: function () {
+            [].forEach.call(vung().querySelectorAll('.dang-chon'), function (x) { x.classList.remove('dang-chon'); });
+            el.scrollIntoView({ block: 'center' });
+            if (laKhoi) { el.classList.add('dang-chon'); chonKhoi(el); } else chonTruong(el);
+          } }, [the('span', { class: 'loai-muc', text: laKhoi ? '⚙' : '✎' }), the('span', { text: ten })]));
+        });
+        cotPhai.appendChild(dsEl);
+      };
+      veDsMuc();
     };
     _manMau = { chonCach: chonCach, taiFile: taiFile, chinh: chinh };
     return _manMau;
