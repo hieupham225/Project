@@ -329,7 +329,8 @@
   .luoi-cach { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; max-width: 900px; width: 100%; margin: 24px auto; }
   .the-cach { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; text-align: left; padding: 22px; min-height: 0; height: auto; border-radius: var(--r-khung); background: var(--be-mat); color: var(--chu); border: 1px solid var(--vien); box-shadow: var(--bong-thap); white-space: normal; font-size: 14px; }
   .the-cach b { font-size: 17px; } .icon-cach { font-size: 30px; }
-  @media (hover: hover) { .the-cach:hover { border-color: var(--vien-dam); box-shadow: var(--bong-cao); transform: translateY(-2px); } }
+  button.the-cach:hover:not(:disabled), button.the-cach:active { background: var(--be-mat); color: var(--chu); }
+  @media (hover: hover) { button.the-cach:hover:not(:disabled) { border-color: var(--vien-dam); box-shadow: var(--bong-cao); transform: translateY(-2px); } }
   .cot-tai { display: flex; flex-direction: column; gap: 14px; max-width: 760px; width: 100%; margin: 16px auto; }
   .o-tai { display: flex; gap: 14px; padding: 18px; background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); }
   .o-tai .so-tai { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--mau); color: var(--tren-mau); font-weight: 700; }
