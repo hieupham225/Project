@@ -3,6 +3,9 @@
  * Được chuyển nguyên văn từ bản Google Apps Script (đã kiểm thử), chỉ đổi phần khai báo sang ES module.
  */
 
+import * as CT from './cau-truc.js';
+export { CAU_TRUC_CO_SAN, layCauTrucCoSan, kiemTraCauTruc, DANG_CAU } from './cau-truc.js';
+
 export const CAU_HINH = {
   DO_DAI_MA: 8,
   KY_TU_MA: 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', // bỏ 0/O, 1/I/L
@@ -115,52 +118,53 @@ export function phanTichFile_(so) {
   return { ok: true, thongTin: thongTin, cauHoi: cauHoi, hocSinh: hocSinh, canhBao: canhBao };
 }
 
-/** Chấm bài 1 học sinh: so đáp án, tính điểm các phần (ưu tiên điểm giáo viên đã nhập). */
+/**
+ * Chấm bài 1 học sinh theo CẤU TRÚC ĐỀ (kq.cauTruc; không có thì dùng cấu trúc Toán v1).
+ * Ưu tiên điểm giáo viên đã nhập (diemNhap.p1/p2/p3 theo thứ tự phần, tong).
+ * Trả về:
+ *   phan: [{ ma, ten, dang, diem, toiDa, cau: [{ cau, chuDe, mucDo, noiDung, hs, dung, diem, ok | kyTu, soDung }] }]
+ *   + các trường của v1 để phiếu cũ vẫn hiển thị: phan1/phan2/phan3, coTraLoiIII, diem { p1, p2, p3, tong, max1..3, maxTong }
+ */
 export function chamBai_(kq, h) {
+  var ct = kq.cauTruc || CT.cauTrucToanV1(kq.thongTin);
   var maDe = khongDau_(h.maDe);
   var dapAnCua = function (q) { return (maDe && q.dapAn[maDe]) || q.dapAn[''] || ''; };
   // Chủ đề / nội dung riêng theo mã đề (khi các mã đề đảo thứ tự câu hỏi)
   var ttCau = function (q) { return (maDe && q.theoDe && q.theoDe[maDe]) || q; };
-  var tt = kq.thongTin;
+  var dn = h.diemNhap || {};
+  var nhapTheoThuTu = [dn.p1, dn.p2, dn.p3];
 
-  var phan1 = kq.cauHoi.I.map(function (q) {
-    var hs = h.traLoi['I.' + q.cau] || '', dung = dapAnCua(q);
-    return { cau: q.cau, chuDe: ttCau(q).chuDe, mucDo: ttCau(q).mucDo, noiDung: ttCau(q).noiDung, hs: hs, dung: dung,
-      ok: !!hs && !!dung && chuanHoaDapAn_(hs) === chuanHoaDapAn_(dung) };
-  });
-
-  var bangII = CAU_HINH.DIEM_PHAN_II_THEO_SO_Y_DUNG;
-  var diemII = 0;
-  var phan2 = kq.cauHoi.II.map(function (q) {
-    var hs = h.traLoi['II.' + q.cau] || '', dung = dapAnCua(q);
-    var a = chuoiDungSai_(hs), b = chuoiDungSai_(dung), soDung = 0;
-    var kyTu = a.split('').map(function (ch, i) {
-      var ok = ch !== '_' && i < b.length && ch === b[i];
-      if (ok) soDung++;
-      return { c: ch === 'D' ? 'Đ' : ch === 'S' ? 'S' : '–', ok: ok };
+  var phan = ct.phan.map(function (p, iP) {
+    var dang = CT.DANG_CAU[p.dang];
+    var tuTinh = 0;
+    var cau = (kq.cauHoi[p.ma] || []).map(function (q) {
+      var hs = h.traLoi[p.ma + '.' + q.cau] || '', dung = dapAnCua(q), t = ttCau(q);
+      var r = dang.cham(hs, dung, p);
+      tuTinh += r.diem;
+      return Object.assign({ cau: q.cau, chuDe: t.chuDe, mucDo: t.mucDo, noiDung: t.noiDung, hs: hs, dung: dung }, r);
     });
-    diemII += b.length === 4 ? bangII[soDung] : (b.length ? soDung / b.length : 0);
-    return { cau: q.cau, chuDe: ttCau(q).chuDe, mucDo: ttCau(q).mucDo, noiDung: ttCau(q).noiDung, hs: hs, kyTu: kyTu, dung: dung, soDung: soDung };
+    var nhap = (dn.theoPhan && dn.theoPhan[p.ma] != null ? dn.theoPhan[p.ma] : nhapTheoThuTu[iP]);
+    var diem = nhap != null && nhap !== '' ? soThuc_(nhap, 0) : tuTinh;
+    return { ma: p.ma, ten: p.ten, dang: p.dang, diem: diem, toiDa: cau.length * dang.toiDa(p), cau: cau };
   });
 
-  var phan3 = kq.cauHoi.III.map(function (q) {
-    var hs = h.traLoi['III.' + q.cau] || '', dung = dapAnCua(q);
-    return { cau: q.cau, chuDe: ttCau(q).chuDe, mucDo: ttCau(q).mucDo, noiDung: ttCau(q).noiDung, hs: hs, dung: dung,
-      ok: !!hs && !!dung && chuanHoaDapAn_(hs) === chuanHoaDapAn_(dung) };
-  });
+  var tongTinh = phan.reduce(function (s, x) { return s + x.diem; }, 0);
+  var tong = dn.tong != null && dn.tong !== '' ? soThuc_(dn.tong, 0) : tongTinh;
+  var maxTong = phan.reduce(function (s, x) { return s + x.toiDa; }, 0);
 
-  var dn = h.diemNhap;
-  var p1 = dn.p1 !== '' ? soThuc_(dn.p1, 0) : phan1.filter(function (x) { return x.ok; }).length * tt.diemCauI;
-  var p2 = dn.p2 !== '' ? soThuc_(dn.p2, 0) : diemII;
-  var p3 = dn.p3 !== '' ? soThuc_(dn.p3, 0) : phan3.filter(function (x) { return x.ok; }).length * tt.diemCauIII;
-  var tong = dn.tong !== '' ? soThuc_(dn.tong, 0) : p1 + p2 + p3;
-  var max1 = phan1.length * tt.diemCauI, max2 = phan2.length * 1, max3 = phan3.length * tt.diemCauIII;
-
+  // ---- tương thích phiếu v1 (3 phần cố định) ----
+  var theoViTri = function (i) { return phan[i] || { diem: 0, toiDa: 0, cau: [] }; };
+  var boDiem = function (ds) { return ds.map(function (q) { var x = Object.assign({}, q); delete x.diem; return x; }); };
+  var p1 = theoViTri(0), p2 = theoViTri(1), p3 = theoViTri(2);
   return {
-    phan1: phan1, phan2: phan2, phan3: phan3,
-    coTraLoiIII: phan3.some(function (x) { return x.hs; }),
-    diem: { p1: dinhDangDiem_(p1), p2: dinhDangDiem_(p2), p3: dinhDangDiem_(p3), tong: dinhDangDiem_(tong),
-      max1: dinhDangSo_(max1), max2: dinhDangSo_(max2), max3: dinhDangSo_(max3), maxTong: dinhDangSo_(max1 + max2 + max3) }
+    cauTruc: { id: ct.id || '', ten: ct.ten || '', mon: ct.mon || '' },
+    phan: phan.map(function (x) {
+      return { ma: x.ma, ten: x.ten, dang: x.dang, diem: dinhDangDiem_(x.diem), toiDa: dinhDangSo_(x.toiDa), cau: x.cau };
+    }),
+    phan1: boDiem(p1.cau), phan2: boDiem(p2.cau), phan3: boDiem(p3.cau),
+    coTraLoiIII: p3.cau.some(function (x) { return x.hs; }),
+    diem: { p1: dinhDangDiem_(p1.diem), p2: dinhDangDiem_(p2.diem), p3: dinhDangDiem_(p3.diem), tong: dinhDangDiem_(tong),
+      max1: dinhDangSo_(p1.toiDa), max2: dinhDangSo_(p2.toiDa), max3: dinhDangSo_(p3.toiDa), maxTong: dinhDangSo_(maxTong) }
   };
 }
 
@@ -277,18 +281,10 @@ export function chuanHoaPhan_(s) {
   return { i: 'I', '1': 'I', ii: 'II', '2': 'II', iii: 'III', '3': 'III' }[k] || '';
 }
 
-export function chuanHoaDapAn_(s) {
-  return String(s).normalize('NFC').toUpperCase().replace(/\s+/g, '').replace(/,/g, '.').replace(/[;|]/g, ';');
-}
+export function chuanHoaDapAn_(s) { return CT.chuanHoaDapAn(s); }
 
 /** "Đ,S,Đ,S" / "DSDS" / "đ s đ s" -> "DSDS" */
-export function chuoiDungSai_(s) {
-  s = String(s == null ? '' : s).normalize('NFC').toUpperCase().replace(/Đ/g, 'D');
-  if (!s.replace(/[^DS]/g, '')) return '';
-  // Có dấu phân cách ("Đ,S,,Đ" / ",Đ,Đ,S"): giữ đúng vị trí ý bỏ trống bằng "_"
-  if (/[,;|]/.test(s)) return s.split(/[,;|]/).map(function (x) { x = x.replace(/[^DS]/g, ''); return x ? x.charAt(0) : '_'; }).join('');
-  return s.replace(/[^DS]/g, '');
-}
+export function chuoiDungSai_(s) { return CT.chuoiDungSai(s); }
 
 export function soThuc_(s, macDinh) {
   var n = parseFloat(String(s == null ? '' : s).replace(',', '.'));
@@ -547,8 +543,10 @@ function doanPhan_(dsDapAn) {
 /**
  * Ghép bảng kết quả + bảng đáp án -> dữ liệu dùng chung với chamBai_().
  * da = null: dùng đáp án chép trong từng dòng của bảng kết quả (nếu có).
+ * cauTruc (tùy chọn): câu không ghi "Phần" được chia vào các phần theo thứ tự và số câu của cấu trúc
+ *   (VD Vật lí: câu 1–18 phần I, 19–22 phần II, 23–28 phần III). Không có -> cách của v1 (đoán theo đáp án, 3 phần Toán).
  */
-export function ghepHaiFile(kqF, da, thongTinThem) {
+export function ghepHaiFile(kqF, da, thongTinThem, cauTruc) {
   if (!kqF.ok) return kqF;
   if (da && !da.ok) return da;
   var canhBao = [];
@@ -570,10 +568,22 @@ export function ghepHaiFile(kqF, da, thongTinThem) {
   if (da) Object.keys(da.cauHoi).forEach(function (n) { soCau[n] = 1; });
   var dsCau = Object.keys(soCau).map(Number).sort(function (a, b) { return a - b; });
   var cauHoi = { I: [], II: [], III: [] }, viTri = {};
-  dsCau.forEach(function (n) {
+  var phanTheoThuTu = null;
+  if (cauTruc) {
+    cauHoi = {};
+    cauTruc.phan.forEach(function (p) { cauHoi[p.ma] = []; });
+    phanTheoThuTu = [];
+    cauTruc.phan.forEach(function (p) { for (var i = 0; i < p.soCau; i++) phanTheoThuTu.push(p.ma); });
+    var tongCau = phanTheoThuTu.length;
+    if (dsCau.length > tongCau) canhBao.push('File có ' + dsCau.length + ' câu, nhiều hơn cấu trúc "' + cauTruc.ten + '" (' + tongCau + ' câu): các câu thừa được tính vào phần cuối.');
+    if (dsCau.length && dsCau.length < tongCau) canhBao.push('File có ' + dsCau.length + ' câu, ít hơn cấu trúc "' + cauTruc.ten + '" (' + tongCau + ' câu).');
+  }
+  dsCau.forEach(function (n, k) {
     var meta = (da && da.cauHoi[n]) || {};
-    var phan = meta.phan || doanPhan_(Object.keys(dapAn).map(function (m) { return dapAn[m].dapAn[n]; })) ||
-      doanPhan_(kqF.hocSinh.map(function (h) { return h.traLoiGoc[n]; })) || 'III';
+    var phan = phanTheoThuTu
+      ? (meta.phan && cauHoi[meta.phan] ? meta.phan : phanTheoThuTu[Math.min(k, phanTheoThuTu.length - 1)])
+      : meta.phan || doanPhan_(Object.keys(dapAn).map(function (m) { return dapAn[m].dapAn[n]; })) ||
+        doanPhan_(kqF.hocSinh.map(function (h) { return h.traLoiGoc[n]; })) || 'III';
     var q = { cau: cauHoi[phan].length + 1, cauGoc: n, chuDe: meta.chuDe || '', mucDo: meta.mucDo || '', noiDung: meta.noiDung || '', dapAn: { '': '' } };
     Object.keys(dapAn).forEach(function (m) { if (dapAn[m].dapAn[n]) q.dapAn[m] = dapAn[m].dapAn[n]; });
     if (da && da.theoDe[n]) { q.theoDe = {}; Object.keys(da.theoDe[n]).forEach(function (m) { var x = da.theoDe[n][m]; q.theoDe[m] = { chuDe: x.chuDe || q.chuDe, mucDo: x.mucDo || q.mucDo, noiDung: x.noiDung || q.noiDung }; }); }
@@ -591,7 +601,7 @@ export function ghepHaiFile(kqF, da, thongTinThem) {
     x.traLoi = traLoi;
     return x;
   });
-  var kq = { ok: true, thongTin: thongTin, cauHoi: cauHoi, hocSinh: hocSinh, canhBao: canhBao, soXepHang: kqF.soXepHang,
+  var kq = { ok: true, thongTin: thongTin, cauHoi: cauHoi, hocSinh: hocSinh, canhBao: canhBao, soXepHang: kqF.soXepHang, cauTruc: cauTruc || undefined,
     maDe: Object.keys(dapAn).map(function (m) { return dapAn[m].ten; }) };
   // Đối chiếu: điểm giáo viên nhập so với điểm tính từ đáp án (phát hiện nhầm file đáp án / nhầm mã đề)
   if (Object.keys(dapAn).length) {
