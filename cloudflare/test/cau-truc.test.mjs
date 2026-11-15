@@ -100,3 +100,20 @@ test('điểm giáo viên nhập vẫn được ưu tiên theo từng phần', (
   const g = L.ghepHaiFile(L.docFileKetQua(kq), L.docFileDapAn(da), {}, ct);
   assert.equal(L.chamBai_(g, g.hocSinh[0]).diem.p1, '7.50');
 });
+
+test('mã đề đảo thứ tự câu: tab CauHoi ghi "Câu gốc" -> chủ đề / nội dung đúng câu của từng mã đề; thiếu thì cảnh báo', () => {
+  const da = L.taoMauDapAn();
+  const td = ['STT', 'Họ và tên', 'Lớp', 'Mã đề thi', ...Array.from({ length: 22 }, (_, i) => 'Câu ' + (i + 1))];
+  const r5 = ['1', 'An', 'Toán 1', '105', ...da.DapAn[1].slice(1)], r6 = ['2', 'Bình', 'Toán 1', '106', ...da.DapAn[2].slice(1)];
+  const g = L.ghepHaiFile(L.docFileKetQua({ KetQua: [td, r5, r6] }), L.docFileDapAn({ DapAn: da.DapAn, CauHoi: da.CauHoi }), {});
+  const c5 = L.chamBai_(g, g.hocSinh[0]), c6 = L.chamBai_(g, g.hocSinh[1]);
+  const goc = da.CauHoi.filter((r) => r[0] === '' && r[1] !== 'Câu');
+  assert.equal(c5.phan1[0].noiDung, goc[0][6]);
+  assert.equal(c6.phan1[0].noiDung, goc[1][6], 'câu 1 mã 106 = câu 2 đề gốc');
+  assert.equal(c6.phan1[1].noiDung, goc[0][6], 'câu 2 mã 106 = câu 1 đề gốc');
+  assert.equal(c6.phan2[0].noiDung, goc[12][6], 'câu không có dòng riêng giữ như đề gốc');
+  assert.equal(c6.diem.p1, '3.00');
+  assert.deepEqual(g.canhBao, []);
+  const chiGoc = L.docFileDapAn({ DapAn: da.DapAn, CauHoi: da.CauHoi.filter((r, i) => i === 0 || !r[0]) });
+  assert.match(L.ghepHaiFile(L.docFileKetQua({ KetQua: [td, r5, r6] }), chiGoc, {}).canhBao.join(' '), /chỉ có 1 bộ chủ đề/);
+});
