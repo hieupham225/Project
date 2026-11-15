@@ -436,7 +436,7 @@ export const MAU_FILE_KET_QUA = {
 /* =====================================================================
  * HAI FILE TẢI LÊN
  *   1. Bảng kết quả học sinh  — mỗi học sinh 1 dòng: Họ và tên, Lớp, Số báo danh, Mã đề thi, Câu 1…N (đáp án học sinh chọn),
- *      Điểm trắc nghiệm / đúng sai / điền từ, Tổng điểm, nhận xét. (Đọc được nguyên file giáo viên đang dùng để trộn thư Word.)
+ *      Điểm trắc nghiệm / đúng sai / tự luận (hoặc "điền từ"), Tổng điểm, nhận xét. (Đọc được nguyên file giáo viên đang dùng để trộn thư Word.)
  *   2. Bảng đáp án theo mã đề — tab DapAn: mỗi mã đề 1 dòng (Mã đề | Câu 1…N);
  *      tab CauHoi (tùy chọn): Câu | Phần | Chủ đề | Mức độ | Nội dung (| Mã đề nếu riêng từng mã đề); tab ThongTin (tùy chọn).
  * Kết quả trả về cùng dạng với phanTichFile_() để dùng chung chamBai_().
@@ -732,7 +732,7 @@ export function taoMauKetQua(dsHocSinh, tenLop, soCau, cauTruc) {
   soCau = soCau || 22;
   var cau = []; for (var i = 1; i <= soCau; i++) cau.push('Câu ' + i);
   var tieuDe = ['STT', 'Mã HS', 'Họ và tên', 'Lớp', 'Số báo danh', 'Mã đề thi'].concat(cau,
-    ['Điểm trắc nghiệm', 'Điểm đúng sai', 'Điểm điền từ', 'Tổng điểm', 'Thứ hạng', 'Ưu điểm', 'Nhược điểm', 'Hướng khắc phục', 'Lời khuyên']);
+    ['Điểm trắc nghiệm', 'Điểm đúng sai', 'Điểm tự luận', 'Tổng điểm', 'Thứ hạng', 'Ưu điểm', 'Nhược điểm', 'Hướng khắc phục', 'Lời khuyên']);
   var dong = (dsHocSinh || []).map(function (h, j) {
     var r = tieuDe.map(function () { return ''; });
     r[0] = String(j + 1); r[1] = h.maHs; r[2] = h.hoTen; r[3] = h.lopMau != null ? h.lopMau : (tenLop || ''); r[4] = h.sbd || '';
@@ -756,7 +756,7 @@ export function taoMauKetQua(dsHocSinh, tenLop, soCau, cauTruc) {
       ['• Cột "Lớp": hệ thống tự đưa kết quả vào đúng lớp. Một file có thể gồm nhiều lớp; xóa các dòng của học sinh không làm bài này. Lớp chưa có sẽ được tạo mới.'],
       ['• "Mã đề thi": mã đề học sinh làm. Đáp án đúng của từng mã đề nằm ở file đáp án riêng — KHÔNG cần chép đáp án vào từng dòng.'],
       ['• "Câu 1" … "Câu N": đáp án học sinh chọn. Trắc nghiệm: A/B/C/D. Đúng/sai: "Đ,S,Đ,S" (ý bỏ trống để trống giữa 2 dấu phẩy). Điền từ: có thể để trống.'],
-      ['• Cột điểm để trống thì hệ thống tự tính (trắc nghiệm 0,25đ/câu; đúng/sai: 1 ý 0,1 – 2 ý 0,25 – 3 ý 0,5 – 4 ý 1đ; điền từ 0,5đ/câu).'],
+      ['• Điểm do hệ thống chấm từ bài làm + đáp án (trắc nghiệm 0,25đ/câu; đúng/sai: 1 ý 0,1 – 2 ý 0,25 – 3 ý 0,5 – 4 ý 1đ; tự luận 0,5đ/câu). Phần tự luận chấm tay (không ghi bài làm câu 17–22): điền điểm vào cột "Điểm tự luận". Điểm điền khác điểm hệ thống chấm sẽ được cảnh báo khi xem trước.'],
       ['• Nhận xét: dùng 2 cột "Ưu điểm", "Nhược điểm", hoặc 1 cột "Ưu, nhược" dạng "+ Ưu điểm: …  + Nhược điểm: …".'],
       ['• Có thể dùng luôn bảng tổng hợp điểm đang dùng để trộn thư Word: các cột đáp án đúng ở cuối mỗi dòng sẽ được bỏ qua.']
     ]
@@ -836,7 +836,7 @@ function taoMauKetQuaTheoCauTruc_(dsHocSinh, tenLop, ct) {
     ].concat(kc.map(function (x) {
       return ['    – Câu ' + x.tu + (x.den > x.tu ? '–' + x.den : '') + ': Phần ' + x.p.ma + ' (' + x.p.ten.replace(/\.$/, '') + ') — ' + TEN_DANG_HD[x.p.dang](x.p) + '.'];
     }), [
-      ['• Cột "Điểm phần …" và "Tổng điểm" để trống thì hệ thống tự tính từ đáp án; có điền thì phiếu dùng điểm giáo viên nhập.'],
+      ['• Điểm do hệ thống chấm từ bài làm + đáp án. Cột "Điểm phần …" chỉ dùng cho phần chấm tay (không ghi bài làm); điểm điền khác điểm hệ thống chấm sẽ được cảnh báo khi xem trước.'],
       ['• Nhận xét: dùng 2 cột "Ưu điểm", "Nhược điểm", hoặc 1 cột "Ưu, nhược" dạng "+ Ưu điểm: …  + Nhược điểm: …".']
     ])
   };

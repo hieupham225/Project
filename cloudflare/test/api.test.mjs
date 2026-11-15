@@ -45,7 +45,7 @@ function dienKetQua(mauKq, maDe = '105') {
       if (n <= 12) x[j] = n === (i % 3) + 1 ? (da[n] === 'A' ? 'B' : 'A') : da[n];
       else if (n <= 16) x[j] = da[n].split('').join(',');
     }
-    x[tieuDe.indexOf('Điểm điền từ')] = '2.5';
+    x[tieuDe.indexOf('Điểm tự luận')] = '2.5';
     x[tieuDe.indexOf('Ưu điểm')] = 'Chăm chỉ'; x[tieuDe.indexOf('Nhược điểm')] = 'Cần cẩn thận hơn';
     return x;
   });
