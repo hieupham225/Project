@@ -286,8 +286,8 @@
   td.sbd { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
   .da-sua { display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 600; color: var(--vang); background: var(--vang-nen); border-radius: var(--r-tron); padding: 1px 8px; white-space: nowrap; }
   tr.hang-sua-diem > td { background: var(--nen); }
-  table.ds:not(.th) tr.hang-sua-diem { background: var(--nen); margin-top: -4px; }
-  table.ds:not(.th) tr.hang-sua-diem > td { display: block; background: none; }
+  table.ds:not(.th) td.o-sua-diem { display: block; border-bottom: 0; padding: 4px 0 6px; }
+  td.o-sua-diem .khung-sua-diem { background: var(--nen); border-radius: var(--r-phan-tu); padding: 12px; }
   .khung-sua-diem { width: 100%; }
   .khung-sua-diem { display: flex; flex-direction: column; gap: 10px; padding: 4px 0; }
   .luoi-sua-diem { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 12px; }
@@ -2112,8 +2112,10 @@
   /* Danh sách phiếu của 1 lần thi -> bấm để xem (thay cho thư mục PDF) */
   /* Sửa điểm từng phần của 1 phiếu: hàng nhập ngay dưới tên học sinh trong danh sách phiếu */
   function suaDiemPhieu(p, dong, d) {
-    var cu = dong.nextSibling;
-    if (cu && cu.classList && cu.classList.contains('hang-sua-diem')) { cu.remove(); return; }
+    // Màn hình nhỏ (bảng hiện dạng thẻ): ô sửa nằm ngay trong thẻ của học sinh; màn hình lớn: 1 hàng ngay dưới
+    var laThe = matchMedia('(max-width: 700px)').matches;
+    var cu = laThe ? dong.querySelector('td.o-sua-diem') : dong.nextSibling;
+    if (cu && cu.classList && (cu.classList.contains('hang-sua-diem') || cu.classList.contains('o-sua-diem'))) { cu.remove(); return; }
     goi('gvCacPhanDiem', p.maPhieu).then(function (r) {
       var o = r.phan.map(function (x) {
         var inp = the('input', { type: 'text', inputmode: 'decimal', 'aria-label': x.ten }); inp.value = x.diem.replace('.', ',');
@@ -2132,15 +2134,17 @@
           return goi('gvTaiDuLieu').then(function (dl) { capNhat(dl); hopDsPhieu(d); }); // làm mới điểm TB, tổng hợp, thứ hạng
         }).catch(function (e) { nut.disabled = false; baoLoi(e); });
       } });
-      var hang = the('tr', { class: 'hang-sua-diem' }, [the('td', { colspan: 4 }, [the('div', { class: 'khung-sua-diem' }, [
+      var khung = the('div', { class: 'khung-sua-diem' }, [
         the('div', { class: 'luoi-sua-diem' }, o.map(function (y) {
           return the('label', { class: 'o' }, [the('span', { text: y.x.ten + ' (tối đa ' + y.x.toiDa.replace('.', ',') + ')' }), y.inp]);
         })),
         the('div', { class: 'chan-sua-diem' }, [the('span', {}, ['Tổng điểm: ', tong]),
           r.suaTay ? the('span', { class: 'goi-y', text: 'Điểm gốc từ file: ' + r.suaTay.diemGoc.join(' · ') }) : null,
           the('span', { class: 'gian' }),
-          the('button', { class: 'phu nho', text: 'Hủy', onclick: function () { hang.remove(); } }), nut])])])]);
-      dong.parentNode.insertBefore(hang, dong.nextSibling);
+          the('button', { class: 'phu nho', text: 'Hủy', onclick: function () { hang.remove(); } }), nut])]);
+      var hang;
+      if (laThe) { hang = the('td', { colspan: 4, class: 'o-sua-diem' }, [khung]); dong.appendChild(hang); }
+      else { hang = the('tr', { class: 'hang-sua-diem' }, [the('td', { colspan: 4 }, [khung])]); dong.parentNode.insertBefore(hang, dong.nextSibling); }
       if (!laCamUng()) o[0] && o[0].inp.focus();
     }).catch(baoLoi);
   }
