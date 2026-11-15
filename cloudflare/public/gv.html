@@ -68,6 +68,12 @@
   table.ds th, table.ds td { padding: 9px 10px; border-bottom: 1px solid var(--vien); text-align: left; vertical-align: middle; }
   table.ds th { background: #F4F1EB; font-size: 12px; font-weight: 600; color: var(--phu); position: sticky; top: 49px; z-index: 1; }
   table.ds tr:last-child td { border-bottom: 0; }
+  /* khung bảng: viền + bo góc (bo ở ô góc, không dùng overflow:hidden để tiêu đề cột vẫn dính khi cuộn) */
+  table.ds { border: 1px solid var(--vien-dam); border-radius: var(--r-khung); }
+  table.ds > :first-child > tr:first-child > :first-child { border-top-left-radius: calc(var(--r-khung) - 1px); }
+  table.ds > :first-child > tr:first-child > :last-child { border-top-right-radius: calc(var(--r-khung) - 1px); }
+  table.ds > :last-child > tr:last-child > :first-child { border-bottom-left-radius: calc(var(--r-khung) - 1px); }
+  table.ds > :last-child > tr:last-child > :last-child { border-bottom-right-radius: calc(var(--r-khung) - 1px); }
   .ma { font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-weight: 600; letter-spacing: .5px; }
   /* Badge */
   .nhan { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--r-tron); font-size: 12px; line-height: 16px; font-weight: 600; white-space: nowrap; }
@@ -148,6 +154,18 @@
   .hang-loc { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
   .hang-loc input[type=search] { flex: 0 1 340px; min-width: 0; }
   .hang-loc select { flex: 0 1 240px; min-width: 0; }
+  /* Máy tính: ô tìm kiếm / bộ lọc nằm cùng hàng với cụm nút, bên phải tiêu đề (mô tả nằm dưới tiêu đề) */
+  @media (min-width: 900px) {
+    .dau-trang:has(> .hang-loc) { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; column-gap: 8px; align-items: center; }
+    .dau-trang:has(> .hang-loc) > .hang-tieu-de { display: contents; }
+    .dau-trang:has(> .hang-loc) > .hang-tieu-de > h1 { grid-column: 1; grid-row: 1; }
+    .dau-trang:has(> .hang-loc) > .mo-ta-trang { grid-column: 1; grid-row: 2; align-self: start; }
+    .dau-trang:has(> .hang-loc) > .hang-loc { grid-column: 2; grid-row: 1; margin-top: 0; justify-self: end; }
+    .dau-trang:has(> .hang-loc) > .hang-tieu-de > .cum { grid-column: 3; grid-row: 1; }
+    .dau-trang:has(> .hang-loc) .hang-loc input[type=search] { flex: 0 1 280px; width: 280px; }
+    .dau-trang:has(> .hang-loc) .hang-loc select { flex: 0 1 220px; width: 220px; }
+    .dau-trang:has(> .hang-loc) .nut-sao-chep-th { margin-left: 0; }
+  }
   /* Hộp thoại form */
   body.co-hop { overflow: hidden; }
   .hop-form { width: min(600px, 94vw); }
@@ -339,7 +357,7 @@
     .o-link { flex-wrap: wrap; } .o-link code { flex: 1 1 100%; }
     select.qd { max-width: 100%; width: 100%; }
     /* Bảng danh sách -> thẻ: mỗi dòng 1 thẻ, nhãn cột bên trái */
-    table.ds:not(.th) { display: block; background: none; }
+    table.ds:not(.th) { display: block; background: none; border: 0; border-radius: 0; }
     table.ds:not(.th) tbody { display: block; }
     table.ds:not(.th) thead { display: block; }
     table.ds:not(.th) thead:not(:has(input)), table.ds:not(.co-chon) thead:has(.chon-tat-ca) { display: none; }
