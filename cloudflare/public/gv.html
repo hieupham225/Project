@@ -355,6 +355,15 @@
   .cong-cu-mau select { height: var(--cao-nho); max-width: 260px; }
   .huong-dan-mau { margin: 0; font-size: 13px; color: var(--phu); }
   .nut-dau-mau:empty { display: none; }
+  .bang-khoi { display: flex; flex-direction: column; gap: 6px; }
+  .the-khoi { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border: 1px dashed #7A93D8; border-radius: var(--r-trong); background: #F4F7FF; cursor: grab; user-select: none; }
+  .the-khoi:hover { border-color: #F07C1F; background: #FFF4EA; }
+  .the-khoi.dang-keo { opacity: .5; }
+  .the-khoi .cam-keo { color: #7A93D8; font-size: 12px; letter-spacing: -2px; line-height: 18px; }
+  .the-khoi .chu-khoi { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .the-khoi b { font-size: 13px; color: #2A4AA8; } .the-khoi small { font-size: 11px; color: var(--phu); line-height: 1.35; }
+  .nho-keo { margin: 0; font-size: 12px; }
+  @media (max-width: 1099px) { .bang-khoi { flex-direction: row; flex-wrap: wrap; } .the-khoi { flex: 1 1 200px; } .the-khoi small { display: none; } }
   .than-mau.ba-cot { display: grid; grid-template-columns: 270px minmax(0, 1fr) 340px; gap: 14px; overflow: hidden; }
   .ba-cot .cot-trai, .ba-cot .cot-phai { min-height: 0; overflow: auto; background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-phan-tu); padding: 14px; display: flex; flex-direction: column; gap: 14px; }
   .ba-cot .cot-giua { min-height: 0; display: flex; flex-direction: column; }
@@ -2808,8 +2817,10 @@
     // Bố cục 3 cột (màn rộng): trình sửa mục nằm ở cột phải thay cho ô nổi; không chọn gì -> cột phải hiện danh sách mục
     var cotPhai = null, veDsMuc = null;
     var laBaCot = function () { return !!cotPhai && matchMedia('(min-width: 1100px)').matches; };
+    var boChon = null; // bỏ tô cam mục đang chọn trên phiếu (đặt trong bước chỉnh)
     var anPop = function () {
       pop.classList.add('an'); pop.textContent = '';
+      if (boChon) boChon();
       if (cotPhai) { cotPhai.textContent = ''; if (veDsMuc) veDsMuc(); }
     };
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && (!pop.classList.contains('an') || laBaCot())) anPop(); });
@@ -2833,7 +2844,7 @@
       (cacBuoc || ['Chọn cách tạo', 'Tải file', 'Kiểm tra phiếu']).forEach(function (x, i) {
         buoc.appendChild(the('span', { class: 'o-buoc' + (i + 1 === so ? ' dang' : i + 1 < so ? ' xong' : '') }, [the('b', { text: i + 1 < so ? '✓' : String(i + 1) }), x]));
       });
-      cotPhai = null; veDsMuc = null; than.className = 'than-mau'; chan.classList.remove('an'); nutLuuDau.textContent = ''; 
+      cotPhai = null; veDsMuc = null; boChon = null; than.className = 'than-mau'; chan.classList.remove('an'); nutLuuDau.textContent = ''; 
       than.textContent = ''; chan.textContent = ''; delete than.dataset.daSua; anPop();
       nen.classList.remove('an'); than.scrollTop = 0;
     };
@@ -2969,7 +2980,7 @@
 
       var chonTruong = function (s) {
         var r = tuRect(s.getBoundingClientRect());
-        s.classList.add('dang-chon');
+        boChon(); s.classList.add('dang-chon');
         var huy = function () { s.classList.remove('dang-chon'); anPop(); };
         moPop([the('div', { class: 'dau-pop' }, [the('b', { text: 'Chỗ này điền:' }), dongPop])].concat(bangChon(s.getAttribute('data-truong'), function (ten) {
           luuLS(); s.setAttribute('data-truong', ten); trinhBay(); huy();
@@ -2978,7 +2989,9 @@
         } })])]), r);
         dongPop.onclick = huy;
       };
+      boChon = function () { if (vung()) [].forEach.call(vung().querySelectorAll('.dang-chon'), function (x) { x.classList.remove('dang-chon'); }); };
       var chonKhoi = function (k) {
+        boChon(); k.classList.add('dang-chon');
         var kk = tenKhoi(k.getAttribute('data-khoi'));
         var ma = k.getAttribute('data-khoi'), chonPhan = null;
         // đổi chỗ với đoạn / bảng / khối liền trước hoặc liền sau (VD đưa Phần II lên trước Phần I)
@@ -3030,7 +3043,7 @@
           khuDiem,
           chonPhan ? the('label', { class: 'chon-phan-khoi' }, [the('span', { text: 'Dạng bài (' + monMau() + ')' }), chonPhan]) : null,
           chonPhan ? the('label', { class: 'chon-phan-khoi' }, [the('span', { text: 'Tiêu đề' }), oTenPhan]) : null,
-          chonPhan ? the('p', { class: 'goi-y', text: 'Lấy từ: các câu có cột "Dạng bài" = dạng đã chọn ở tab CauHoi của file đáp án, dù câu nằm ở phần nào (không ghi dạng bài thì hệ thống tự nhận theo đáp án). "Tổng điểm" của bảng = điểm các câu dạng này, chấm theo dạng bài. Tiêu đề: gõ ở ô trên để thay cả dòng, hoặc để trống để hệ thống tự ghi. Đổi môn của mẫu ở cuối trang.' }) : null,
+          chonPhan ? the('p', { class: 'goi-y', text: 'Lấy từ: các câu có cột "Dạng bài" = dạng đã chọn ở tab CauHoi của file đáp án, dù câu nằm ở phần nào (không ghi dạng bài thì hệ thống tự nhận theo đáp án). "Tổng điểm" của bảng = điểm các câu dạng này, chấm theo dạng bài. Tiêu đề: gõ ở ô trên để thay cả dòng, hoặc để trống để hệ thống tự ghi. Đổi môn của mẫu ở mục "Thông tin mẫu" (cột trái).' }) : null,
           the('div', { class: 'chan-pop' }, [
             the('button', { type: 'button', class: 'phu nho', text: '↑ Đưa lên', disabled: k.previousElementSibling ? null : 'disabled', onclick: function () { doiCho(-1); } }),
             the('button', { type: 'button', class: 'phu nho', text: '↓ Đưa xuống', disabled: k.nextElementSibling ? null : 'disabled', onclick: function () { doiCho(1); } }),
@@ -3057,6 +3070,7 @@
       };
       var chonO = function (td) {
         var tr = td.parentElement, bangHtml = td.closest('table'), coGopDoc = !!bangHtml.querySelector('td[rowspan]:not([rowspan="1"])');
+        boChon(); td.classList.add('dang-chon');
         moPop([the('div', { class: 'dau-pop' }, [the('b', { text: 'Dòng bảng' }), dongPop]),
           coGopDoc ? the('p', { class: 'goi-y', text: 'Bảng có ô gộp dọc — thêm / xóa dòng trong Word rồi tải lại để giữ đúng bố cục.' }) : null,
           the('div', { class: 'chan-pop' }, [
@@ -3108,22 +3122,89 @@
         };
         return inp;
       })()]);
-      var chonKhoiChen = the('select', { 'aria-label': 'Chèn phần tự động' }, [the('option', { value: '', text: '＋ Chèn phần tự động…' })].concat(dsKhoi.map(function (k) { return the('option', { value: k.ma, text: k.ten, title: k.moTa }); })));
-      chonKhoiChen.onchange = function () {
-        var ma = chonKhoiChen.value; chonKhoiChen.value = ''; if (!ma || xemThu) return;
-        luuLS();
+      /* Phần tự động: kéo thả thẻ khối vào phiếu (hoặc bấm thẻ để chèn tại con trỏ / cuối phiếu) */
+      var taoKhoiMoi = function (ma) {
         var el = doc().createElement(ma === 'xep-hang' ? 'span' : 'div'); el.className = 'khoi'; el.setAttribute('data-khoi', ma);
         if (ma === 'phan-tich') {
           var daCo = [].map.call(vung().querySelectorAll('.khoi[data-khoi="phan-tich"]'), function (x) { return x.getAttribute('data-dang') || DANG_THEO_MA[x.getAttribute('data-phan') || ''] || ''; });
           var dsD = dangCuaMon(monMau());
           el.setAttribute('data-dang', dsD.filter(function (x) { return daCo.indexOf(x) < 0; })[0] || dsD[0] || 'trac_nghiem');
         }
+        return el;
+      };
+      var sauKhiChen = function (el, ma) {
+        trinhBay(); el.scrollIntoView({ block: 'center' });
+        if (ma !== 'xep-hang') chonKhoi(el);
+        bao('Đã chèn "' + tenKhoi(ma).ten + '".');
+      };
+      var chenTaiConTro = function (ma) {
+        if (xemThu) return bao('Đang xem thử — chọn "Đang chỉnh sửa" để chèn.', true);
+        luuLS();
+        var el = taoKhoiMoi(ma);
         var sel = doc().getSelection(), n = sel && sel.rangeCount ? sel.getRangeAt(0).startContainer : null, e = n && (n.nodeType === 1 ? n : n.parentElement);
         var goc = vung().querySelector('.mau-word') || vung();
         if (ma === 'xep-hang' && e && goc.contains(e)) { var r = sel.getRangeAt(0); r.collapse(false); r.insertNode(el); }
         else { var cap = e && goc.contains(e) ? e : null; while (cap && cap.parentElement !== goc) cap = cap.parentElement; if (cap) cap.after(el); else goc.appendChild(el); }
-        trinhBay(); el.scrollIntoView({ block: 'center' });
-        bao('Đã chèn "' + tenKhoi(ma).ten + '" — đặt con trỏ vào chỗ khác trên phiếu trước khi chèn để chèn vào đó.');
+        sauKhiChen(el, ma);
+      };
+      var dangKeo = '';
+      var chonKhoiChen = the('div', { class: 'bang-khoi' }, dsKhoi.map(function (k) {
+        var the_ = the('div', { class: 'the-khoi', draggable: 'true', role: 'button', tabindex: '0', title: 'Kéo vào phiếu, hoặc bấm để chèn tại con trỏ' }, [
+          the('span', { class: 'cam-keo', text: '⋮⋮' }), the('span', { class: 'chu-khoi' }, [the('b', { text: k.ten }), the('small', { text: k.moTa })])]);
+        the_.addEventListener('dragstart', function (ev) {
+          if (xemThu) { ev.preventDefault(); return bao('Đang xem thử — chọn "Đang chỉnh sửa" để chèn.', true); }
+          dangKeo = k.ma; ev.dataTransfer.effectAllowed = 'copy'; ev.dataTransfer.setData('text/x-khoi', k.ma); the_.classList.add('dang-keo');
+        });
+        the_.addEventListener('dragend', function () { dangKeo = ''; the_.classList.remove('dang-keo'); boVach(); });
+        the_.addEventListener('click', function () { chenTaiConTro(k.ma); });
+        the_.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); chenTaiConTro(k.ma); } });
+        return the_;
+      }));
+      // vạch cam báo chỗ sẽ thả
+      var vach = null, viTriTha = null;
+      var boVach = function () { if (vach && vach.parentNode) vach.remove(); viTriTha = null; };
+      var tinhViTriTha = function (ev) {
+        var d = doc(), goc = vung().querySelector('.mau-word') || vung();
+        if (dangKeo === 'xep-hang') { // khối nằm trong dòng chữ: thả đúng chỗ con trỏ chuột
+          var r = d.caretRangeFromPoint ? d.caretRangeFromPoint(ev.clientX, ev.clientY) : null;
+          if (r && goc.contains(r.startContainer) && !(r.startContainer.parentElement || r.startContainer).closest('.khoi, .truong')) return { range: r };
+          return null;
+        }
+        var e = d.elementFromPoint(ev.clientX, ev.clientY);
+        if (!e || !goc.contains(e) || e === goc) return { cha: goc, truoc: null };
+        var kh = e.closest('.khoi'); if (kh && goc.contains(kh)) e = kh;
+        // leo lên tới phần tử con trực tiếp của phiếu hoặc của 1 ô bảng
+        while (e.parentElement && e.parentElement !== goc && !/^T[DH]$/.test(e.parentElement.tagName)) e = e.parentElement;
+        if (!e.parentElement) return null;
+        var rc = e.getBoundingClientRect(), sau = ev.clientY > rc.top + rc.height / 2;
+        return { cha: e.parentElement, truoc: sau ? e.nextSibling : e };
+      };
+      var hienVach = function (vt) {
+        boVach(); viTriTha = vt; if (!vt) return;
+        vach = doc().createElement(dangKeo === 'xep-hang' ? 'span' : 'div'); vach.className = 'vach-tha';
+        if (vt.range) vt.range.insertNode(vach); else vt.cha.insertBefore(vach, vt.truoc);
+      };
+      var ganKeoTha = function (d) {
+        d.addEventListener('dragover', function (ev) {
+          if (!dangKeo) return;
+          ev.preventDefault(); ev.dataTransfer.dropEffect = 'copy';
+          if (ev.target === vach) return;
+          hienVach(tinhViTriTha(ev));
+        });
+        d.addEventListener('dragleave', function (ev) { if (dangKeo && !ev.relatedTarget) boVach(); });
+        d.addEventListener('drop', function (ev) {
+          if (!dangKeo) return;
+          ev.preventDefault();
+          var ma = dangKeo; dangKeo = '';
+          if (!vach || !vach.parentNode) { boVach(); return; }
+          var cho = vach; vach = null;
+          // lưu lịch sử khi chưa có vạch
+          cho.remove(); luuLS();
+          var el = taoKhoiMoi(ma);
+          if (viTriTha && viTriTha.range) viTriTha.range.insertNode(el); else if (viTriTha) viTriTha.cha.insertBefore(el, viTriTha.truoc);
+          viTriTha = null;
+          sauKhiChen(el, ma);
+        });
       };
       var nutHoanTac = the('button', { type: 'button', class: 'phu nho', text: '↶ Hoàn tác', disabled: 'disabled', onclick: function () {
         if (!lichSu.length || xemThu) return; vung().innerHTML = lichSu.pop(); trinhBay(); anPop(); nutHoanTac.disabled = !lichSu.length;
@@ -3135,6 +3216,7 @@
         [].forEach.call(v.querySelectorAll('.khoi'), function (k) { k.textContent = tenKhoi(k.getAttribute('data-khoi')).ten; k.className = 'khoi'; });
         [].forEach.call(v.querySelectorAll('.truong'), function (s) { s.textContent = '«' + s.getAttribute('data-truong') + '»'; s.className = 'truong'; });
         [].forEach.call(v.querySelectorAll('[contenteditable]'), function (x) { x.removeAttribute('contenteditable'); });
+        [].forEach.call(v.querySelectorAll('.dang-chon'), function (x) { x.classList.remove('dang-chon'); if (!x.getAttribute('class')) x.removeAttribute('class'); });
         return v.innerHTML.replace(/ data-do="\d+"/g, '');
       };
       var nutLuu = the('button', { text: m.id ? 'Lưu thay đổi' : 'Lưu mẫu phiếu', onclick: function () {
@@ -3172,6 +3254,7 @@
           anPop();
         });
         d.addEventListener('scroll', function () { if (!laBaCot()) anPop(); }, true);
+        ganKeoTha(d);
         d.addEventListener('input', function () { daSua(); });
         d.addEventListener('keydown', function (e) {
           if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && lichSu.length) { e.preventDefault(); nutHoanTac.click(); }
@@ -3182,10 +3265,11 @@
       khung.srcdoc = '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="script-src \'none\'">' +
         '<style>html{background:#E9E6E0}body{margin:0;padding:24px 12px}#vung{outline:none;width:max-content;max-width:none;margin:0 auto;background:#fff;padding:36px;box-shadow:0 2px 10px rgba(0,0,0,.12)}' +
         '@media (max-width:700px){body{padding:8px}#vung{padding:14px}}' +
-        '.truong{background:#FFF1B8;outline:1px dashed #C9A227;border-radius:2px;cursor:pointer}.truong:hover{background:#FFE58A}.truong.dang-chon{background:#DCE6FF;outline:2px solid #225BFF}' +
+        '.truong{background:#FFF1B8;outline:1px dashed #C9A227;border-radius:2px;cursor:pointer}.truong:hover{background:#FFE58A}.truong.dang-chon,.truong.dang-chon:hover{background:#FFD9B3;outline:2px solid #F07C1F}' +
         'div.khoi{position:relative;margin:8pt 0;padding:8px;border:2px dashed #7A93D8;border-radius:8px;background:#F4F7FF;cursor:pointer}div.khoi:hover{border-color:#225BFF}' +
         '.nhan-khoi{display:block;margin:-2px 0 6px;font:600 12px system-ui,-apple-system,sans-serif;color:#2A4AA8}' +
-        'span.khoi{outline:1px dashed #7A93D8;background:#F4F7FF;border-radius:3px;cursor:pointer}.khoi.dang-chon{border-color:#225BFF;outline-color:#225BFF}' +
+        'span.khoi{outline:1px dashed #7A93D8;background:#F4F7FF;border-radius:3px;cursor:pointer}div.khoi.dang-chon{border:2px solid #F07C1F;background:#FFF4EA}div.khoi.dang-chon .nhan-khoi{color:#C2560A}span.khoi.dang-chon{outline:2px solid #F07C1F;background:#FFE8D4}td.dang-chon{box-shadow:inset 0 0 0 2px #F07C1F!important}' +
+        'div.vach-tha{height:0;margin:4pt 0;border-top:3px solid #F07C1F;border-radius:2px}span.vach-tha{display:inline-block;width:3px;height:1.1em;vertical-align:middle;background:#F07C1F}' +
         'td:focus-within{box-shadow:inset 0 0 0 2px rgba(34,91,255,.25)}::selection{background:#B9CCFF}</style></head><body><div id="vung" contenteditable="true" spellcheck="false">' +
         m.html + '</div></body></html>';
       veChonHs();
@@ -3195,7 +3279,8 @@
       var cotTrai = the('aside', { class: 'cot-trai' }, [
         nhom('Thông tin mẫu', [the('label', { class: 'o' }, ['Tên mẫu phiếu', oTen]), the('label', { class: 'o' }, ['Môn học', chonMon])]),
         nhom('Xem thử', [chonHs, nutExcel]),
-        nhom('Chỉnh sửa', [chonKhoiChen, nutHoanTac, huongDan]),
+        nhom('Phần tự động', [the('p', { class: 'goi-y nho-keo', text: 'Kéo thẻ vào phiếu (vạch cam là chỗ thả), hoặc bấm thẻ để chèn tại con trỏ.' }), chonKhoiChen]),
+        nhom('Chỉnh sửa', [nutHoanTac, huongDan]),
         (m.canhBao || []).length ? nhom('Lưu ý khi đọc file', [the('ul', { class: 'canh-bao' }, m.canhBao.map(function (c) { return the('li', { text: c }); }))]) : null,
         !m.id && !m.tep ? the('button', { class: 'phu nho', text: '← Chọn cách khác', onclick: function () { if (!than.dataset.daSua || confirm('Bỏ các chỉnh sửa?')) chonCach(); } }) : null
       ].filter(Boolean));
