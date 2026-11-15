@@ -103,3 +103,35 @@ test('lưu mẫu (lọc mã độc), gửi kết quả với mẫu, phụ huynh 
   const ph = await PH.goi('/api/phieu', { ma, maPhieu: tc.phieu[0].maPhieu });
   assert.match(ph.d.htmlMau, /Ngô Bảo/); assert.ok(ph.d.trangMau.rong > 500);
 });
+
+test('Word thường: tự dò trường theo file Excel (bảng đáp án, giá trị, nhiều dòng) và theo nhãn', () => {
+  const run = (chu, mau) => `<w:r>${mau ? `<w:rPr><w:b/><w:color w:val="${mau}"/></w:rPr>` : ''}<w:t xml:space="preserve">${chu}</w:t></w:r>`;
+  const p = (...r) => `<w:p>${r.join('')}</w:p>`;
+  const o = (chu) => `<w:tc><w:p>${run(chu)}</w:p></w:tc>`;
+  const hang = (...c) => `<w:tr>${c.map(o).join('')}</w:tr>`;
+  const doc = `<?xml version="1.0"?><w:document ${W}><w:body>
+${p(run('Họ và tên: '), run('Trần Minh An', 'FF0000'), run('   Mã đề: '), run('102', 'FF0000'))}
+${p(run('Điểm phần 1: '), run('2.50', 'FF0000'), run('/3'))}
+<w:tbl><w:tblGrid><w:gridCol w:w="800"/><w:gridCol w:w="1500"/><w:gridCol w:w="1500"/></w:tblGrid>
+${hang('Câu', 'Đáp án của bạn', 'Đáp án đúng')}${hang('1', 'A', 'A')}${hang('2', 'C', 'B')}${hang('3', 'D', 'D')}${hang('4', 'B', 'C')}
+</w:tbl>
+${p(run('+ Ưu điểm: Chăm chỉ'))}${p(run('+ Nhược điểm: Còn ẩu'))}
+<w:sectPr/></w:body></w:document>`;
+  const tieuDe = ['STT', 'Họ và tên', 'Mã đề thi', 'Điểm phần 1', '', 'Câu 1', 'Câu 2', 'Câu 3', 'Câu 4', 'Nhận xét', '1', '2', '3', '4'];
+  const dong = [
+    ['1', 'Lê Hà', '101', '3', '3.00', 'A', 'B', 'C', 'D', 'Tốt', 'A', 'B', 'C', 'D'],
+    ['2', 'Trần Minh An', '102', '2.5', '2.50', 'A', 'C', 'D', 'B', '+ Ưu điểm: Chăm chỉ\r\n+ Nhược điểm: Còn ẩu', 'A', 'B', 'D', 'C']
+  ];
+  const kq = MW.docMauWord({ 'word/document.xml': doc }, { duLieu: { tieuDe, dong } });
+  const theo = Object.fromEntries(kq.doDuoc.map((x) => [x.goc + '|' + x.cach, x.truong]));
+  assert.equal(theo['Trần Minh An|giá trị'], 'Họ_và_tên');
+  assert.equal(theo['102|giá trị'], 'Mã_đề_thi', 'số ngắn: nhờ nhãn "Mã đề"');
+  assert.equal(theo['2.50|giá trị'], 'F5', 'chọn cột định dạng "2.50" chứ không phải cột gốc "2.5"');
+  assert.deepEqual(kq.doDuoc.filter((x) => x.cach === 'bảng').map((x) => x.truong + '=' + x.goc), ['Câu_1=A', 'Câu_2=C', 'Câu_3=D', 'Câu_4=B', 'M_1=A', 'M_2=B', 'M_3=D', 'M_4=C']);
+  assert.equal(kq.doDuoc.find((x) => x.cach === 'nhiều dòng').truong, 'Nhận_xét');
+  const ra = MW.dienMau(kq.html, Object.fromEntries(tieuDe.map((h, j) => [MW.tenTruongWord(h, j), dong[0][j]])));
+  assert.match(ra, /Lê Hà/); assert.ok(!/Trần Minh An|Còn ẩu/.test(ra), 'giá trị mẫu đã được thay hết');
+  // không có Excel: theo nhãn
+  const k2 = MW.docMauWord({ 'word/document.xml': doc });
+  assert.deepEqual(k2.doDuoc.map((x) => [x.truong, x.goc]), [['Họ_và_tên', 'Trần Minh An'], ['Mã_đề_thi', '102']]);
+});

@@ -33,12 +33,13 @@ function trinhDuyet() {
 }
 
 /** Giáo viên điền bảng kết quả mẫu của lớp: mọi em làm mã đề 105, sai câu (i % 3) + 1. */
+let soSbd = 0;
 function dienKetQua(mauKq, maDe = '105') {
   const da = L.taoMauDapAn().DapAn.find((r) => r[0] === maDe);
   const tieuDe = mauKq.KetQua[0];
   const dong = mauKq.KetQua.slice(1).map((r, i) => {
     const x = r.slice();
-    x[4] = '2101' + String(i).padStart(2, '0'); x[5] = maDe;
+    x[4] = String(31000000 + (++soSbd)); x[5] = maDe; // SBD không trùng giữa các em (SBD cố định cả khóa)
     for (let n = 1; n <= 22; n++) {
       const j = tieuDe.indexOf('Câu ' + n);
       if (n <= 12) x[j] = n === (i % 3) + 1 ? (da[n] === 'A' ? 'B' : 'A') : da[n];

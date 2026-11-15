@@ -30,12 +30,12 @@ function trinhDuyet() {
 const A = trinhDuyet();
 const hs = (dl, ten) => dl.hocSinh.find((h) => h.hoTen === ten);
 
-test('nhập lớp có số báo danh: lưu SBD, kiểm tra 8 số / trùng, bổ sung cho em đã có', async () => {
+test('nhập lớp có số báo danh: lưu SBD, kiểm tra định dạng / trùng, bổ sung cho em đã có', async () => {
   assert.equal((await A.goi('/api/dang-ky', { hoTen: 'Thầy Nam', tenKhongGian: 'TT thử SBD', email: `nam.${lam}@vd.vn`, matKhau: 'matkhau123' })).ok, true);
   await A.rpc('gvTaoNhom', 'Toán 12A', 'Toán');
   await A.rpc('gvThemNhieuHocSinh', [['Họ và tên', 'Lớp'], ['Trần Bình', 'Toán 12A']], {}, '');
   const td = ['STT', 'Số báo danh', 'Họ và tên', 'Ngày sinh', 'Lớp', 'SĐT phụ huynh'];
-  await assert.rejects(A.rpc('gvThemNhieuHocSinh', [td, ['1', '1234567', 'Lê Chi', '', 'Toán 12A', '']], {}, ''), /đúng 8 chữ số/);
+  await assert.rejects(A.rpc('gvThemNhieuHocSinh', [td, ['1', '12a', 'Lê Chi', '', 'Toán 12A', '']], {}, ''), /4–12 chữ số/);
   await assert.rejects(A.rpc('gvThemNhieuHocSinh', [td, ['1', '24010001', 'Lê Chi', '', 'Toán 12A', ''], ['2', '24010001', 'Võ Dung', '', 'Toán 12A', '']], {}, ''), /bị trùng/);
   const dl = await A.rpc('gvThemNhieuHocSinh', [td,
     ['1', '24010001', 'Nguyễn An', '12/05/2008', 'Toán 12A', '0912000001'],
@@ -53,7 +53,7 @@ test('nhập lớp có số báo danh: lưu SBD, kiểm tra 8 số / trùng, b�
   assert.equal(hs(dl2, 'Lê Chi').sdt, '0912000003');
   // sửa 1 học sinh: SBD trùng / sai định dạng
   await assert.rejects(A.rpc('gvLuuHocSinh', { maHs: hs(dl2, 'Lê Chi').maHs, hoTen: 'Lê Chi', lop: 'Toán 12A', sbd: '24010001' }), /đã là của học sinh Nguyễn An/);
-  await assert.rejects(A.rpc('gvLuuHocSinh', { hoTen: 'Mới', lop: 'Toán 12A', sbd: '12ab' }), /8 chữ số/);
+  await assert.rejects(A.rpc('gvLuuHocSinh', { hoTen: 'Mới', lop: 'Toán 12A', sbd: '12ab' }), /4–12 chữ số/);
 });
 
 test('mẫu phiếu nhập lớp điền sẵn học sinh của lớp', async () => {
@@ -123,4 +123,19 @@ test('sửa điểm từng phần trên app: kiểm tra tối đa, tổng tự c
   assert.equal(p2.chenhLech, '-1.25');
   const dl = await A.rpc('gvTaiDuLieu');
   assert.ok(dl.diem.some((x) => x[0] === lan1 && x[2] === '8.25'), 'tổng hợp / điểm TB dùng điểm mới');
+});
+
+test('SBD 6 số trong file kết quả cũ vẫn được nhận và lưu cho học sinh', async () => {
+  await A.rpc('gvTaoNhom', 'Toán 11B', 'Toán');
+  const mau = await A.rpc('gvLayMau', 'Toán 11B');
+  const td = mau.ketQua.KetQua[0];
+  const r = td.map(() => ''); r[td.indexOf('Họ và tên')] = 'Mai Hoa'; r[td.indexOf('Lớp')] = 'Toán 11B'; r[td.indexOf('Số báo danh')] = '210105'; r[td.indexOf('Mã đề thi')] = '105';
+  const so = { kq: { KetQua: [td, r] }, da: L.taoMauDapAn() };
+  const bd = await A.rpc('gvBatDauDot', so, { baiThi: 'KT SBD 6 số' });
+  await A.rpc('gvTaoPhieuLo', bd.dsDot[0].maDot, so, bd.dsDot[0].canTao);
+  assert.equal(hs(await A.rpc('gvTaiDuLieu'), 'Mai Hoa').sbd, '210105');
+  // lần sau: tên gõ khác, SBD khớp -> đúng em
+  const r2 = r.slice(); r2[td.indexOf('Họ và tên')] = 'Mai Thị Hoa';
+  const xt = await A.rpc('gvXemTruoc', { kq: { KetQua: [td, r2] }, da: L.taoMauDapAn() }, {});
+  assert.equal(xt.hocSinh[0].trangThai, 'co');
 });

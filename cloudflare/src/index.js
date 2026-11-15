@@ -589,7 +589,7 @@ const HAM = {
       nhom.forEach((n) => c.kiemTraLop(n));
       const sdt = o(r, cc.sdt);
       const sbdGoc = o(r, cc.sbd), sbd = L.chuanHoaSbd_(sbdGoc);
-      if (sbdGoc && !L.sbdHopLe_(sbd)) throw new Loi('Dòng "' + ten + '": số báo danh "' + sbdGoc + '" phải gồm đúng 8 chữ số.');
+      if (sbdGoc && !L.sbdHopLe_(sbd)) throw new Loi('Dòng "' + ten + '": số báo danh "' + sbdGoc + '" chỉ gồm 4–12 chữ số (thường 8 số).');
       if (sbd && sbdTrongFile[sbd]) throw new Loi('Số báo danh ' + sbd + ' bị trùng giữa "' + sbdTrongFile[sbd] + '" và "' + ten + '" trong file.');
       if (sbd) sbdTrongFile[sbd] = ten;
       const moi = { hoTen: ten, nhom, ngaySinh: o(r, cc.ngaySinh), sdt, ghiChu: o(r, cc.ghiChu), sbd };
@@ -1430,11 +1430,11 @@ function cacPhanCuaPhieu(ch) {
   return ds;
 }
 
-/** SBD khi lưu 1 học sinh: trống hoặc đúng 8 số, không trùng em khác trong không gian. */
+/** SBD khi lưu 1 học sinh: trống hoặc 4–12 chữ số, không trùng em khác trong không gian. */
 function kiemTraSbd(sbdGoc, ds, cu) {
   const sbd = L.chuanHoaSbd_(sbdGoc);
   if (!L.chuoi_(sbdGoc)) return '';
-  if (!L.sbdHopLe_(sbd)) throw new Loi('Số báo danh phải gồm đúng 8 chữ số.');
+  if (!L.sbdHopLe_(sbd)) throw new Loi('Số báo danh chỉ gồm 4–12 chữ số (thường 8 số).');
   const trung = ds.find((h) => h.sbd === sbd && (!cu || h.id !== cu.id));
   if (trung) throw new Loi('Số báo danh ' + sbd + ' đã là của học sinh ' + trung.hoTen + ' (' + trung.maHs + ').');
   return sbd;

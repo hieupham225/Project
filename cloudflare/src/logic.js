@@ -337,9 +337,9 @@ export const LY_DO_CAN_CHON = {
   lechSbd: 'Số báo danh trong file là của học sinh khác tên — kiểm tra lại SBD'
 };
 
-/** Số báo danh: chỉ giữ chữ số. Hợp lệ khi đủ 8 số. */
+/** Số báo danh: chỉ giữ chữ số. Hợp lệ khi gồm 4–12 chữ số (thường 8 số; file cũ có thể 6 số). */
 export function chuanHoaSbd_(s) { return String(s == null ? '' : s).replace(/\D/g, ''); }
-export function sbdHopLe_(s) { return /^\d{8}$/.test(chuanHoaSbd_(s)); }
+export function sbdHopLe_(s) { return /^\d{4,12}$/.test(chuanHoaSbd_(s)); }
 
 export const MAU_FILE_KET_QUA = {
   KetQua: [
@@ -703,7 +703,7 @@ export function taoMauNhapLop(ds, tenLop) {
     DanhSach: [tieuDe].concat(dong),
     HuongDan: [
       ['HƯỚNG DẪN — PHIẾU NHẬP LỚP'],
-      ['• Mỗi học sinh 1 dòng. "Số báo danh" gồm đúng 8 chữ số, cố định cả khóa và không trùng giữa các học sinh.'],
+      ['• Mỗi học sinh 1 dòng. "Số báo danh" gồm chữ số (thường 8 số), cố định cả khóa và không trùng giữa các học sinh.'],
       ['• Học sinh đã có trong hệ thống (cùng SBD, hoặc cùng họ tên trong lớp): chỉ bổ sung SBD / ngày sinh / SĐT còn trống, không tạo trùng.'],
       ['• "Ngày sinh" ghi dd/mm/yyyy (VD 15/03/2009) — dùng để nhóm các lớp theo năm sinh.'],
       ['• "Lớp": học sinh học nhiều lớp thì ghi các lớp ngăn bằng dấu chấm phẩy (VD "Toán 1; Lý 11A").'],

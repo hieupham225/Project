@@ -186,7 +186,7 @@ export function khoaTruong(s) { return String(s || '').normalize('NFC').toLowerC
 
 /* ===================== dựng HTML ===================== */
 
-export function docMauWord(tep) {
+export function docMauWord(tep, tuyChon) {
   var lay = function (ten) { var k = Object.keys(tep).find(function (x) { return x.replace(/^\/+/, '').toLowerCase() === ten.toLowerCase(); }); return k ? tep[k] : null; };
   var docGoc = lay('word/document.xml');
   if (!docGoc) return { ok: false, loi: 'File không phải Word (.docx) hợp lệ — không tìm thấy nội dung tài liệu.' };
@@ -198,7 +198,8 @@ export function docMauWord(tep) {
   var truong = [], daCo = {}, canhBao = [], soAnh = 0, soIf = 0;
   // Trường đang mở — dùng chung giữa các đoạn: kết quả trộn của 1 trường có thể trải qua nhiều đoạn văn.
   // Vị trí bắt đầu trường đánh dấu bằng \u0000<số>\u0000; nội dung thật điền vào khi gặp 'end'.
-  var truongMo = [], soTruong = 0, ketQuaTruong = {};
+  var truongMo = [], soTruong = 0, ketQuaTruong = {}, soBang = 0;
+  var dsDoan = []; // các đoạn văn (mảnh chữ) — dò trường rồi mới dựng HTML
   var rongBangToiDa = 0; // twip — bảng có thể lấn ra lề phải (như trong Word)
   var themTruong = function (ten) { var k = khoaTruong(ten); if (!daCo[k]) { daCo[k] = 1; truong.push(ten); } };
 
@@ -224,16 +225,22 @@ export function docMauWord(tep) {
       (noi ? (canh === 'right' ? 'float:right;margin-left:6pt;' : 'float:left;margin-right:6pt;') : 'vertical-align:bottom;') + '">';
   };
 
-  /** Đoạn văn: các run + trường (MERGEFIELD trải qua nhiều run: begin / instr / separate / kết quả / end). */
+  /**
+   * Đoạn văn: các run + trường (MERGEFIELD trải qua nhiều run: begin / instr / separate / kết quả / end).
+   * Đoạn được giữ dạng danh sách mảnh { chu, css } (chữ — bộ dò trường có thể thay) | { html } (ảnh, xuống dòng, trường trộn thư)
+   * rồi mới dựng HTML ở cuối (sau khi dò trường). Trả về dấu \u0001<số>\u0001 thay cho đoạn.
+   */
   var veDoan = function (p, ngucanh) {
     var pPrRieng = con(p, 'w:pPr');
     var idKieu = val(con(pPrRieng, 'w:pStyle')) || ks.macDinhP;
     var pPr = [ks.pGoc, ngucanh.pPrBang, chuoiKieu(ks, idKieu, 'pPr'), pPrRieng].reduce(gopThuocTinh, null);
     var rPrDoan = [ks.rGoc, ngucanh.rPrBang, chuoiKieu(ks, idKieu, 'rPr')].reduce(gopThuocTinh, null);
-    var html = '', coNoiDung = false;
+    var manh = [], coNoiDung = false;
+    var them = function (m) { var cuoi = manh[manh.length - 1]; if (m.chu != null && cuoi && cuoi.chu != null && cuoi.css === m.css) cuoi.chu += m.chu; else manh.push(m); coNoiDung = true; };
     var batDauTrongKetQua = truongMo.length > 0 && truongMo[truongMo.length - 1].tach;
     var veRun = function (r) {
       var rPr = [rPrDoan, chuoiKieu(ks, val(con(con(r, 'w:rPr'), 'w:rStyle')), 'rPr'), con(r, 'w:rPr')].reduce(gopThuocTinh, null);
+      var css = cssChu(rPr);
       r.c.forEach(function (x) {
         if (typeof x === 'string') return;
         if (x.n === 'w:fldChar') {
@@ -242,7 +249,7 @@ export function docMauWord(tep) {
             var id = ++soTruong;
             truongMo.push({ id: id, instr: '', tach: false, rPr: rPr, ketQua: '' });
             var dau = '\u0000' + id + '\u0000';
-            if (truongMo.length > 1) truongMo[truongMo.length - 2].ketQua += dau; else { html += dau; coNoiDung = true; }
+            if (truongMo.length > 1) truongMo[truongMo.length - 2].ketQua += dau; else them({ html: dau });
           }
           else if (loai === 'separate' && truongMo.length) truongMo[truongMo.length - 1].tach = true;
           else if (loai === 'end' && truongMo.length) {
@@ -256,22 +263,22 @@ export function docMauWord(tep) {
         }
         if (x.n === 'w:instrText') { if (truongMo.length && !truongMo[truongMo.length - 1].tach) truongMo[truongMo.length - 1].instr += chuTrong(x); return; }
         var dangTrongTruong = truongMo.length > 0;
-        var phan = '';
-        if (x.n === 'w:t') phan = anToan(chuTrong(x));
-        else if (x.n === 'w:tab') phan = '<span style="display:inline-block;min-width:24pt"></span>';
-        else if (x.n === 'w:br') phan = x.a['w:type'] === 'page' ? '<span class="ngat-trang"></span>' : '<br>';
-        else if (x.n === 'w:cr') phan = '<br>';
-        else if (x.n === 'w:noBreakHyphen') phan = '‑';
-        else if (x.n === 'w:sym') phan = '&#x' + (x.a['w:char'] || '25A1').replace(/^F0/i, '') + ';';
-        else if (x.n === 'w:drawing') phan = veAnh(x);
-        else if (x.n === 'w:pict' || x.n === 'mc:AlternateContent') { var d = tim(x, 'w:drawing'); phan = d ? veAnh(d) : ''; }
-        if (!phan) return;
+        var phan = null;
+        if (x.n === 'w:t') phan = { chu: chuTrong(x), css: css };
+        else if (x.n === 'w:tab') phan = { html: '<span style="display:inline-block;min-width:24pt"></span>' };
+        else if (x.n === 'w:br') phan = { html: x.a['w:type'] === 'page' ? '<span class="ngat-trang"></span>' : '<br>' };
+        else if (x.n === 'w:cr') phan = { html: '<br>' };
+        else if (x.n === 'w:noBreakHyphen') phan = { chu: '‑', css: css };
+        else if (x.n === 'w:sym') phan = { html: '<span style="' + css + '">&#x' + (x.a['w:char'] || '25A1').replace(/^F0/i, '') + ';</span>' };
+        else if (x.n === 'w:drawing') phan = { html: veAnh(x) };
+        else if (x.n === 'w:pict' || x.n === 'mc:AlternateContent') { var d = tim(x, 'w:drawing'); phan = d ? { html: veAnh(d) } : null; }
+        if (!phan || (phan.html === '')) return;
         if (dangTrongTruong) {
           var tt = truongMo[truongMo.length - 1];
-          if (tt.tach) { if (!tt.rPrKetQua) tt.rPrKetQua = rPr; tt.ketQua += '<span style="' + cssChu(rPr) + '">' + phan + '</span>'; }
+          if (tt.tach) { if (!tt.rPrKetQua) tt.rPrKetQua = rPr; tt.ketQua += phan.chu != null ? '<span style="' + phan.css + '">' + anToan(phan.chu) + '</span>' : phan.html; }
           return;
         }
-        html += '<span style="' + cssChu(rPr) + '">' + phan + '</span>'; coNoiDung = true;
+        them(phan);
       });
     };
     var duyet = function (nut) {
@@ -281,13 +288,25 @@ export function docMauWord(tep) {
         else if (x.n === 'w:hyperlink' || x.n === 'w:smartTag' || x.n === 'w:ins' || x.n === 'w:customXml' || x.n === 'w:sdt' || x.n === 'w:sdtContent' || x.n === 'w:fldSimple') {
           if (x.n === 'w:fldSimple') {
             var mf = phanTichTruong(x.a['w:instr']);
-            if (mf) { themTruong(mf.ten); var r0 = tim(x, 'w:r'); html += '<span class="truong" data-truong="' + anToan(mf.ten) + '" style="' + cssChu([rPrDoan, r0 && con(r0, 'w:rPr')].reduce(gopThuocTinh, null)) + '">«' + anToan(mf.ten) + '»</span>'; coNoiDung = true; return; }
+            if (mf) { themTruong(mf.ten); var r0 = tim(x, 'w:r'); them({ html: '<span class="truong" data-truong="' + anToan(mf.ten) + '" style="' + cssChu([rPrDoan, r0 && con(r0, 'w:rPr')].reduce(gopThuocTinh, null)) + '">«' + anToan(mf.ten) + '»</span>' }); return; }
           }
           duyet(x);
         }
       });
     };
     duyet(p);
+    if (!coNoiDung && batDauTrongKetQua) return ''; // đoạn chỉ chứa phần kết quả trộn cũ của 1 trường (trải nhiều đoạn) -> bỏ
+    var doanCss = cssDoan(pPr);
+    dsDoan.push({ manh: manh, css: 'margin:0;' + cssChu(rPrDoan) + (doanCss ? ';' + doanCss : ''), viTri: ngucanh.viTri || null, rong: !coNoiDung });
+    return '\u0001' + (dsDoan.length - 1) + '\u0001';
+  };
+  /** Dựng HTML 1 đoạn (sau khi dò trường). */
+  var dungDoan = function (d) {
+    if (d.bo) return '';
+    var html = d.manh.map(function (m) {
+      if (m.truong) return '<span class="truong" data-truong="' + anToan(m.truong) + '" data-do="' + m.doId + '" data-goc="' + anToan(m.goc) + '" style="' + m.css + '">«' + anToan(m.truong) + '»</span>';
+      return m.chu != null ? '<span style="' + m.css + '">' + anToan(m.chu) + '</span>' : m.html;
+    }).join('');
     // ký hiệu {{Tên trường}} gõ thẳng trong Word -> trường (gộp cả khi Word tách thành nhiều run)
     html = html.replace(/\{\{((?:[^{}<]|<[^>]*>)+?)\}\}/g, function (m, trong) {
       var ten = trong.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').trim();
@@ -295,11 +314,8 @@ export function docMauWord(tep) {
       themTruong(ten);
       return '<span class="truong" data-truong="' + anToan(ten) + '">«' + anToan(ten) + '»</span>';
     });
-    var rPrCss = cssChu(rPrDoan);
-    var doanCss = cssDoan(pPr);
-    if (!coNoiDung && batDauTrongKetQua) return ''; // đoạn chỉ chứa phần kết quả trộn cũ của 1 trường (trải nhiều đoạn) -> bỏ
-    if (!coNoiDung) html = '&#8203;'; // đoạn trống vẫn giữ chiều cao 1 dòng
-    return '<p style="margin:0;' + rPrCss + (doanCss ? ';' + doanCss : '') + '">' + html + '</p>';
+    if (d.rong) html = '&#8203;'; // đoạn trống vẫn giữ chiều cao 1 dòng
+    return '<p style="' + d.css + '">' + html + '</p>';
   };
 
   var veBang = function (tbl, ngucanh) {
@@ -329,8 +345,9 @@ export function docMauWord(tep) {
         for (var k = i - 1; k >= 0; k--) { var tren = luoi[k].o.find(function (x) { return x.cot === o.cot; }); if (tren && tren.vm !== 'tiep') { tren.rowspan++; break; } if (!tren) break; }
       });
     });
-    var nHang = luoi.length, tongCot = cot.length;
+    var nHang = luoi.length, tongCot = cot.length, idBang = ++soBang;
     var veO = function (o, i) {
+      var ngucanhO = { pPrBang: ngucanhCon.pPrBang, rPrBang: ngucanhCon.rPrBang, viTri: { bang: idBang, hang: i, cot: o.cot } };
       var tcB = con(o.tcPr, 'w:tcBorders');
       var canh = function (k, ngoai, trong) {
         var rieng = tcB && con(tcB, 'w:' + k);
@@ -345,7 +362,7 @@ export function docMauWord(tep) {
       var va = val(con(o.tcPr, 'w:vAlign')); css.push('vertical-align:' + (va === 'center' ? 'middle' : va === 'bottom' ? 'bottom' : 'top'));
       var shd = con(o.tcPr, 'w:shd'); if (shd && shd.a['w:fill'] && shd.a['w:fill'] !== 'auto') css.push('background:#' + shd.a['w:fill']);
       var noi = o.tc.c.filter(function (x) { return typeof x !== 'string' && (x.n === 'w:p' || x.n === 'w:tbl' || x.n === 'w:sdt'); })
-        .map(function (x) { return x.n === 'w:tbl' ? veBang(x, ngucanhCon) : x.n === 'w:sdt' ? veKhoi(con(x, 'w:sdtContent'), ngucanhCon) : veDoan(x, ngucanhCon); }).join('');
+        .map(function (x) { return x.n === 'w:tbl' ? veBang(x, ngucanhCon) : x.n === 'w:sdt' ? veKhoi(con(x, 'w:sdtContent'), ngucanhO) : veDoan(x, ngucanhO); }).join('');
       return '<td' + (o.span > 1 ? ' colspan="' + o.span + '"' : '') + (o.rowspan > 1 ? ' rowspan="' + o.rowspan + '"' : '') + ' style="' + css.join(';') + '">' + noi + '</td>';
     };
     var than = luoi.map(function (h, i) {
@@ -376,6 +393,10 @@ export function docMauWord(tep) {
   };
 
   var noiDung = veKhoi(body, {});
+  // Word thường (không có trường trộn thư) -> tự dò chỗ cần điền: theo file Excel mẫu (nếu có) hoặc theo nhãn "Họ và tên: …"
+  var doDuoc = [];
+  if (!truong.length || (tuyChon && tuyChon.duLieu)) doDuoc = doTruong(dsDoan, tuyChon && tuyChon.duLieu, themTruong);
+  noiDung = noiDung.replace(/\u0001(\d+)\u0001/g, function (m, i) { return dungDoan(dsDoan[+i]); });
   for (var vong = 0; vong < 5 && noiDung.indexOf('\u0000') >= 0; vong++) noiDung = noiDung.replace(/\u0000(\d+)\u0000/g, function (m, id) { return ketQuaTruong[id] != null ? ketQuaTruong[id] : ''; });
   // khổ giấy + lề (section cuối)
   var sect = con(body, 'w:sectPr'), pg = con(sect, 'w:pgSz'), mar = con(sect, 'w:pgMar');
@@ -388,7 +409,190 @@ export function docMauWord(tep) {
   if (soIf) canhBao.push(soIf + ' trường điều kiện (IF) đang hiển thị theo giá trị lúc lưu file Word — chưa tính lại theo từng học sinh.');
   if (/<w:txbxContent/.test(chuoiTuByte(docGoc))) canhBao.push('File có hộp văn bản (text box): nội dung trong hộp có thể chưa hiển thị đúng vị trí.');
   var html = '<div class="mau-word" style="width:' + (trang.rong - trang.trai - trang.phai).toFixed(1) + 'pt;font-family:\'Times New Roman\',serif;font-size:11pt;line-height:1.15;color:#000">' + noiDung + '</div>';
-  return { ok: true, html: html, truong: truong, trang: trang, canhBao: canhBao, soAnh: soAnh };
+  return { ok: true, html: html, truong: truong, trang: trang, canhBao: canhBao, soAnh: soAnh, doDuoc: doDuoc };
+}
+
+/* ===================== tự dò trường (Word thường) ===================== */
+
+function chuanSo(s) { // so sánh giá trị: gộp khoảng trắng, NFC; số thập phân "2,75" = "2.75"
+  s = String(s == null ? '' : s).normalize('NFC').replace(/\s+/g, ' ').trim();
+  return /^-?\d+(?:[.,]\d+)?$/.test(s) ? s.replace(',', '.') : s;
+}
+function khongDauNhe(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+
+var NHAN_HE_THONG = [
+  { re: /(?:họ\s*(?:và)?\s*tên(?:\s*học\s*sinh)?|học\s*sinh)\s*:\s*/i, truong: 'Họ_và_tên' },
+  { re: /(?:số\s*báo\s*danh|sbd)\s*:\s*/i, truong: 'Số_báo_danh' },
+  { re: /mã\s*đề(?:\s*thi)?\s*:\s*/i, truong: 'Mã_đề_thi' },
+  { re: /tổng\s*điểm\s*:\s*/i, truong: 'Tổng_điểm' },
+  { re: /ngày\s*thi\s*:\s*/i, truong: 'Ngày_thi' },
+  { re: /(?<![a-zà-ỹ])lớp(?:\s*[a-zà-ỹ]+)?\s*:\s*/i, truong: 'Lớp' }
+];
+
+/**
+ * Dò chỗ cần điền trong các đoạn (Word thường đã điền sẵn dữ liệu 1 học sinh).
+ * duLieu = { tieuDe: [tiêu đề cột Excel], dong: [[giá trị…], …] } (file kết quả dùng để trộn) — có thì dò theo giá trị, không thì theo nhãn.
+ * Đổi mảnh chữ thành { truong, css, goc, doId } ngay trong dsDoan. Trả về danh sách đã dò [{ id, truong, goc, cach }].
+ */
+function doTruong(dsDoan, duLieu, themTruong) {
+  var ketQua = [], soId = 0;
+  var doanText = function (d) { return d.manh.map(function (m) { return m.chu != null ? m.chu : m.truong ? '\u0002' : '\u0003'; }).join(''); };
+  /** Thay đoạn chữ [tu, den) (theo vị trí trong chuỗi doanText) của đoạn d bằng 1 trường. */
+  var thay = function (d, tu, den, ten, cach) {
+    var moi = [], viTri = 0, daDat = false, goc = doanText(d).slice(tu, den);
+    d.manh.forEach(function (m) {
+      var dai = m.chu != null ? m.chu.length : 1, a = viTri, b = viTri + dai;
+      viTri = b;
+      if (m.chu == null || b <= tu || a >= den) { moi.push(m); return; }
+      if (a < tu) moi.push({ chu: m.chu.slice(0, tu - a), css: m.css });
+      if (!daDat) { moi.push({ truong: ten, css: m.css, goc: goc, doId: ++soId }); daDat = true; }
+      if (b > den) moi.push({ chu: m.chu.slice(den - a), css: m.css });
+    });
+    d.manh = moi;
+    themTruong(ten);
+    ketQua.push({ id: soId, truong: ten, goc: goc.trim(), cach: cach });
+  };
+  var chiChu = function (d) { return d.manh.length && d.manh.every(function (m) { return m.chu != null; }); };
+
+  /* ---- 1. Theo file Excel: chọn dòng của học sinh có trong phiếu ---- */
+  var dong = null, tieuDe = [], ten = [];
+  if (duLieu && duLieu.tieuDe && duLieu.dong && duLieu.dong.length) {
+    tieuDe = duLieu.tieuDe.map(function (x) { return String(x == null ? '' : x); });
+    ten = tieuDe.map(function (h, j) { return tenTruongWord(h, j); });
+    var toanVan = dsDoan.map(function (d) { return chuanSo(doanText(d)); }).join('\n');
+    var diemTot = 0;
+    duLieu.dong.forEach(function (r) {
+      var diem = 0, daDem = {};
+      r.forEach(function (v) { v = chuanSo(v); if (v.length >= 4 && !daDem[v] && toanVan.indexOf(v) >= 0) { daDem[v] = 1; diem += v.length >= 8 ? 2 : 1; } });
+      if (diem > diemTot) { diemTot = diem; dong = r; }
+    });
+    if (diemTot < 3) dong = null;
+  }
+  if (dong) {
+    var gt = dong.map(chuanSo);
+    /* 1a. Bảng: cột ô khớp 1 chuỗi cột Excel ("Câu 1…Câu 12" -> Câu_1…; "1…22" -> M_1…) */
+    var chuoi = {};
+    tieuDe.forEach(function (h, j) {
+      var m = /^(.*?)[\s_.-]*(\d+)$/.exec(h.trim()); if (!m) return;
+      var k = khongDauNhe(m[1]); (chuoi[k] = chuoi[k] || []).push({ j: j, so: +m[2] });
+    });
+    var dsChuoi = Object.keys(chuoi).filter(function (k) { return chuoi[k].length >= 3; }).map(function (k) {
+      return { tienTo: k, cot: chuoi[k].sort(function (a, b) { return a.so - b.so; }).map(function (x) { return x.j; }) };
+    });
+    var theoCot = {};
+    dsDoan.forEach(function (d, i) { if (d.viTri && chiChu(d)) { var k = d.viTri.bang + ':' + d.viTri.cot; (theoCot[k] = theoCot[k] || []).push(i); } });
+    Object.keys(theoCot).forEach(function (k) {
+      var o = theoCot[k].map(function (i) { return { i: i, v: chuanSo(doanText(dsDoan[i])) }; });
+      if (o.length < 3) return;
+      var tot = null;
+      dsChuoi.forEach(function (c) {
+        var phieu = {};
+        o.forEach(function (x, vt) { if (!x.v) return; c.cot.forEach(function (j, p) { if (gt[j] === x.v) phieu[p - vt] = (phieu[p - vt] || 0) + 1; }); });
+        Object.keys(phieu).forEach(function (lech) {
+          var ung = { c: c, lech: +lech, phieu: phieu[lech] };
+          if (!tot || ung.phieu > tot.phieu) { tot = ung; return; }
+          if (ung.phieu === tot.phieu) { // bằng nhau (học sinh làm đúng hết): theo tiêu đề cột trên phiếu
+            var dau = khongDauNhe(o.slice(0, 3).map(function (x) { return x.v; }).join(' '));
+            var dapAnDung = /dung|dapso|dapan(?!cuaban)/.test(dau) && !/cuaban/.test(dau);
+            if ((dapAnDung && ung.c.tienTo !== 'cau') || (!dapAnDung && ung.c.tienTo === 'cau' && tot.c.tienTo !== 'cau')) tot = ung;
+          }
+        });
+      });
+      var coChu = o.filter(function (x) { return x.v; }).length;
+      if (!tot || tot.phieu < 3 || tot.phieu < coChu * 0.5) return;
+      o.forEach(function (x, vt) {
+        var p = vt + tot.lech, j = tot.c.cot[p];
+        if (j == null || !x.v || gt[j] !== x.v) return;
+        var d = dsDoan[x.i], s = doanText(d), a = s.search(/\S/);
+        thay(d, a, s.trimEnd().length, ten[j], 'bảng');
+        x.xong = true;
+      });
+    });
+    /* 1b. Giá trị nhiều dòng (nhận xét): các đoạn liên tiếp trùng từng dòng */
+    gt.forEach(function (v, j) {
+      var dongs = String(dong[j] || '').split(/\r?\n/).map(chuanSo).filter(Boolean);
+      if (dongs.length < 2) return;
+      for (var i = 0; i + dongs.length <= dsDoan.length; i++) {
+        var khop = dongs.every(function (l, k) { var d = dsDoan[i + k]; return chiChu(d) && chuanSo(doanText(d)) === l; });
+        if (!khop) continue;
+        var d0 = dsDoan[i], s = doanText(d0);
+        thay(d0, s.search(/\S/), s.trimEnd().length, ten[j], 'nhiều dòng');
+        ketQua[ketQua.length - 1].goc = dongs.join(' / ');
+        for (var k = 1; k < dongs.length; k++) dsDoan[i + k].bo = true;
+        break;
+      }
+    });
+    /* 1c. Giá trị đơn: mảnh chữ trùng giá trị 1 ô (số ngắn cần có nhãn đứng trước, VD "Mã đề thi: 101") */
+    var ungVien = gt.map(function (v, j) { return { j: j, v: v }; }).filter(function (x) { return x.v; });
+    // Số: cột có cùng kiểu thập phân với giá trị trên phiếu ở mọi dòng (VD "3.00" chứ không phải "3") được ưu tiên
+    var dinhDangGiong = function (j, v) {
+      var m = /^-?\d+(?:\.(\d+))?$/.exec(v); if (!m) return 0;
+      var thap = m[1] ? m[1].length : 0, co = 0, tong = 0;
+      duLieu.dong.forEach(function (r) { var s = chuanSo(r[j]); if (!/^-?\d+(?:\.\d+)?$/.test(s)) return; tong++; var mm = /\.(\d+)$/.exec(s); if ((mm ? mm[1].length : 0) === thap) co++; });
+      return tong ? co / tong : 0;
+    };
+    dsDoan.forEach(function (d) {
+      if (d.bo) return;
+      for (var vong = 0; vong < 30; vong++) {
+        var s = doanText(d), tot = null;
+        // các khúc chữ liền nhau (giữa 2 trường / ảnh)
+        var khuc = [], re = /[^\u0002\u0003]+/g, m;
+        while ((m = re.exec(s))) khuc.push({ tu: m.index, chu: m[0] });
+        // từng mảnh có kiểu chữ riêng (VD "Phần 3: " thường + "1.10" đỏ đậm): giá trị thường được định dạng khác nhãn
+        var vtM = 0;
+        d.manh.forEach(function (mm) { var dai = mm.chu != null ? mm.chu.length : 1; if (mm.chu != null && mm.chu.trim()) khuc.push({ tu: vtM, chu: mm.chu }); vtM += dai; });
+        khuc.forEach(function (k) {
+          ungVien.forEach(function (x) {
+            var v = x.v, ngan = v.length < 4 || /^\d{1,3}$/.test(v);
+            var tim = function (tu, den) {
+              var truoc = khongDauNhe(s.slice(0, tu)), nhan = khongDauNhe(tieuDe[x.j]);
+              var coNhan = nhan.length >= 3 && truoc.slice(-nhan.length - 6).indexOf(nhan) >= 0;
+              // nhãn trên phiếu ngắn hơn tên cột ("Mã đề:" ~ cột "Mã đề thi"): đuôi chữ ngay trước giá trị nằm trong tên cột
+              for (var dai = Math.min(12, truoc.length); !coNhan && dai >= 4; dai--) if (nhan.indexOf(truoc.slice(-dai)) >= 0) coNhan = true;
+              if (ngan && !coNhan) return;
+              var diem = (coNhan ? 4 : 0) + (tieuDe[x.j].trim() ? 1 : 0) + v.length / 100 + dinhDangGiong(x.j, v) * 3;
+              if (!tot || diem > tot.diem) tot = { tu: tu, den: den, j: x.j, diem: diem };
+            };
+            var chuK = chuanSo(k.chu), dau = k.chu.search(/\S/);
+            if (chuK === v) { tim(k.tu + dau, k.tu + k.chu.trimEnd().length); return; }
+            // nằm giữa câu: chỉ với giá trị đủ đặc trưng (tên, số dài)
+            if (v.length >= 6 && /[^\d.\s]/.test(v) || v.length >= 8) {
+              var vt = k.chu.indexOf(v);
+              if (vt >= 0) tim(k.tu + vt, k.tu + vt + v.length);
+            }
+          });
+        });
+        if (!tot) break;
+        thay(d, tot.tu, tot.den, ten[tot.j], 'giá trị');
+      }
+    });
+  } else {
+    /* 2. Không có file Excel: theo nhãn quen thuộc "Họ và tên: …", "Lớp: …", "SBD: …" */
+    dsDoan.forEach(function (d) {
+      var daDung = {};
+      for (var vong = 0; vong < 8; vong++) {
+        var s = doanText(d), tot = null;
+        NHAN_HE_THONG.forEach(function (n) {
+          if (daDung[n.truong]) return;
+          var re = new RegExp(n.re.source, 'ig'), m;
+          while ((m = re.exec(s))) {
+            var tu = m.index + m[0].length, sau = s.slice(tu);
+            var het = sau.search(/[\u0002\u0003;]|\s{2,}|\s+\d+\.\s|\/\d|$/);
+            // giá trị thường có kiểu chữ riêng: dừng ở chỗ đổi kiểu (VD "6.20" đỏ đậm + "/10" thường)
+            var batDau = tu + (sau.length - sau.replace(/^\s+/, '').length), vtM = 0;
+            d.manh.forEach(function (mm) { var dai = mm.chu != null ? mm.chu.length : 1; if (vtM <= batDau && batDau < vtM + dai && vtM + dai - tu > 0) het = Math.min(het, vtM + dai - tu); vtM += dai; });
+            var giaTri = sau.slice(0, het).trimEnd();
+            if (!giaTri || giaTri.length > 60 || /^[«{]/.test(giaTri)) continue;
+            if (!tot || tu < tot.tu) tot = { tu: tu, den: tu + giaTri.length, truong: n.truong };
+          }
+        });
+        if (!tot) break;
+        daDung[tot.truong] = 1;
+        thay(d, tot.tu, tot.den, tot.truong, 'nhãn');
+      }
+    });
+  }
+  return ketQua;
 }
 
 /* ===================== điền dữ liệu ===================== */
@@ -398,7 +602,7 @@ export function dienMau(html, giaTri, tuyChon) {
   tuyChon = tuyChon || {};
   var theoKhoa = {};
   Object.keys(giaTri || {}).forEach(function (k) { theoKhoa[khoaTruong(k)] = giaTri[k]; });
-  return String(html).replace(/<span class="truong" data-truong="([^"]*)"((?:\s+data-(?:truoc|sau)="[^"]*")*)(\s+style="[^"]*")?>[^<]*<\/span>/g, function (m, ten, them, style) {
+  return String(html).replace(/<span class="truong" data-truong="([^"]*)"((?:\s+data-[a-z]+="[^"]*")*)(\s+style="[^"]*")?>[^<]*<\/span>/g, function (m, ten, them, style) {
     var tenGoc = ten.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
     var v = theoKhoa[khoaTruong(tenGoc)];
     if (v == null || v === '') return tuyChon.giuTrong ? m : '<span' + (style || '') + '></span>';
