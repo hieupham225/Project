@@ -2,7 +2,7 @@
 
 ## v1.1 (1.1.0) — 15/11/2026
 
-Thử nghiệm trên staging (https://phieu-ket-qua-staging.ketquahoctap.workers.dev). Khi đưa lên production cần chạy migration theo thứ tự **0003 → 0004 → 0005 → 0006**.
+Đã lên production (https://phieu-ket-qua.ketquahoctap.workers.dev) ngày 15/11/2026, sau khi sao lưu cơ sở dữ liệu và chạy migration **0003 → 0004 → 0005 → 0006**. Dữ liệu cũ giữ nguyên (11 lớp, 414 học sinh, 6 lần thi, 234 phiếu); lớp và lần thi cũ gắn môn Toán, 234 học sinh nhận SBD từ phiếu cũ.
 
 **Nhiều môn, cấu trúc đề**
 - Bộ chấm chạy theo **cấu trúc đề**: có sẵn THPT 2025 cho Toán, Vật lí, Hóa học, Sinh học, Lịch sử, Địa lí, Tiếng Anh. Phần III (6 câu) của Toán, Lý, Hóa, Sinh, Địa là dạng **Tự luận** (giáo viên chấm, nhập cột "Điểm tự luận").
