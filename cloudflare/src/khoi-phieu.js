@@ -170,7 +170,7 @@ export function phieuMinhHoa() {
   };
   return {
     hoTen: 'Nguyễn Văn An', thuHang: '3', soXepHang: 33, lan: 2, ngayThi: '28/09/2026',
-    tenPhan: { I: 'Câu trắc nghiệm nhiều phương án lựa chọn.', II: 'Câu trắc nghiệm đúng sai.', III: 'Trả lời ngắn' },
+    tenPhan: { I: 'Câu trắc nghiệm nhiều phương án lựa chọn.', II: 'Câu trắc nghiệm đúng sai.', III: 'Tự luận' },
     moTaPhan: { I: '(Minh họa: rút gọn còn vài câu — khi tạo phiếu sẽ đủ số câu và đúng chủ đề theo mã đề của từng học sinh.)' },
     lichSu: [{ lan: 1, ngayThi: '28/08/2026', tong: '7.25' }], chenhLech: '+1.25', tangDiem: true,
     nhanXet: { uu: 'Nắm vững kiến thức cơ bản, trình bày cẩn thận.', nhuoc: 'Còn nhầm lẫn ở câu vận dụng.', khacPhuc: 'Luyện thêm các dạng bài vận dụng.' },

@@ -64,9 +64,10 @@
       h.push('<td colspan="2">' + (d.thuHang ? '<b>' + (so++) + '. Xếp hạng:</b> <span class="do">' + e(d.thuHang) + '</span>' + (d.soXepHang ? ' / ' + e(d.soXepHang) : '') : '') + '</td></tr>');
     }
     h.push('<tr><td colspan="3"><b>' + (so++) + '. Kết quả cụ thể:</b> ');
-    if (c.phan1.length) h.push('Phần 1: <span class="do">' + e(dm.p1) + '</span>/' + e(dm.max1) + '; ');
-    if (c.phan2.length) h.push('Phần 2: <span class="do">' + e(dm.p2) + '</span>/' + e(dm.max2) + '; ');
-    if (c.phan3.length) h.push('Phần 3: <span class="do">' + e(dm.p3) + '</span>/' + e(dm.max3) + '; ');
+    // phiếu mặc định: ghi theo loại câu (mục 3 = Tự luận) thay cho "Phần 1/2/3"
+    if (c.phan1.length) h.push('Trắc nghiệm: <span class="do">' + e(dm.p1) + '</span>/' + e(dm.max1) + '; ');
+    if (c.phan2.length) h.push('Đúng sai: <span class="do">' + e(dm.p2) + '</span>/' + e(dm.max2) + '; ');
+    if (c.phan3.length) h.push('Tự luận: <span class="do">' + e(dm.p3) + '</span>/' + e(dm.max3) + '; ');
     h.push('<b>Tổng điểm: <span class="do">' + e(dm.tong) + '</span>/' + e(dm.maxTong) + '</b></td></tr></table>');
 
     // Kết quả các lần làm trước

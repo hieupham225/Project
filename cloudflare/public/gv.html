@@ -2910,7 +2910,7 @@
         p('<b>A. THÔNG TIN CHUNG</b>', 'margin-top:6pt') +
         '<table style="border-collapse:collapse;width:100%"><tbody><tr><td>' + p('<b>1. Họ và tên:</b> ' + tr('Họ_và_tên')) + '</td><td>' + p('<b>2. Lớp:</b> ' + tr('Lớp')) + '</td><td>' + p('<b>3. Mã đề thi:</b> ' + tr('Mã_đề_thi')) + '</td></tr>' +
         '<tr><td>' + p('<b>4. Số báo danh:</b> ' + tr('Số_báo_danh', 'font-weight:normal')) + '</td><td colspan="2">' + p('<b>5. Xếp hạng:</b> ' + k('xep-hang', 'span')) + '</td></tr></tbody></table>' +
-        p('<b>6. Kết quả cụ thể:</b>') + k('bang-diem') + k('cac-lan') +
+        p('<b>6. Kết quả cụ thể:</b>') + '<div class="khoi" data-khoi="bang-diem" data-muc="trac_nghiem:Trắc nghiệm|dung_sai:Đúng sai|tra_loi_ngan:Tự luận">Điểm các phần</div>' + k('cac-lan') +
         '<p style="margin:6pt 0;border-bottom:1.5pt solid #000"></p>' + p('<b>B. PHÂN TÍCH BÀI THI</b>') + kp('trac_nghiem') + kp('dung_sai') + kp('tra_loi_ngan') + k('nhan-xet') + '</div>';
       return { id: '', ten: 'Phân tích bài thi (tự đủ số câu)', html: html, trang: { mon: 'Toán', rong: 595.3, cao: 841.9, tren: 36, duoi: 36, trai: 36, phai: 36, rongToiDa: 523 }, tenTep: '' };
     };
