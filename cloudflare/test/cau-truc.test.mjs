@@ -229,3 +229,12 @@ test('file mẫu có tab HuongDan đứng đầu (kể cả tab dữ liệu bị
   assert.equal(L.docFileKetQua(dauHd(kq, 'KetQua')).hocSinh.length, 1, 'tab KetQua đổi tên -> lấy tab dữ liệu đầu, bỏ qua HuongDan');
   assert.ok(L.docFileDapAn(dauHd(da, 'DapAn')).ok);
 });
+
+test('kiểm tra cột mã đề ở tab CauHoi: số ngoài phần, số lặp, thiếu số -> cảnh báo; cột đúng / trống thì không', () => {
+  const cot = { '101': [2, 1, 3, 5, 4], '102': [1, 2, 4, 4, 5], '103': ['', '', '', '', ''] };
+  const ch = [['Câu', 'Phần', 'Chủ đề', '101', '102', '103'], ...[1, 2, 3, 4, 5].map((g) => [String(g), g <= 3 ? 'I' : 'II', 'cd' + g, ...['101', '102', '103'].map((m) => String(cot[m][g - 1]))])];
+  const da = L.docFileDapAn({ DapAn: [['Mã đề', 'Câu 1', 'Câu 2', 'Câu 3', 'Câu 4', 'Câu 5'], ['101', 'A', 'B', 'C', 'DSDS', 'DSDD'], ['102', 'A', 'B', 'C', 'DSDS', 'DSDD'], ['103', 'A', 'B', 'C', 'DSDS', 'DSDD']], CauHoi: ch });
+  assert.equal(da.canhBao.length, 1, JSON.stringify(da.canhBao));
+  assert.match(da.canhBao[0], /cột mã đề 102: số 4 ghi ở 2 câu gốc \(3, 4\); câu gốc 3 ghi 4 — không thuộc phần I \(câu 1–3\); phần I \(câu 1–3\) thiếu số 3/);
+  assert.deepEqual(L.docFileDapAn(L.taoMauDapAn()).canhBao, [], 'file mẫu hợp lệ');
+});
