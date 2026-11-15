@@ -71,7 +71,10 @@ Thầy cô tạo mẫu phiếu bằng cách **tải lên mẫu Word trộn thư 
    Thầy cô chỉnh trường ghép sai; **xem thử** phiếu 1 học sinh trước khi lưu.
 3. **Thư viện mẫu phiếu** (Cài đặt → Mẫu phiếu): xem, đổi tên, tải lại file Word mới, ẩn. Mỗi mẫu gắn 1 cấu trúc đề (hoặc "chỉ trộn dữ liệu Excel, không chấm"). Mẫu "Phân tích bài thi" hiện tại là mẫu mặc định; phiếu cũ giữ nguyên.
 4. **Gửi kết quả**: chọn môn / cấu trúc đề + mẫu phiếu → tải Excel → ghép học sinh (SBD → Mã HS → họ tên) → điền từng phiếu → công bố, tra cứu, PDF như hiện tại. Sửa điểm, Tổng hợp, biểu đồ dùng chung cho mọi mẫu.
-5. **AI hỗ trợ (tùy chọn, làm sau)**: gợi ý ghép tên trường khó hiểu, gợi ý cấu trúc đề từ bảng câu hỏi trong phiếu — cần khóa API, có chi phí mỗi lần phân tích.
+5. **Phạm vi theo phiên bản (chốt 15/11/2026)**:
+   - **v1.1**: mẫu từ **Word trộn thư** và **Word thông thường** (tự đoán chỗ "nhãn: giá trị mẫu", bôi đen để gắn trường, hoặc gõ `{{Tên trường}}` trong Word) + **trình chỉnh mẫu phiếu** (xem trước với dữ liệu thật, gắn trường, sửa chữ / dòng bảng, khối có sẵn, tạo mẫu từ đầu).
+   - **v2**: mẫu từ **ảnh / PDF** bằng AI (Claude đọc ảnh → dựng mẫu web → chỉnh trong trình chỉnh mẫu); cần khóa API, chi phí theo lượt tạo mẫu.
+6. **AI hỗ trợ (tùy chọn, làm sau)**: gợi ý ghép tên trường khó hiểu, gợi ý cấu trúc đề từ bảng câu hỏi trong phiếu — cần khóa API, có chi phí mỗi lần phân tích.
 
 Thay cho giai đoạn 3 cũ ("Phiếu tổng quát"). Chờ 2 file Word trộn thư (+ file Excel nguồn) của thầy để kiểm chứng bộ đọc trước khi chốt chi tiết.
 
