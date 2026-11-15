@@ -5,6 +5,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import crypto from 'crypto';
 
 const goc = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const LOAI = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.txt': 'text/plain; charset=utf-8' };
@@ -16,6 +17,13 @@ for (const ten of fs.readdirSync(path.join(goc, 'public'))) {
 }
 // Module dùng chung máy chủ + trình duyệt: đọc file Word thành mẫu phiếu
 for (const ten of ['mau-word.js', 'khoi-phieu.js']) trang['/' + ten] = { loai: LOAI['.js'], noiDung: fs.readFileSync(path.join(goc, 'src', ten), 'utf8') };
+// Gắn ?v=<mã nội dung> vào đường dẫn script trong các trang HTML: file .js đổi thì trình duyệt tải bản mới ngay (không dùng bản cũ trong bộ nhớ đệm)
+const maPhienBan = (s) => crypto.createHash('sha1').update(s).digest('hex').slice(0, 10);
+for (const k of Object.keys(trang)) {
+  if (!k.endsWith('.html')) continue;
+  trang[k].noiDung = trang[k].noiDung.replace(/(src="|from ')(\/[a-z0-9-]+\.js)(["'])/g, (m, dau, duong, cuoi) =>
+    trang[duong] ? dau + duong + '?v=' + maPhienBan(trang[duong].noiDung) + cuoi : m);
+}
 const dich = path.join(goc, 'src', 'trang.js');
 const noiDung = '// Tự sinh bởi scripts/dong-goi-trang.mjs từ thư mục public/ — không sửa tay.\nexport default ' + JSON.stringify(trang) + ';\n';
 // Chỉ ghi khi nội dung đổi: src/ nằm trong watch_dir của `wrangler dev`, ghi lại y hệt sẽ gây build lặp vô hạn.
