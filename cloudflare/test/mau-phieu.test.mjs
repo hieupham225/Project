@@ -147,7 +147,7 @@ test('khối có sẵn: bảng phân tích tự dựng theo đề (số câu, ch
   assert.ok(dl.khoiPhieu.some((k) => k.ma === 'phan-tich'));
   assert.match((await B.rpc('gvLayMauPhieu', mau)).html, /data-khoi="phan-tich"/, 'bộ lọc giữ khối');
   // Toán: mã 105 (đề gốc) và 106 (đảo câu phần I) — tab CauHoi dạng ngang
-  const ct = L.layCauTrucCoSan('thpt2025-toan'), da = L.taoMauDapAn();
+  const ct = L.layCauTrucCoSan('thpt2025-toan'), da = L.taoMauDapAn(null, { daoCau: true });
   const td = ['STT', 'Họ và tên', 'Lớp', 'Thứ hạng', 'Mã đề thi', ...Array.from({ length: 22 }, (_, i) => 'Câu ' + (i + 1)), 'Ưu điểm'];
   const so = { kq: { KetQua: [td, ['1', 'Hồ An', 'Toán K', '2', '105', ...da.DapAn[1].slice(1), 'Chăm'], ['2', 'Vũ Bình', 'Toán K', '1', '106', ...da.DapAn[2].slice(1), '']] }, da };
   const bd = await B.rpc('gvBatDauDot', so, { baiThi: 'KT khối', mauPhieu: mau, cauTruc: ct.id });
