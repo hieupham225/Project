@@ -116,9 +116,9 @@ test('ưu tiên điểm chấm từ đáp án; cột điểm giáo viên lệch 
 });
 
 test('mã đề đảo thứ tự câu: tab CauHoi dạng ngang (cột mã đề = câu số mấy trong mã đề) hoặc dạng "Mã đề | Câu | Câu gốc"; thiếu thì cảnh báo', () => {
-  const da = L.taoMauDapAn(null, { daoCau: true });
+  const da = L.taoMauDapAn();
   assert.deepEqual(da.CauHoi[0], ['Câu', 'Phần', 'Dạng bài', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể', '105', '106']);
-  assert.deepEqual(da.CauHoi[1].slice(6), ['1', '2'], 'câu gốc 1 = câu 1 mã 105 = câu 2 mã 106');
+  assert.deepEqual(da.CauHoi[1].slice(6), ['', '2'], 'mã 105 không trộn (để trống) · câu gốc 1 = câu 2 mã 106');
   const td = ['STT', 'Họ và tên', 'Lớp', 'Mã đề thi', ...Array.from({ length: 22 }, (_, i) => 'Câu ' + (i + 1))];
   const r5 = ['1', 'An', 'Toán 1', '105', ...da.DapAn[1].slice(1)], r6 = ['2', 'Bình', 'Toán 1', '106', ...da.DapAn[2].slice(1)];
   const goc = da.CauHoi.slice(1).map((r) => r[5]);
@@ -140,9 +140,7 @@ test('mã đề đảo thứ tự câu: tab CauHoi dạng ngang (cột mã đề
   const chiGoc = L.docFileDapAn({ DapAn: da.DapAn, CauHoi: da.CauHoi.map((r) => r.slice(0, 6)) });
   // chỉ 1 bộ chủ đề (các mã thay số, giữ thứ tự): không cảnh báo, câu n của mã nào cũng dùng chủ đề câu n
   assert.deepEqual(L.ghepHaiFile(L.docFileKetQua({ KetQua: [td, r5, r6] }), chiGoc, {}).canhBao, []);
-  const mac = L.taoMauDapAn();
-  assert.deepEqual(mac.CauHoi[0], ['Câu', 'Phần', 'Dạng bài', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể'], 'mẫu mặc định: không có cột mã đề');
-  assert.notDeepEqual(mac.DapAn[1].slice(1, 13), mac.DapAn[2].slice(1, 13), 'mã 106 thay số: đáp án khác');
+
 });
 
 test('cột điểm không có chữ "Điểm": "Trắc nghiệm", "Đúng sai", "Tự luận", "Tổng" vẫn nhận', () => {

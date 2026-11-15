@@ -888,8 +888,8 @@ function taoMauDapAnTheoCauTruc_(ct) {
     kc.forEach(function (x) { for (var n = x.tu; n <= x.den; n++) r.push(dapAnMau_(x.p, n - x.tu, lech)); });
     return r;
   });
-  var cauHoi = [['Câu', 'Phần', 'Dạng bài', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể']];
-  kc.forEach(function (x) { for (var n = x.tu; n <= x.den; n++) cauHoi.push([String(n), x.p.ma, CT.TEN_DANG_FILE[x.p.dang] || '', '', '', '']); });
+  var cauHoi = [['Câu', 'Phần', 'Dạng bài', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể', '101', '102']];
+  kc.forEach(function (x) { for (var n = x.tu; n <= x.den; n++) cauHoi.push([String(n), x.p.ma, CT.TEN_DANG_FILE[x.p.dang] || '', '', '', '', '', '']); });
   return {
     DapAn: [tieuDe].concat(hai),
     CauHoi: cauHoi,
@@ -909,7 +909,7 @@ function taoMauDapAnTheoCauTruc_(ct) {
     }), [
       x_dt_(ct),
       ['• Tab CauHoi (tùy chọn): chủ đề, mức độ, nội dung từng câu — hiện trên phiếu. Cột "Dạng bài" (' + Object.keys(CT.TEN_DANG_FILE).map(function (d) { return CT.TEN_DANG_FILE[d]; }).join(' / ') + ') quyết định câu vào bảng nào trên phiếu và cách chấm, điểm; cột "Phần" chỉ để nhóm câu.'],
-      ['• Mỗi hàng là 1 câu (1 dạng bài) của ĐỀ GỐC, ghi 1 lần. Các mã đề thay số, giữ nguyên thứ tự câu: không cần thêm gì. Chỉ khi có mã ĐẢO THỨ TỰ câu: thêm 1 cột cho mỗi mã đó (tiêu đề = mã đề), ô = câu đó là câu số mấy trong mã đề; ô trống = giữ vị trí.'],
+      ['• Mỗi hàng là 1 câu (1 dạng bài) của ĐỀ GỐC, ghi 1 lần. Cột "101", "102" (đổi thành mã đề thật, thêm cột cho đủ mã): mã chỉ THAY SỐ, giữ thứ tự câu → để trống; mã có TRỘN thứ tự câu → mỗi ô ghi câu đề gốc đó là câu số mấy trong mã đề.'],
       ['• Tab ThongTin (tùy chọn): tiêu đề phiếu, mô tả, ngày thi, mô tả từng phần.']
     ])
   };
@@ -921,21 +921,20 @@ function x_dt_(ct) {
 }
 
 /** Mẫu bảng đáp án theo mã đề. */
-// tuyChon.daoCau = true: ví dụ mã 106 ĐẢO thứ tự câu (có cột mã đề ở tab CauHoi). Mặc định: các mã chỉ thay số, giữ thứ tự câu.
-export function taoMauDapAn(cauTruc, tuyChon) {
+// Ví dụ 2 mã đề: 105 chỉ thay số, giữ thứ tự câu (cột 105 ở tab CauHoi để trống); 106 TRỘN câu phần I (cột 106 đã điền vị trí)
+export function taoMauDapAn(cauTruc) {
   if (cauTruc && cauTruc.id !== 'thpt2025-toan') return taoMauDapAnTheoCauTruc_(cauTruc);
-  var daoCau = !!(tuyChon && tuyChon.daoCau);
   var de = MAU_FILE_KET_QUA.DeThi.slice(1); // Phần | Câu | Chủ đề | Mức độ | Nội dung | Đáp án (mã 105)
   // Tab CauHoi: mỗi hàng = 1 câu của đề gốc (chủ đề, nội dung gõ 1 lần); cột mã đề "105", "106": câu đó là câu số mấy trong mã đề.
   // Ví dụ: mã 105 giữ thứ tự đề gốc; mã 106 đảo câu phần I (đổi chỗ từng cặp: câu gốc 1 là câu 2 của mã 106…)
-  var cauHoi = [['Câu', 'Phần', 'Dạng bài', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể'].concat(daoCau ? ['105', '106'] : [])];
+  var cauHoi = [['Câu', 'Phần', 'Dạng bài', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể', '105', '106']];
   var dangTheoPhan = { I: 'trac_nghiem', II: 'dung_sai', III: 'tu_luan' };
   var dapAn105 = [], dapAn106 = [];
   var doi = { A: 'B', B: 'C', C: 'D', D: 'A' };
-  var doiCho = function (n) { return daoCau && n <= 12 ? (n % 2 ? n + 1 : n - 1) : n; }; // câu gốc n <-> câu doiCho(n) của mã 106 (mặc định giữ thứ tự)
+  var doiCho = function (n) { return n <= 12 ? (n % 2 ? n + 1 : n - 1) : n; }; // câu gốc n <-> câu doiCho(n) của mã 106
   de.forEach(function (r, i) {
     // Toán: câu 17–22 ghi "Tự luận" như thầy cô quen gọi (hệ thống xếp vào phần trả lời ngắn của cấu trúc Toán)
-    cauHoi.push([String(i + 1), r[0], CT.TEN_DANG_FILE[dangTheoPhan[r[0]]] || '', r[2], r[3], r[4]].concat(daoCau ? [String(i + 1), String(doiCho(i + 1))] : []));
+    cauHoi.push([String(i + 1), r[0], CT.TEN_DANG_FILE[dangTheoPhan[r[0]]] || '', r[2], r[3], r[4], '', String(doiCho(i + 1))]);
     dapAn105.push(r[5]);
   });
   de.forEach(function (r, i) {
@@ -963,8 +962,9 @@ export function taoMauDapAn(cauTruc, tuyChon) {
       ['• Tab CauHoi (tùy chọn): chủ đề, mức độ, nội dung từng câu — hiện trên phiếu.'],
       ['• Cột "Dạng bài": Trắc nghiệm ABCD / Đúng sai / Tự luận — quyết định câu vào bảng nào trên phiếu, chấm và tính điểm theo dạng. Cột "Phần" chỉ để nhóm câu. Để trống thì hệ thống tự nhận theo đáp án.'],
       ['• Tab CauHoi: mỗi hàng là 1 câu (1 dạng bài) của ĐỀ GỐC — ghi chủ đề, nội dung 1 lần, viết theo dạng bài (không cần ghi số cụ thể).'],
-      ['• Các mã đề sinh từ đề gốc bằng cách THAY SỐ, GIỮ NGUYÊN thứ tự câu: chỉ cần đáp án từng mã ở tab DapAn — câu n của mã nào cũng dùng chủ đề câu n ở tab CauHoi.'],
-      ['• Chỉ khi có mã đề ĐẢO THỨ TỰ câu: thêm ở tab CauHoi 1 cột cho mỗi mã đề đó (tiêu đề cột = mã đề, VD "106"); ô = câu đó là câu số mấy trong mã đề (VD hàng câu 1, cột "106" ghi 2: câu 1 đề gốc là câu 2 của mã 106). Ô trống = giữ vị trí.'],
+      ['• Cột mã đề ở tab CauHoi ("105", "106" là ví dụ — đổi thành mã đề thật, thêm cột cho đủ mã):'],
+      ['   – Mã đề chỉ THAY SỐ, giữ nguyên thứ tự câu: ĐỂ TRỐNG cột đó (như cột 105) — câu n của mã đó dùng chủ đề câu n.'],
+      ['   – Mã đề có TRỘN thứ tự câu: ĐIỀN cột đó, mỗi ô = câu đề gốc ở hàng đó là câu số mấy trong mã đề (như cột 106: câu 1 đề gốc là câu 2 của mã 106). Trộn trong từng phần; hệ thống báo nếu ghi sai.'],
       ['• Tab ThongTin (tùy chọn): tiêu đề phiếu, mô tả, ngày thi, tên/mô tả từng phần.']
     ]
   };
