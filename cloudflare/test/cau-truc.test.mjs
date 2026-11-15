@@ -215,3 +215,11 @@ test('dạng Tự luận (chấm tay) tách khỏi Trả lời ngắn: tự lu�
   assert.deepEqual(c.lechNhap, []);
   assert.equal(L.docFileDapAn({ DapAn: [['Mã đề', 'Câu 1'], ['1', 'A']], CauHoi: [['Câu', 'Dạng bài'], ['1', 'Tự luận']] }).cauHoi[1].dang, 'tu_luan');
 });
+
+test('file mẫu có tab HuongDan đứng đầu (kể cả tab dữ liệu bị đổi tên) vẫn đọc đúng', () => {
+  const kq = L.taoMauKetQua(), da = L.taoMauDapAn();
+  const dauHd = (so, doiTen) => { const o = { HuongDan: so.HuongDan }; Object.keys(so).forEach((k) => { if (k !== 'HuongDan') o[doiTen && k === doiTen ? 'Sheet1' : k] = so[k]; }); return o; };
+  assert.equal(L.docFileKetQua(dauHd(kq)).hocSinh.length, 1);
+  assert.equal(L.docFileKetQua(dauHd(kq, 'KetQua')).hocSinh.length, 1, 'tab KetQua đổi tên -> lấy tab dữ liệu đầu, bỏ qua HuongDan');
+  assert.ok(L.docFileDapAn(dauHd(da, 'DapAn')).ok);
+});

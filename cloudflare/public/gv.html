@@ -1724,7 +1724,7 @@
     var f = this.files[0]; this.value = '';
     if (!f) return;
     docExcel(f).then(function (so) {
-      var ten = Object.keys(so).filter(function (t) { return /ket\s*qua|kết\s*quả|ketqua/i.test(t); })[0] || Object.keys(so)[0];
+      var ten = Object.keys(so).filter(function (t) { return /ket\s*qua|kết\s*quả|ketqua|danh\s*s[aá]ch/i.test(t); })[0] || tabDuLieuDau(Object.keys(so));
       return themNhieu(so[ten], {});
     }).catch(baoLoi);
   };
@@ -1759,9 +1759,12 @@
     return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, function (c) { return c === 'đ' ? 'd' : 'D'; })
       .replace(/[^A-Za-z0-9_.-]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || 'file';
   }
+  // tab dữ liệu đầu tiên (bỏ qua tab hướng dẫn)
+  function tabDuLieuDau(ds) { return ds.filter(function (t) { return !/h[uư][oớ]ng\s*d[aẫ]n/i.test(t); })[0] || ds[0]; }
   function luuXlsx(so, tenFile) {
     var wb = XLSX.utils.book_new();
-    Object.keys(so).forEach(function (t) {
+    // tab hướng dẫn đứng đầu (mở file là thấy cách điền); các tab dữ liệu đọc theo tên nên thứ tự không ảnh hưởng
+    Object.keys(so).sort(function (a, b) { return (b === 'HuongDan') - (a === 'HuongDan'); }).forEach(function (t) {
       var ws = XLSX.utils.aoa_to_sheet(so[t]);
       Object.keys(ws).forEach(function (o) { if (o[0] !== '!') { ws[o].t = 's'; ws[o].z = '@'; } });
       ws['!cols'] = so[t][0].map(function (h) { return { wch: /^Câu \d+$/.test(h) ? 8 : /Họ và tên|Nội dung|Giá trị|Chủ đề|Ưu|Nhược|khắc phục|Lời khuyên|HƯỚNG DẪN/.test(h) ? 32 : 12 }; });
@@ -2748,7 +2751,8 @@
   }
   function docBangExcel(buf) { // dòng tiêu đề: dòng đầu có từ 3 ô trở lên (trộn thư dùng dòng đầu làm tên trường)
     var wb = XLSX.read(new Uint8Array(buf), { type: 'array' });
-    var r = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false, defval: '' }).map(function (x) { return x.map(String); });
+    var tenTab = wb.SheetNames.filter(function (t) { return /ket\s*qua|kết\s*quả|ketqua/i.test(t); })[0] || tabDuLieuDau(wb.SheetNames);
+    var r = XLSX.utils.sheet_to_json(wb.Sheets[tenTab], { header: 1, raw: false, defval: '' }).map(function (x) { return x.map(String); });
     var h = r.findIndex(function (x) { return x.filter(function (v) { return v.trim(); }).length >= 3; });
     return h < 0 ? null : { tieuDe: r[h], dong: r.slice(h + 1).filter(function (x) { return x.some(function (v) { return v.trim(); }); }) };
   }

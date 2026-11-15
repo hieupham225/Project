@@ -479,7 +479,7 @@ export function tachNhanXet(s) {
 
 /** Đọc bảng kết quả học sinh. */
 export function docFileKetQua(so) {
-  var tab = chuanHoaSo_(so), ds = Object.keys(tab);
+  var tab = chuanHoaSo_(so), ds = Object.keys(tab).filter(function (k) { return k !== 'huongdan'; });
   var bang = (tab.ketqua || tab.ketquathi || tab.tonghopdiem || tab[ds[0]] || { dong: [] }).dong;
   var hIdx = timDongTieuDe_(bang, function (k) { return timChiSo_(k, ALIAS_TEN) >= 0 || k.indexOf('mahs') >= 0; });
   if (hIdx < 0) return { ok: false, loi: 'Bảng kết quả cần có cột "Họ và tên" (hoặc "Mã HS").' };
@@ -534,7 +534,7 @@ export function docFileKetQua(so) {
 
 /** Đọc bảng đáp án theo mã đề. */
 export function docFileDapAn(so) {
-  var tab = chuanHoaSo_(so), ds = Object.keys(tab);
+  var tab = chuanHoaSo_(so), ds = Object.keys(tab).filter(function (k) { return k !== 'huongdan'; });
   var bangDa = (tab.dapan || tab.dapantheomade || tab[ds[0]] || { dong: [] }).dong;
   var hIdx = timDongTieuDe_(bangDa, function (k) { return timChiSo_(k, ['made', 'madethi']) >= 0; });
   if (hIdx < 0) return { ok: false, loi: 'File đáp án cần có tab "DapAn" với cột "Mã đề" và các cột "Câu 1", "Câu 2"…' };
