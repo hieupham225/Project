@@ -93,12 +93,25 @@ test('Tiếng Anh đề trung tâm (tự tạo): trắc nghiệm + điền từ 
   assert.equal(c.diem.tong, '5.50');
 });
 
-test('điểm giáo viên nhập vẫn được ưu tiên theo từng phần', () => {
+test('ưu tiên điểm chấm từ đáp án; cột điểm giáo viên lệch thì cảnh báo; phần không có bài làm thì dùng cột điểm giáo viên', () => {
   const ct = layCauTrucCoSan('thpt2025-tieng-anh');
   const dung = Array(40).fill('A');
-  const { kq, da } = taoFile(40, dung, [dung], [['Điểm trắc nghiệm', ['7.5']]]);
+  const { kq, da } = taoFile(40, dung, [dung, dung], [['Điểm trắc nghiệm', ['7.5', '10']]]);
   const g = L.ghepHaiFile(L.docFileKetQua(kq), L.docFileDapAn(da), {}, ct);
-  assert.equal(L.chamBai_(g, g.hocSinh[0]).diem.p1, '7.50');
+  const a = L.chamBai_(g, g.hocSinh[0]);
+  assert.equal(a.diem.p1, '10.00');
+  assert.deepEqual(a.lechNhap.map((x) => [x.file, x.cham]), [['7.50', '10.00']]);
+  assert.deepEqual(L.chamBai_(g, g.hocSinh[1]).lechNhap, []);
+  assert.match(g.canhBao.join(' '), /1 học sinh có "Điểm trắc nghiệm" trong file khác điểm hệ thống chấm từ đáp án: Học sinh 1 \(file 7\.50, chấm 10\.00\)/);
+  // Toán: phần III không có bài làm (tự luận chấm tay) -> lấy cột "Tự luận"
+  const toan = layCauTrucCoSan('thpt2025-toan');
+  const d2 = [...Array(12).fill('A'), ...Array(4).fill('DSDS'), ...Array(6).fill('1')];
+  const td = ['STT', 'Họ và tên', 'Lớp', 'Mã đề thi', 'Tự luận', ...Array.from({ length: 16 }, (_, i) => 'Câu ' + (i + 1))];
+  const g2 = L.ghepHaiFile(L.docFileKetQua({ KetQua: [td, ['1', 'An', 'Toán 1', '101', '2.65', ...d2.slice(0, 16)]] }),
+    L.docFileDapAn({ DapAn: [['Mã đề', ...d2.map((_, i) => 'Câu ' + (i + 1))], ['101', ...d2]] }), {}, toan);
+  const c2 = L.chamBai_(g2, g2.hocSinh[0]);
+  assert.deepEqual([c2.diem.p1, c2.diem.p2, c2.diem.p3, c2.diem.tong], ['3.00', '4.00', '2.65', '9.65']);
+  assert.deepEqual(c2.lechNhap, []);
 });
 
 test('mã đề đảo thứ tự câu: tab CauHoi dạng ngang (cột mã đề = câu số mấy trong mã đề) hoặc dạng "Mã đề | Câu | Câu gốc"; thiếu thì cảnh báo', () => {

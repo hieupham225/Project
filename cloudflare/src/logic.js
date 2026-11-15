@@ -134,6 +134,7 @@ export function chamBai_(kq, h) {
   var ttCau = function (q) { return (maDe && q.theoDe && q.theoDe[maDe]) || q; };
   var dn = h.diemNhap || {};
   var nhapTheoThuTu = [dn.p1, dn.p2, dn.p3];
+  var lechNhap = []; // điểm trong file giáo viên khác điểm hệ thống chấm
   // cột "Điểm trắc nghiệm / đúng sai / tự luận" gắn theo dạng bài (mỗi dạng 1 phần), không theo vị trí phần
   var nhapTheoDang = { trac_nghiem: dn.p1, dung_sai: dn.p2, tra_loi_ngan: dn.p3, dien_tu: dn.p3 };
   var dangDuyNhat = ct.phan.every(function (p, i) { return ct.phan.findIndex(function (x) { return x.dang === p.dang; }) === i; });
@@ -148,12 +149,19 @@ export function chamBai_(kq, h) {
       return Object.assign({ cau: q.cau, chuDe: t.chuDe, mucDo: t.mucDo, noiDung: t.noiDung, hs: hs, dung: dung }, r);
     });
     var nhap = (dn.theoPhan && dn.theoPhan[p.ma] != null ? dn.theoPhan[p.ma] : dangDuyNhat ? nhapTheoDang[p.dang] : nhapTheoThuTu[iP]);
-    var diem = nhap != null && nhap !== '' ? soThuc_(nhap, 0) : tuTinh;
+    var coNhap = nhap != null && nhap !== '';
+    // Ưu tiên điểm chấm từ file kết quả + file đáp án. Chỉ dùng cột điểm giáo viên khi phần này không chấm được
+    // (mã đề không có đáp án, hoặc cả file không có bài làm của phần này — VD tự luận chấm tay).
+    var coDapAn = cau.some(function (q) { return q.dung; });
+    var coBaiLam = kq.phanCoBaiLam ? !!kq.phanCoBaiLam[p.ma] : cau.some(function (q) { return q.hs; });
+    var chamDuoc = cau.length > 0 && coDapAn && coBaiLam;
+    var diem = chamDuoc ? tuTinh : coNhap ? soThuc_(nhap, 0) : tuTinh;
+    if (chamDuoc && coNhap && Math.abs(soThuc_(nhap, 0) - tuTinh) > 0.001) lechNhap.push({ ma: p.ma, ten: 'Điểm ' + ({ trac_nghiem: 'trắc nghiệm', dung_sai: 'đúng sai', tra_loi_ngan: 'tự luận', dien_tu: 'điền từ', sap_xep: 'sắp xếp' }[p.dang] || 'phần ' + p.ma), dang: p.dang, file: dinhDangDiem_(soThuc_(nhap, 0)), cham: dinhDangDiem_(tuTinh) });
     return { ma: p.ma, ten: p.ten, dang: p.dang, diem: diem, toiDa: cau.length * dang.toiDa(p), cau: cau };
   });
 
-  var tongTinh = phan.reduce(function (s, x) { return s + x.diem; }, 0);
-  var tong = dn.tong != null && dn.tong !== '' ? soThuc_(dn.tong, 0) : tongTinh;
+  var tong = phan.reduce(function (s, x) { return s + x.diem; }, 0);
+  if (dn.tong != null && dn.tong !== '' && Math.abs(soThuc_(dn.tong, 0) - tong) > 0.001) lechNhap.push({ ma: 'tong', ten: 'Tổng điểm', file: dinhDangDiem_(soThuc_(dn.tong, 0)), cham: dinhDangDiem_(tong) });
   var maxTong = phan.reduce(function (s, x) { return s + x.toiDa; }, 0);
 
   // ---- tương thích phiếu v1 (3 phần cố định) ----
@@ -162,6 +170,7 @@ export function chamBai_(kq, h) {
   var p1 = theoViTri(0), p2 = theoViTri(1), p3 = theoViTri(2);
   return {
     cauTruc: { id: ct.id || '', ten: ct.ten || '', mon: ct.mon || '' },
+    lechNhap: lechNhap,
     phan: phan.map(function (x) {
       return { ma: x.ma, ten: x.ten, dang: x.dang, diem: dinhDangDiem_(x.diem), toiDa: dinhDangSo_(x.toiDa), cau: x.cau };
     }),
@@ -692,18 +701,22 @@ export function ghepHaiFile(kqF, da, thongTinThem, cauTruc) {
   var kq = { ok: true, thongTin: thongTin, cauHoi: cauHoi, hocSinh: hocSinh, canhBao: canhBao, soXepHang: kqF.soXepHang, cauTruc: cauTruc || undefined,
     tenWord: kqF.tenWord || [], truongDiem: kqF.truongDiem || {},
     maDe: Object.keys(dapAn).map(function (m) { return dapAn[m].ten; }) };
-  // Đối chiếu: điểm giáo viên nhập so với điểm tính từ đáp án (phát hiện nhầm file đáp án / nhầm mã đề)
-  if (Object.keys(dapAn).length) {
-    var lech = { p1: 0, p2: 0 };
-    hocSinh.forEach(function (h) {
-      if (!dapAn[khongDau_(h.maDe)]) return;
-      var tu = chamBai_(kq, Object.assign({}, h, { diemNhap: { p1: '', p2: '', p3: h.diemNhap.p3 || '0', tong: '' } }));
-      if (h.diemNhap.p1 !== '' && Math.abs(soThuc_(h.diemNhap.p1, 0) - soThuc_(tu.diem.p1, 0)) > 0.001) lech.p1++;
-      if (h.diemNhap.p2 !== '' && Math.abs(soThuc_(h.diemNhap.p2, 0) - soThuc_(tu.diem.p2, 0)) > 0.001) lech.p2++;
+  // Phần nào cả file có bài làm (ít nhất 1 học sinh trả lời) thì chấm từ đáp án; không có (VD tự luận chấm tay) thì lấy cột điểm giáo viên
+  kq.phanCoBaiLam = {};
+  hocSinh.forEach(function (h) { Object.keys(h.traLoi).forEach(function (k) { if (h.traLoi[k]) kq.phanCoBaiLam[k.split('.')[0]] = true; }); });
+  // Đối chiếu: cột điểm giáo viên nhập trong file so với điểm hệ thống chấm (nhầm file đáp án / nhầm mã đề / giáo viên cộng nhầm)
+  var lech = {}, thuTu = [];
+  hocSinh.forEach(function (h) {
+    chamBai_(kq, h).lechNhap.forEach(function (x) {
+      if (!lech[x.ten]) { lech[x.ten] = []; thuTu.push(x.ten); }
+      lech[x.ten].push(h.hoTen + ' (file ' + x.file + ', chấm ' + x.cham + ')');
     });
-    if (lech.p1) canhBao.push(lech.p1 + ' học sinh có "điểm trắc nghiệm" khác với điểm tính từ đáp án — kiểm tra lại file đáp án hoặc mã đề. Phiếu dùng điểm giáo viên nhập.');
-    if (lech.p2) canhBao.push(lech.p2 + ' học sinh có "điểm đúng sai" khác với điểm tính từ đáp án — kiểm tra lại. Phiếu dùng điểm giáo viên nhập.');
-  }
+  });
+  thuTu.forEach(function (ten) {
+    var ds = lech[ten];
+    canhBao.push(ds.length + ' học sinh có "' + ten + '" trong file khác điểm hệ thống chấm từ đáp án: ' + ds.slice(0, 3).join('; ') + (ds.length > 3 ? '; …' : '') +
+      '. Phiếu dùng điểm hệ thống chấm — kiểm tra lại đáp án / mã đề / bài làm, hoặc sửa điểm sau khi tạo phiếu.');
+  });
   return kq;
 }
 

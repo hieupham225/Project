@@ -130,6 +130,7 @@
   .lop-chon label { display: inline-flex; gap: 6px; align-items: center; font-weight: 500; }
   .chip { display: inline-flex; padding: 1px 8px; margin: 1px 4px 1px 0; border-radius: var(--r-tron); background: var(--mau-nhat); color: var(--chu); font-size: 12px; font-weight: 500; }
   .nhan.xacnhan { background: var(--vang-nen); color: var(--vang); }
+  .nhan.lech-diem { display: block; width: fit-content; margin-top: 4px; white-space: normal; font-size: 11px; }
   select.qd { max-width: 340px; }
   table.xn td { vertical-align: top; }
   .file-o { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -1872,7 +1873,8 @@
       cb.checked = !!chonGhep[h.chiSo];
       cb.onchange = function () { if (cb.checked) chonGhep[h.chiSo] = 1; else delete chonGhep[h.chiSo]; capNhatChonGhep(); };
       tb.appendChild(the('tr', { class: chonGhep[h.chiSo] ? 'dang-chon' : '' }, [the('td', {}, [cb]), the('td', { text: h.stt }), the('td', {}, [the('b', { text: h.hoTen })]), the('td', { text: h.maHsFile || '—' }),
-        the('td', {}, [oLop]), the('td', { text: h.maDe || '—' }), the('td', { text: h.tongDiem + ' / ' + h.maxTong }), the('td', {}, [o])]));
+        the('td', {}, [oLop]), the('td', { text: h.maDe || '—' }), the('td', {}, [h.tongDiem + ' / ' + h.maxTong, (h.lechDiem || []).length ? the('span', { class: 'nhan xacnhan lech-diem', title: 'Điểm trong file khác điểm hệ thống chấm (phiếu dùng điểm hệ thống chấm)',
+          text: '⚠ ' + h.lechDiem.map(function (x) { return x.ten.replace(/\.$/, '') + ': file ' + x.file + ' ≠ chấm ' + x.cham; }).join(' · ') }) : null]), the('td', {}, [o])]));
     });
 
     var kv = $('khuVang'); kv.textContent = '';

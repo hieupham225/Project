@@ -800,7 +800,7 @@ const HAM = {
       const r = g.dong[i], ld = g.lopDong[i], cham = L.chamBai_(kq, h);
       if (!dauTien && (r.hs || r.moi)) dauTien = { h, cham, hs: r.hs || { hoTen: h.hoTen }, nhom: ld.nhom };
       const canChon = r.canLop ? 'canLop' : r.canChon || '';
-      return { chiSo: i, stt: h.stt, hoTen: h.hoTen, maHsFile: h.maHs, maDe: h.maDe, sbd: h.sbd, tongDiem: cham.diem.tong, maxTong: cham.diem.maxTong,
+      return { chiSo: i, stt: h.stt, hoTen: h.hoTen, maHsFile: h.maHs, maDe: h.maDe, sbd: h.sbd, tongDiem: cham.diem.tong, maxTong: cham.diem.maxTong, lechDiem: cham.lechNhap || [],
         trangThai: r.loi ? 'loi' : canChon ? 'canChon' : r.boQua ? 'boqua' : r.moi ? 'moi' : 'co',
         lopFile: h.lop, nhom: ld.nhom || '', lopMoi: !!ld.lopMoi, lopDoan: !!ld.doan, goiYLop: ld.goiY || [],
         loi: r.loi || '', lyDo: canChon ? L.LY_DO_CAN_CHON[canChon] || '' : '', canChon, tuDong: !!r.tuDong,
