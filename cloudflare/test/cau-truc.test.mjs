@@ -142,3 +142,12 @@ test('khối phân tích theo từng phần: data-phan chọn phần, data-ten �
   assert.equal((out.match(/PHẦN /g) || []).length, 2, 'phần IV không có thì để trống');
   assert.equal(L.chuanHoaPhan_('Phần 4'), 'IV');
 });
+
+test('khối phân tích chọn theo dạng bài (data-dang); tiêu đề tự đặt thay cả dòng', async () => {
+  const KP = await import('../src/khoi-phieu.js');
+  const d = KP.phieuMinhHoa();
+  const out = KP.dungKhoi('<div class="khoi" data-khoi="phan-tich" data-dang="dung_sai" data-ten="Phần 2 – Đúng/Sai">x</div><div class="khoi" data-khoi="phan-tich" data-dang="trac_nghiem">y</div>', d);
+  assert.match(out, /<b>Phần 2 – Đúng\/Sai<\/b>/);
+  assert.match(out, /1\. PHẦN I: /);
+  assert.ok(out.indexOf('Phần 2 – Đúng') < out.indexOf('1. PHẦN I'));
+});

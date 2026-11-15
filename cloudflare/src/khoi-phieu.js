@@ -33,7 +33,8 @@ function cacPhan(c) {
 function bangPhan(d, p, tenRieng) {
   var tenPhan = tenRieng || (d.tenPhan && d.tenPhan[p.ma]) || p.ten || '', moTa = d.moTaPhan && d.moTaPhan[p.ma];
   var coHs = p.dang !== 'tra_loi_ngan' || p.cau.some(function (q) { return q.hs; });
-  var h = '<p style="margin:6pt 0 2pt"><b>' + p.so + '. PHẦN ' + e(p.ma) + ': ' + e(tenPhan) + '</b></p>' + (moTa ? '<p style="margin:0 0 2pt">' + e(moTa) + '</p>' : '');
+  // tenRieng: tiêu đề giáo viên tự đặt cho khối (thay cả dòng "1. PHẦN I: …")
+  var h = '<p style="margin:6pt 0 2pt"><b>' + (tenRieng ? e(tenRieng) : p.so + '. PHẦN ' + e(p.ma) + ': ' + e(tenPhan)) + '</b></p>' + (moTa ? '<p style="margin:0 0 2pt">' + e(moTa) + '</p>' : '');
   h += '<table style="' + BANG + '"><tr><th style="' + TH + ';width:6%">Câu</th><th style="' + TH + ';width:22%">Chủ đề kiến thức</th><th style="' + TH + '">Nội dung phân tích cụ thể</th>' +
     (coHs ? '<th style="' + TH + ';width:11%;color:#d40000">Đáp án<br>của bạn</th>' : '') + '<th style="' + TH + ';width:11%;color:#00a040">' + (p.dang === 'tra_loi_ngan' ? 'Đáp số' : 'Đáp án<br>đúng') + '</th></tr>';
   p.cau.forEach(function (q) {
@@ -49,9 +50,11 @@ function bangPhan(d, p, tenRieng) {
 }
 
 var DUNG = {
+  // data-dang: các phần có dạng bài đó (VD trac_nghiem); data-phan: theo mã phần (mẫu cũ); không có = mọi phần
   'phan-tich': function (d, phan, tt) {
-    var ten = phan && tt && tt.ten;
-    return cacPhan(d.cham || {}).filter(function (p) { return !phan || p.ma === phan; }).map(function (p) { return bangPhan(d, p, ten); }).join('');
+    tt = tt || {};
+    var dang = tt.dang || '', ten = (dang || phan) && tt.ten;
+    return cacPhan(d.cham || {}).filter(function (p) { return dang ? p.dang === dang : !phan || p.ma === phan; }).map(function (p) { return bangPhan(d, p, ten); }).join('');
   },
   'bang-diem': function (d) {
     var c = d.cham || {}, dm = c.diem || {};
