@@ -179,3 +179,13 @@ test('cột "Dạng bài" (tab CauHoi) quyết định câu vào phần nào, kh
   assert.deepEqual(c.phan.map((p) => [p.dang, p.diem]), [['trac_nghiem', '0.25'], ['dung_sai', '2.00'], ['tra_loi_ngan', '0.50']]);
   assert.deepEqual(g.canhBao.filter((x) => /dạng bài/.test(x)), []);
 });
+
+test('khối Điểm các phần: theo dạng bài, thứ tự + nhãn tự đặt; nhận xét "Ưu và nhược điểm" / "Điểm cần lưu ý"', async () => {
+  const KP = await import('../src/khoi-phieu.js');
+  const d = KP.phieuMinhHoa();
+  assert.match(KP.dungKhoi('<div class="khoi" data-khoi="bang-diem">x</div>', d), /Trắc nghiệm: <span[^>]*>2\.50<\/span>\/3; Đúng sai: .*Tự luận: /);
+  const out = KP.dungKhoi('<div class="khoi" data-khoi="bang-diem" data-thutu="dung_sai,trac_nghiem" data-nhan="dung_sai=Phần II – ĐS">x</div>', d);
+  assert.ok(out.indexOf('Phần II – ĐS') < out.indexOf('Trắc nghiệm') && out.indexOf('Trắc nghiệm') < out.indexOf('Tự luận'), out);
+  const kq = L.docFileKetQua({ KetQua: [['Họ và tên', 'Ưu và nhược điểm'], ['An', '+ Ưu điểm: Chăm.\r\n+ Điểm cần lưu ý: Ẩu.']] });
+  assert.deepEqual([kq.hocSinh[0].nhanXet.uu, kq.hocSinh[0].nhanXet.nhuoc, kq.hocSinh[0].nhanXet.nhanNhuoc], ['Chăm.', 'Ẩu.', 'Điểm cần lưu ý']);
+});

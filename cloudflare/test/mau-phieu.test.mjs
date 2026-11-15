@@ -161,7 +161,7 @@ test('khối có sẵn: bảng phân tích tự dựng theo đề (số câu, ch
   assert.ok(h5.indexOf(L.chuoi_(goc[0])) < h5.indexOf(L.chuoi_(goc[1])), 'mã 105: câu 1 = câu 1 đề gốc');
   const i6 = h6.indexOf('PHẦN I');
   assert.ok(h6.indexOf(goc[1], i6) < h6.indexOf(goc[0], i6), 'mã 106: câu 1 = câu 2 đề gốc');
-  assert.match(h5, /Phần 1: <span[^>]*>3\.00<\/span>\/3/); assert.match(h5, /Tổng điểm: <span[^>]*>[\d.]+<\/span>\/10/);
+  assert.match(h5, /Trắc nghiệm: <span[^>]*>3\.00<\/span>\/3/); assert.match(h5, /Tổng điểm: <span[^>]*>[\d.]+<\/span>\/10/);
   assert.match(h5, />2<\/span> \/ 2/, 'xếp hạng 2 / 2');
   assert.match(h5, /Ưu điểm: Chăm/); assert.match(h6, /Chúc <span[^>]*>Vũ Bình/);
   // Vật lí 18/4/6: cùng mẫu, bảng tự đủ 28 câu

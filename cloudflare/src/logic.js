@@ -464,10 +464,12 @@ function soCauTuTieuDe_(h) {
 export function tachNhanXet(s) {
   s = String(s || '').replace(/\r/g, '');
   var kq = { uu: '', nhuoc: '' };
-  var mu = /ưu\s*điểm\s*:?\s*([\s\S]*?)(?=\n?\s*\+?\s*nhược\s*điểm|$)/i.exec(s);
-  var mn = /nhược\s*điểm\s*:?\s*([\s\S]*)$/i.exec(s);
-  if (mu) kq.uu = mu[1].replace(/^\s*\+\s*/, '').trim();
-  if (mn) kq.nhuoc = mn[1].replace(/^\s*\+\s*/, '').trim();
+  // nhãn phần "nhược": Nhược điểm / Điểm cần lưu ý / Hạn chế / Cần cải thiện (ở đầu dòng hoặc sau dấu +)
+  var NHUOC = '(nhược\\s*điểm|điểm\\s*cần\\s*lưu\\s*ý|hạn\\s*chế|cần\\s*cải\\s*thiện)';
+  var mu = new RegExp('ưu\\s*điểm\\s*:?\\s*([\\s\\S]*?)(?=(?:^|\\n|\\+)\\s*' + NHUOC + '\\s*:|$)', 'i').exec(s);
+  var mn = new RegExp('(?:^|\\n|\\+)\\s*' + NHUOC + '\\s*:\\s*([\\s\\S]*)$', 'i').exec(s);
+  if (mu) kq.uu = mu[1].replace(/^\s*\+\s*/, '').replace(/\s*\+\s*$/, '').trim();
+  if (mn) { kq.nhuoc = mn[2].replace(/^\s*\+\s*/, '').trim(); var nh = mn[1].replace(/\s+/g, ' '); kq.nhanNhuoc = nh.charAt(0).toUpperCase() + nh.slice(1).toLowerCase(); }
   if (!mu && !mn) kq.uu = s.trim();
   return kq;
 }
@@ -484,7 +486,7 @@ export function docFileKetQua(so) {
     ten: timChiSo_(hk, ALIAS_TEN), lop: timChiSo_(hk, ['lop', 'loptoan', 'lophoc', 'nhomlop', 'nhom']),
     sbd: timChiSo_(hk, ['sobaodanh', 'sbd']), maDe: timChiSo_(hk, ['madethi', 'made', 'ma']), sdt: timChiSo_(hk, ['sdtphuhuynh', 'sdt', 'sodienthoai']),
     p1: timChiSo_(hk, ALIAS_P1), p2: timChiSo_(hk, ALIAS_P2), p3: timChiSo_(hk, ALIAS_P3), tong: timChiSo_(hk, ALIAS_TONG),
-    uuNhuoc: timChiSo_(hk, ['uunhuoc', 'uunhuocdiem', 'nhanxet']), uu: timChiSo_(hk, ['uudiem']), nhuoc: timChiSo_(hk, ['nhuocdiem']),
+    uuNhuoc: timChiSo_(hk, ['uunhuoc', 'uunhuocdiem', 'uuvanhuocdiem', 'uuvanhuoc', 'uudiemvanhuocdiem', 'uuvahanche', 'nhanxet']), uu: timChiSo_(hk, ['uudiem']), nhuoc: timChiSo_(hk, ['nhuocdiem']),
     khacPhuc: timChiSo_(hk, ['huongkhacphuc', 'khacphuc']), loiKhuyen: timChiSo_(hk, ['loikhuyen'])
   };
   // Tên trường kiểu Word trộn thư của từng cột (dùng cho mẫu phiếu Word): "Họ và tên" -> Họ_và_tên, cột trống -> F<số cột>, "1" -> M_1
@@ -520,7 +522,7 @@ export function docFileKetQua(so) {
       sbd: oChuoi_(r, c.sbd), maDe: maDe, sdt: oChuoi_(r, c.sdt), traLoiGoc: traLoiGoc,
       cot: (function () { var o = {}; tenWord.forEach(function (k, j) { var v = oChuoi_(r, j); if (v !== '') o[k] = v; }); return o; })(),
       diemNhap: { p1: oChuoi_(r, c.p1), p2: oChuoi_(r, c.p2), p3: oChuoi_(r, c.p3), tong: oChuoi_(r, c.tong) },
-      nhanXet: { uu: oChuoi_(r, c.uu) || nx.uu, nhuoc: oChuoi_(r, c.nhuoc) || nx.nhuoc, khacPhuc: oChuoi_(r, c.khacPhuc), loiKhuyen: oChuoi_(r, c.loiKhuyen) }
+      nhanXet: { uu: oChuoi_(r, c.uu) || nx.uu, nhuoc: oChuoi_(r, c.nhuoc) || nx.nhuoc, nhanNhuoc: oChuoi_(r, c.nhuoc) ? '' : nx.nhanNhuoc || '', khacPhuc: oChuoi_(r, c.khacPhuc), loiKhuyen: oChuoi_(r, c.loiKhuyen) }
     });
   });
   if (!hocSinh.length) return { ok: false, loi: 'Bảng kết quả chưa có học sinh nào.' };

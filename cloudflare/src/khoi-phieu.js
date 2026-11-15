@@ -7,7 +7,7 @@
 
 export const CAC_KHOI = [
   { ma: 'phan-tich', ten: 'Bảng phân tích từng câu', moTa: 'Câu – Chủ đề – Nội dung – Đáp án của bạn – Đáp án đúng, theo từng phần; số câu, chủ đề theo đề và mã đề' },
-  { ma: 'bang-diem', ten: 'Điểm các phần', moTa: 'Phần 1: …/…; Phần 2: …/…; … Tổng điểm: …/…' },
+  { ma: 'bang-diem', ten: 'Điểm các phần', moTa: 'Điểm theo từng dạng bài, VD Trắc nghiệm: …/…; Đúng sai: …/…; Tự luận: …/…; Tổng điểm: …/…' },
   { ma: 'cac-lan', ten: 'Kết quả các lần làm', moTa: 'Điểm các lần làm trước + so với lần trước (chỉ hiện từ lần 2)' },
   { ma: 'xep-hang', ten: 'Xếp hạng', moTa: 'Hạng trong lớp, VD 3 / 33 (khi file có cột Thứ hạng)' },
   { ma: 'nhan-xet', ten: 'Nhận xét', moTa: 'Ưu điểm, Nhược điểm, Hướng khắc phục, Lời khuyên (mục trống tự ẩn)' }
@@ -56,9 +56,11 @@ var DUNG = {
     var dang = tt.dang || '', ten = (dang || phan) && tt.ten;
     return cacPhan(d.cham || {}).filter(function (p) { return dang ? p.dang === dang : !phan || p.ma === phan; }).map(function (p) { return bangPhan(d, p, ten); }).join('');
   },
-  'bang-diem': function (d) {
+  // Điểm theo DẠNG BÀI (không theo số thứ tự phần): data-thutu = thứ tự dạng ("dung_sai,trac_nghiem"),
+  // data-nhan = nhãn tự đặt ("trac_nghiem=Phần I – Trắc nghiệm|dung_sai=…"); dạng có trong đề mà chưa xếp thì nối vào cuối
+  'bang-diem': function (d, phan, tt) {
     var c = d.cham || {}, dm = c.diem || {};
-    return '<p style="margin:2pt 0">' + cacPhan(c).map(function (p) { return 'Phần ' + p.so + ': <span style="' + DO + '">' + e(p.diem) + '</span>/' + e(p.toiDa) + '; '; }).join('') +
+    return '<p style="margin:2pt 0">' + diemTheoDang(c, tt).map(function (x) { return e(x.nhan) + ': <span style="' + DO + '">' + e(x.diem) + '</span>/' + e(x.toiDa) + '; '; }).join('') +
       '<b>Tổng điểm: <span style="' + DO + '">' + e(dm.tong) + '</span>/' + e(dm.maxTong) + '</b></p>';
   },
   'cac-lan': function (d) {
@@ -80,7 +82,7 @@ var DUNG = {
     if (nx.uu || nx.nhuoc) {
       h += '<p style="margin:4pt 0 2pt;' + NX + '">- Ưu và nhược điểm qua bài thi:</p>';
       if (nx.uu) h += '<p style="margin:0 0 2pt 18pt"><i>+ Ưu điểm: ' + e(nx.uu) + '</i></p>';
-      if (nx.nhuoc) h += '<p style="margin:0 0 2pt 18pt"><i>+ Nhược điểm: ' + e(nx.nhuoc) + '</i></p>';
+      if (nx.nhuoc) h += '<p style="margin:0 0 2pt 18pt"><i>+ ' + e(nx.nhanNhuoc || 'Nhược điểm') + ': ' + e(nx.nhuoc) + '</i></p>';
     }
     if (nx.khacPhuc) h += '<p style="margin:2pt 0"><span style="' + NX + '">- Hướng khắc phục:</span> <i>' + e(nx.khacPhuc) + '</i></p>';
     h += '<p style="margin:2pt 0"><b>Lời khuyên:</b> ' + (nx.loiKhuyen ? e(nx.loiKhuyen)
@@ -88,6 +90,33 @@ var DUNG = {
     return h;
   }
 };
+
+/** Tên ngắn của dạng bài (nhãn mặc định trong khối "Điểm các phần"). */
+export var TEN_NGAN_DANG = { trac_nghiem: 'Trắc nghiệm', dung_sai: 'Đúng sai', tra_loi_ngan: 'Tự luận', dien_tu: 'Điền từ', sap_xep: 'Sắp xếp' };
+/** "a=X|b=Y" <-> { a: 'X', b: 'Y' } (nhãn khối Điểm các phần). */
+export function docNhan(s) {
+  var o = {};
+  String(s || '').split('|').forEach(function (x) { var i = x.indexOf('='); if (i > 0) o[x.slice(0, i)] = x.slice(i + 1); });
+  return o;
+}
+export function ghiNhan(o) {
+  return Object.keys(o || {}).filter(function (k) { return o[k]; }).map(function (k) { return k + '=' + String(o[k]).replace(/[|=]/g, ' ').trim(); }).join('|');
+}
+/** Điểm gộp theo dạng bài, theo thứ tự / nhãn của khối. */
+export function diemTheoDang(c, tt) {
+  tt = tt || {};
+  var nhan = docNhan(tt.nhan), thuTu = String(tt.thutu || '').split(',').filter(Boolean), nhom = {}, ds = [];
+  cacPhan(c).forEach(function (p) {
+    var k = p.dang || p.ma;
+    if (!nhom[k]) { nhom[k] = { dang: k, diem: 0, toiDa: 0 }; ds.push(k); }
+    nhom[k].diem += parseFloat(p.diem) || 0; nhom[k].toiDa += parseFloat(p.toiDa) || 0;
+  });
+  var xep = thuTu.filter(function (k) { return nhom[k]; }).concat(ds.filter(function (k) { return thuTu.indexOf(k) < 0; }));
+  return xep.map(function (k) {
+    var x = nhom[k];
+    return { dang: k, nhan: nhan[k] || TEN_NGAN_DANG[k] || ('Phần ' + k), diem: x.diem.toFixed(2), toiDa: String(Math.round(x.toiDa * 100) / 100) };
+  });
+}
 
 /** data-khoi / data-phan / data-ten của thẻ khối (đã bỏ mã hóa &amp; …). */
 function docThuocTinh(s) {
