@@ -77,6 +77,15 @@ export const DANG_CAU = {
     nhanDang: function (v) { return /^-?[\d.,/]+$/.test(chuoi(v).replace(/\s+/g, '')); }
   },
 
+  // Tự luận: giáo viên chấm tay — không tự chấm; điểm lấy từ cột "Điểm tự luận" (file kết quả) hoặc sửa điểm trên app
+  tu_luan: {
+    ten: 'Tự luận',
+    chamTay: true,
+    toiDa: function (p) { return p.diemMoiCau; },
+    cham: function () { return { ok: false, diem: 0 }; },
+    nhanDang: function () { return false; }
+  },
+
   dien_tu: {
     ten: 'Điền từ / viết lại câu',
     toiDa: function (p) { return p.diemMoiCau; },
@@ -146,14 +155,14 @@ export function cauTrucToanV1(thongTin) {
 function so(n) { return String(Math.round(n * 100) / 100).replace('.', ','); }
 /** Mô tả ngắn: "I: 18 câu trắc nghiệm × 0,25 · II: 4 câu đúng/sai · III: 6 câu trả lời ngắn × 0,25 — tổng 10 điểm" */
 export function moTaCauTruc(ct) {
-  var ngan = { trac_nghiem: 'trắc nghiệm', dung_sai: 'đúng/sai', tra_loi_ngan: 'trả lời ngắn', dien_tu: 'điền từ', sap_xep: 'sắp xếp' };
+  var ngan = { trac_nghiem: 'trắc nghiệm', dung_sai: 'đúng/sai', tra_loi_ngan: 'trả lời ngắn', tu_luan: 'tự luận', dien_tu: 'điền từ', sap_xep: 'sắp xếp' };
   return ct.phan.map(function (p) {
     return p.ma + ': ' + p.soCau + ' câu ' + (ngan[p.dang] || p.dang) + (p.dang === 'dung_sai' ? '' : ' × ' + so(p.diemMoiCau));
   }).join(' · ') + ' — tổng ' + so(diemToiDa(ct)) + ' điểm';
 }
 /** Danh sách môn của các cấu trúc có sẵn (giữ thứ tự). */
 /** Tên dạng bài ghi trong file đáp án (cột "Dạng bài" tab CauHoi). */
-export const TEN_DANG_FILE = { trac_nghiem: 'Trắc nghiệm ABCD', dung_sai: 'Đúng sai', tra_loi_ngan: 'Tự luận', dien_tu: 'Điền từ', sap_xep: 'Sắp xếp' };
+export const TEN_DANG_FILE = { trac_nghiem: 'Trắc nghiệm ABCD', dung_sai: 'Đúng sai', tra_loi_ngan: 'Trả lời ngắn', tu_luan: 'Tự luận', dien_tu: 'Điền từ', sap_xep: 'Sắp xếp' };
 
 /** "Trắc nghiệm ABCD" / "TN" / "Đúng sai" / "Tự luận" / "Trả lời ngắn" / mã dạng -> mã dạng; không nhận ra -> ''. */
 export function chuanHoaDang(s) {
@@ -162,7 +171,8 @@ export function chuanHoaDang(s) {
   if (DANG_CAU[k]) return k;
   if (/dungsai|^ds$/.test(k)) return 'dung_sai';
   if (/tracnghiem|abcd|^tn$|nhieuphuongan/.test(k)) return 'trac_nghiem';
-  if (/traloingan|tuluan|^tl$|^tln$/.test(k)) return 'tra_loi_ngan';
+  if (/traloingan|^tln$/.test(k)) return 'tra_loi_ngan';
+  if (/tuluan|^tl$/.test(k)) return 'tu_luan';
   if (/dientu|vietlai/.test(k)) return 'dien_tu';
   if (/sapxep/.test(k)) return 'sap_xep';
   return '';

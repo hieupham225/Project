@@ -136,7 +136,9 @@ export function chamBai_(kq, h) {
   var nhapTheoThuTu = [dn.p1, dn.p2, dn.p3];
   var lechNhap = []; // điểm trong file giáo viên khác điểm hệ thống chấm
   // cột "Điểm trắc nghiệm / đúng sai / tự luận" gắn theo dạng bài (mỗi dạng 1 phần), không theo vị trí phần
-  var nhapTheoDang = { trac_nghiem: dn.p1, dung_sai: dn.p2, tra_loi_ngan: dn.p3, dien_tu: dn.p3 };
+  // cột "Điểm tự luận" chỉ dùng cho Trả lời ngắn khi đề không có phần Tự luận riêng (đề Toán THPT: phần III thầy cô quen gọi "tự luận")
+  var coTuLuan = ct.phan.some(function (p) { return p.dang === 'tu_luan'; });
+  var nhapTheoDang = { trac_nghiem: dn.p1, dung_sai: dn.p2, tra_loi_ngan: dn.tln || (coTuLuan ? '' : dn.p3), tu_luan: dn.p3, dien_tu: dn.p3 };
   var dangDuyNhat = ct.phan.every(function (p, i) { return ct.phan.findIndex(function (x) { return x.dang === p.dang; }) === i; });
 
   var phan = ct.phan.map(function (p, iP) {
@@ -154,9 +156,9 @@ export function chamBai_(kq, h) {
     // (mã đề không có đáp án, hoặc cả file không có bài làm của phần này — VD tự luận chấm tay).
     var coDapAn = cau.some(function (q) { return q.dung; });
     var coBaiLam = kq.phanCoBaiLam ? !!kq.phanCoBaiLam[p.ma] : cau.some(function (q) { return q.hs; });
-    var chamDuoc = cau.length > 0 && coDapAn && coBaiLam;
+    var chamDuoc = cau.length > 0 && coDapAn && coBaiLam && !dang.chamTay;
     var diem = chamDuoc ? tuTinh : coNhap ? soThuc_(nhap, 0) : tuTinh;
-    if (chamDuoc && coNhap && Math.abs(soThuc_(nhap, 0) - tuTinh) > 0.001) lechNhap.push({ ma: p.ma, ten: 'Điểm ' + ({ trac_nghiem: 'trắc nghiệm', dung_sai: 'đúng sai', tra_loi_ngan: 'tự luận', dien_tu: 'điền từ', sap_xep: 'sắp xếp' }[p.dang] || 'phần ' + p.ma), dang: p.dang, file: dinhDangDiem_(soThuc_(nhap, 0)), cham: dinhDangDiem_(tuTinh) });
+    if (chamDuoc && coNhap && Math.abs(soThuc_(nhap, 0) - tuTinh) > 0.001) lechNhap.push({ ma: p.ma, ten: 'Điểm ' + ({ trac_nghiem: 'trắc nghiệm', dung_sai: 'đúng sai', tra_loi_ngan: 'trả lời ngắn', tu_luan: 'tự luận', dien_tu: 'điền từ', sap_xep: 'sắp xếp' }[p.dang] || 'phần ' + p.ma), dang: p.dang, file: dinhDangDiem_(soThuc_(nhap, 0)), cham: dinhDangDiem_(tuTinh) });
     return { ma: p.ma, ten: p.ten, dang: p.dang, diem: diem, toiDa: cau.length * dang.toiDa(p), cau: cau };
   });
 
@@ -289,7 +291,8 @@ export function khongDau_(s) {
 // Tên cột điểm từng phần (đã bỏ dấu, bỏ khoảng trắng). Có hoặc không có chữ "Điểm" phía trước đều nhận.
 var ALIAS_P1 = ['diemtracnghiem', 'diemphani', 'diemphan1', 'diemp1', 'tracnghiem', 'phani', 'phan1'];
 var ALIAS_P2 = ['diemdungsai', 'diemphanii', 'diemphan2', 'diemp2', 'dungsai', 'phanii', 'phan2'];
-var ALIAS_P3 = ['diemdientu', 'diemtraloingan', 'diemtuluan', 'diemphaniii', 'diemphan3', 'diemp3', 'dientu', 'traloingan', 'tuluan', 'phaniii', 'phan3'];
+var ALIAS_P3 = ['diemtuluan', 'diemdientu', 'diemphaniii', 'diemphan3', 'diemp3', 'tuluan', 'dientu', 'phaniii', 'phan3', 'diemtraloingan', 'traloingan'];
+var ALIAS_TLN = ['diemtraloingan', 'traloingan']; // cột riêng cho Trả lời ngắn (khi file có cả cột Tự luận)
 var ALIAS_TONG = ['tongdiem', 'diemtong', 'tong'];
 
 export function timChiSo_(dsKhoa, dsTen) {
@@ -485,7 +488,7 @@ export function docFileKetQua(so) {
     stt: hk.indexOf('stt'), thuHang: timChiSo_(hk, ['thuhang', 'xephang', 'hang']), maHs: timChiSo_(hk, ['mahs', 'mahocsinh']),
     ten: timChiSo_(hk, ALIAS_TEN), lop: timChiSo_(hk, ['lop', 'loptoan', 'lophoc', 'nhomlop', 'nhom']),
     sbd: timChiSo_(hk, ['sobaodanh', 'sbd']), maDe: timChiSo_(hk, ['madethi', 'made', 'ma']), sdt: timChiSo_(hk, ['sdtphuhuynh', 'sdt', 'sodienthoai']),
-    p1: timChiSo_(hk, ALIAS_P1), p2: timChiSo_(hk, ALIAS_P2), p3: timChiSo_(hk, ALIAS_P3), tong: timChiSo_(hk, ALIAS_TONG),
+    p1: timChiSo_(hk, ALIAS_P1), p2: timChiSo_(hk, ALIAS_P2), p3: timChiSo_(hk, ALIAS_P3), tln: timChiSo_(hk, ALIAS_TLN), tong: timChiSo_(hk, ALIAS_TONG),
     uuNhuoc: timChiSo_(hk, ['uunhuoc', 'uunhuocdiem', 'uuvanhuocdiem', 'uuvanhuoc', 'uudiemvanhuocdiem', 'uuvahanche', 'nhanxet']), uu: timChiSo_(hk, ['uudiem']), nhuoc: timChiSo_(hk, ['nhuocdiem']),
     khacPhuc: timChiSo_(hk, ['huongkhacphuc', 'khacphuc']), loiKhuyen: timChiSo_(hk, ['loikhuyen'])
   };
@@ -521,7 +524,7 @@ export function docFileKetQua(so) {
       chiSo: hocSinh.length, stt: oChuoi_(r, c.stt), thuHang: oChuoi_(r, c.thuHang), maHs: maHs, hoTen: ten, lop: oChuoi_(r, c.lop),
       sbd: oChuoi_(r, c.sbd), maDe: maDe, sdt: oChuoi_(r, c.sdt), traLoiGoc: traLoiGoc,
       cot: (function () { var o = {}; tenWord.forEach(function (k, j) { var v = oChuoi_(r, j); if (v !== '') o[k] = v; }); return o; })(),
-      diemNhap: { p1: oChuoi_(r, c.p1), p2: oChuoi_(r, c.p2), p3: oChuoi_(r, c.p3), tong: oChuoi_(r, c.tong) },
+      diemNhap: { p1: oChuoi_(r, c.p1), p2: oChuoi_(r, c.p2), p3: oChuoi_(r, c.p3), tln: c.tln >= 0 && c.tln !== c.p3 ? oChuoi_(r, c.tln) : '', tong: oChuoi_(r, c.tong) },
       nhanXet: { uu: oChuoi_(r, c.uu) || nx.uu, nhuoc: oChuoi_(r, c.nhuoc) || nx.nhuoc, nhanNhuoc: oChuoi_(r, c.nhuoc) ? '' : nx.nhanNhuoc || '', khacPhuc: oChuoi_(r, c.khacPhuc), loiKhuyen: oChuoi_(r, c.loiKhuyen) }
     });
   });
@@ -663,7 +666,10 @@ export function ghepHaiFile(kqF, da, thongTinThem, cauTruc) {
   var phanTheoDang = function (dang, n) {
     if (!dang) return '';
     var p = cauTruc ? cauTruc.phan.filter(function (x) { return x.dang === dang; })[0] : null;
-    var ma = cauTruc ? (p && p.ma) : MA_THEO_DANG_V1[dang];
+    if (!p && cauTruc && (dang === 'tu_luan' || dang === 'tra_loi_ngan')) { // đề ghi "Tự luận" mà cấu trúc là "Trả lời ngắn" (hoặc ngược lại): coi như cùng phần
+      p = cauTruc.phan.filter(function (x) { return x.dang === (dang === 'tu_luan' ? 'tra_loi_ngan' : 'tu_luan'); })[0] || null;
+    }
+    var ma = cauTruc ? (p && p.ma) : MA_THEO_DANG_V1[dang === 'tu_luan' ? 'tra_loi_ngan' : dang];
     if (!ma) (khongCoDang[dang] = khongCoDang[dang] || []).push(n);
     return ma || '';
   };
@@ -787,6 +793,7 @@ var TEN_DANG_HD = {
   trac_nghiem: function (p) { return 'trắc nghiệm, ghi ' + (p.phuongAn || 'ABCD').split('').join('/') + ', ' + soVN_(p.diemMoiCau) + 'đ/câu'; },
   dung_sai: function () { return 'đúng/sai 4 ý, ghi "Đ,S,Đ,S"; 1 ý 0,1 – 2 ý 0,25 – 3 ý 0,5 – 4 ý 1đ'; },
   tra_loi_ngan: function (p) { return 'trả lời ngắn, ghi số (VD 1,5), ' + soVN_(p.diemMoiCau) + 'đ/câu'; },
+  tu_luan: function (p) { return 'tự luận, giáo viên chấm tay (tối đa ' + soVN_(p.diemMoiCau) + 'đ/câu) — điền tổng điểm phần vào cột "Điểm tự luận"; tab DapAn ghi đáp số / gợi ý (tùy chọn)'; },
   dien_tu: function (p) { return 'điền từ / viết lại câu, ' + soVN_(p.diemMoiCau) + 'đ/câu'; },
   sap_xep: function (p) { return 'sắp xếp, ghi thứ tự VD "a-c-b-d", ' + soVN_(p.diemMoiCau) + 'đ/câu'; }
 };

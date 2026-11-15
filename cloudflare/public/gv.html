@@ -1392,10 +1392,12 @@
   function dangCuaMon(mon) {
     var ds = [];
     (DL.cauTrucDe || []).forEach(function (c) { if (c.mon === mon) c.phan.forEach(function (p) { if (ds.indexOf(p.dang) < 0) ds.push(p.dang); }); });
-    return ds.length ? ds : ['trac_nghiem', 'dung_sai', 'tra_loi_ngan'];
+    // luôn có 4 dạng cơ bản (đề tự tạo có thể dùng), thêm dạng riêng của môn (VD Tiếng Anh: điền từ, sắp xếp)
+    ['trac_nghiem', 'dung_sai', 'tra_loi_ngan', 'tu_luan'].forEach(function (d, i) { if (ds.indexOf(d) < 0) ds.splice(Math.min(i, ds.length), 0, d); });
+    return ds;
   }
   function tenDang(dang) {
-    return { trac_nghiem: 'Trắc nghiệm ABCD', dung_sai: 'Trắc nghiệm Đúng / Sai', tra_loi_ngan: 'Tự luận (trả lời ngắn)', dien_tu: 'Điền từ / viết lại câu', sap_xep: 'Sắp xếp câu / đoạn', tu_luan: 'Tự luận' }[dang] || dang;
+    return { trac_nghiem: 'Trắc nghiệm ABCD', dung_sai: 'Trắc nghiệm Đúng / Sai', tra_loi_ngan: 'Trả lời ngắn', tu_luan: 'Tự luận (chấm tay)', dien_tu: 'Điền từ / viết lại câu', sap_xep: 'Sắp xếp câu / đoạn', tu_luan: 'Tự luận' }[dang] || dang;
   }
   function xmlAnToan(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function taoDocxMaTraCuu(tenLop, ds) {
@@ -2650,7 +2652,7 @@
   $('nutTaoMau').onclick = function () { manMau().chonCach(); };
 
   /* ---- Cấu trúc đề ---- */
-  var DANG_CHON = [['trac_nghiem', 'Trắc nghiệm ABCD'], ['dung_sai', 'Trắc nghiệm Đúng / Sai'], ['tra_loi_ngan', 'Tự luận (trả lời ngắn)'], ['dien_tu', 'Điền từ / viết lại câu'], ['sap_xep', 'Sắp xếp câu / đoạn']];
+  var DANG_CHON = [['trac_nghiem', 'Trắc nghiệm ABCD'], ['dung_sai', 'Trắc nghiệm Đúng / Sai'], ['tra_loi_ngan', 'Trả lời ngắn (tự chấm)'], ['tu_luan', 'Tự luận (giáo viên chấm tay)'], ['dien_tu', 'Điền từ / viết lại câu'], ['sap_xep', 'Sắp xếp câu / đoạn']];
   function soVN(n) { return String(Math.round(n * 100) / 100).replace('.', ','); }
   function diemPhan(p) { return p.soCau * (p.dang === 'dung_sai' ? ((p.bangDiem || [])[4] || p.diemMoiCau || 1) : p.diemMoiCau); }
   function veDsCauTruc() {

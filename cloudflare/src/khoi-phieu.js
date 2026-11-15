@@ -32,11 +32,11 @@ function cacPhan(c) {
 
 function bangPhan(d, p, tenRieng) {
   var tenPhan = tenRieng || (d.tenPhan && d.tenPhan[p.ma]) || p.ten || '', moTa = d.moTaPhan && d.moTaPhan[p.ma];
-  var coHs = p.dang !== 'tra_loi_ngan' || p.cau.some(function (q) { return q.hs; });
+  var coHs = p.dang !== 'tu_luan' && (p.dang !== 'tra_loi_ngan' || p.cau.some(function (q) { return q.hs; }));
   // tenRieng: tiêu đề giáo viên tự đặt cho khối (thay cả dòng "1. PHẦN I: …")
   var h = '<p style="margin:6pt 0 2pt"><b>' + (tenRieng ? e(tenRieng) : p.so + '. PHẦN ' + e(p.ma) + ': ' + e(tenPhan)) + '</b></p>' + (moTa ? '<p style="margin:0 0 2pt">' + e(moTa) + '</p>' : '');
   h += '<table style="' + BANG + '"><tr><th style="' + TH + ';width:6%">Câu</th><th style="' + TH + ';width:22%">Chủ đề kiến thức</th><th style="' + TH + '">Nội dung phân tích cụ thể</th>' +
-    (coHs ? '<th style="' + TH + ';width:11%;color:#d40000">Đáp án<br>của bạn</th>' : '') + '<th style="' + TH + ';width:11%;color:#00a040">' + (p.dang === 'tra_loi_ngan' ? 'Đáp số' : 'Đáp án<br>đúng') + '</th></tr>';
+    (coHs ? '<th style="' + TH + ';width:11%;color:#d40000">Đáp án<br>của bạn</th>' : '') + '<th style="' + TH + ';width:11%;color:#00a040">' + (p.dang === 'tra_loi_ngan' || p.dang === 'tu_luan' ? 'Đáp số' : 'Đáp án<br>đúng') + '</th></tr>';
   p.cau.forEach(function (q) {
     var hs;
     if (p.dang === 'dung_sai') hs = (q.kyTu || []).length ? q.kyTu.map(function (k, i) { return (i ? ',' : '') + '<span style="' + (k.ok ? XANH : DO) + '">' + e(k.c) + '</span>'; }).join('') : '<span style="' + DO + '">—</span>';
@@ -92,7 +92,7 @@ var DUNG = {
 };
 
 /** Tên ngắn của dạng bài (nhãn mặc định trong khối "Điểm các phần"). */
-export var TEN_NGAN_DANG = { trac_nghiem: 'Trắc nghiệm', dung_sai: 'Đúng sai', tra_loi_ngan: 'Tự luận', dien_tu: 'Điền từ', sap_xep: 'Sắp xếp' };
+export var TEN_NGAN_DANG = { trac_nghiem: 'Trắc nghiệm', dung_sai: 'Đúng sai', tra_loi_ngan: 'Trả lời ngắn', tu_luan: 'Tự luận', dien_tu: 'Điền từ', sap_xep: 'Sắp xếp' };
 /** "a=X|b=Y" <-> { a: 'X', b: 'Y' } (nhãn khối Điểm các phần). */
 export function docNhan(s) {
   var o = {};

@@ -142,7 +142,7 @@ test('mã đề đảo thứ tự câu: tab CauHoi dạng ngang (cột mã đề
 
 test('cột điểm không có chữ "Điểm": "Trắc nghiệm", "Đúng sai", "Tự luận", "Tổng" vẫn nhận', () => {
   const kq = L.docFileKetQua({ KetQua: [['STT', 'Họ và tên', 'Lớp', 'Mã đề thi', 'Trắc nghiệm', 'Đúng sai', 'Tự luận', 'Tổng'], ['1', 'An', 'Toán 1', '101', '3', '3.5', '2.65', '9.15']] });
-  assert.deepEqual(kq.hocSinh[0].diemNhap, { p1: '3', p2: '3.5', p3: '2.65', tong: '9.15' });
+  assert.deepEqual(kq.hocSinh[0].diemNhap, { p1: '3', p2: '3.5', p3: '2.65', tln: '', tong: '9.15' });
 });
 
 test('khối phân tích theo từng phần: data-phan chọn phần, data-ten đổi tên phần, giữ thứ tự trong mẫu', async () => {
@@ -183,9 +183,9 @@ test('cột "Dạng bài" (tab CauHoi) quyết định câu vào phần nào, kh
 test('khối Điểm các phần: theo dạng bài, thứ tự + nhãn tự đặt; nhận xét "Ưu và nhược điểm" / "Điểm cần lưu ý"', async () => {
   const KP = await import('../src/khoi-phieu.js');
   const d = KP.phieuMinhHoa();
-  assert.match(KP.dungKhoi('<div class="khoi" data-khoi="bang-diem">x</div>', d), /Trắc nghiệm: <span[^>]*>2\.50<\/span>\/3; Đúng sai: .*Tự luận: /);
+  assert.match(KP.dungKhoi('<div class="khoi" data-khoi="bang-diem">x</div>', d), /Trắc nghiệm: <span[^>]*>2\.50<\/span>\/3; Đúng sai: .*Trả lời ngắn: /);
   const out = KP.dungKhoi('<div class="khoi" data-khoi="bang-diem" data-thutu="dung_sai,trac_nghiem" data-nhan="dung_sai=Phần II – ĐS">x</div>', d);
-  assert.ok(out.indexOf('Phần II – ĐS') < out.indexOf('Trắc nghiệm') && out.indexOf('Trắc nghiệm') < out.indexOf('Tự luận'), out);
+  assert.ok(out.indexOf('Phần II – ĐS') < out.indexOf('Trắc nghiệm') && out.indexOf('Trắc nghiệm') < out.indexOf('Trả lời ngắn'), out);
   const kq = L.docFileKetQua({ KetQua: [['Họ và tên', 'Ưu và nhược điểm'], ['An', '+ Ưu điểm: Chăm.\r\n+ Điểm cần lưu ý: Ẩu.']] });
   assert.deepEqual([kq.hocSinh[0].nhanXet.uu, kq.hocSinh[0].nhanXet.nhuoc, kq.hocSinh[0].nhanXet.nhanNhuoc], ['Chăm.', 'Ẩu.', 'Điểm cần lưu ý']);
 });
@@ -197,4 +197,21 @@ test('khối Điểm các phần: mỗi dòng = nhãn + dạng bài tính điể
   const out = KP.dungKhoi('<div class="khoi" data-khoi="bang-diem" data-muc="dung_sai:Phần 2|trac_nghiem:TN: ABCD|dien_tu:Không có">x</div>', d);
   assert.match(out, /Phần 2: <span[^>]*>3\.50<\/span>\/4; TN: ABCD: <span[^>]*>2\.50<\/span>\/3; <b>Tổng điểm: <span[^>]*>8\.50/);
   assert.doesNotMatch(out, /Không có|Tự luận/, 'dạng đề không có -> ẩn; dạng không có dòng -> không hiện riêng');
+});
+
+test('dạng Tự luận (chấm tay) tách khỏi Trả lời ngắn: tự luận lấy cột "Điểm tự luận", trả lời ngắn tự chấm', () => {
+  const ct = { id: 'x', ten: 'Đề có tự luận', mon: 'Toán', phan: [
+    { ma: 'I', ten: 'TN', dang: 'trac_nghiem', soCau: 2, diemMoiCau: 1, phuongAn: 'ABCD' },
+    { ma: 'II', ten: 'TLN', dang: 'tra_loi_ngan', soCau: 2, diemMoiCau: 1 },
+    { ma: 'III', ten: 'TL', dang: 'tu_luan', soCau: 2, diemMoiCau: 3 }] };
+  assert.deepEqual(kiemTraCauTruc(ct), []);
+  const td = ['STT', 'Họ và tên', 'Lớp', 'Mã đề thi', 'Câu 1', 'Câu 2', 'Câu 3', 'Câu 4', 'Điểm tự luận'];
+  const g = L.ghepHaiFile(L.docFileKetQua({ KetQua: [td, ['1', 'An', 'L', '101', 'A', 'C', '5', '7', '4.5']] }),
+    L.docFileDapAn({ DapAn: [['Mã đề', 'Câu 1', 'Câu 2', 'Câu 3', 'Câu 4', 'Câu 5', 'Câu 6'], ['101', 'A', 'B', '5', '8', 'x=2', '']],
+      CauHoi: [['Câu', 'Dạng bài'], ['1', 'Trắc nghiệm'], ['2', 'Trắc nghiệm'], ['3', 'Trả lời ngắn'], ['4', 'Trả lời ngắn'], ['5', 'Tự luận'], ['6', 'Tự luận']] }), {}, ct);
+  assert.deepEqual(Object.keys(g.cauHoi).map((p) => g.cauHoi[p].length), [2, 2, 2]);
+  const c = L.chamBai_(g, g.hocSinh[0]);
+  assert.deepEqual(c.phan.map((p) => [p.dang, p.diem, p.toiDa]), [['trac_nghiem', '1.00', '2'], ['tra_loi_ngan', '1.00', '2'], ['tu_luan', '4.50', '6']]);
+  assert.deepEqual(c.lechNhap, []);
+  assert.equal(L.docFileDapAn({ DapAn: [['Mã đề', 'Câu 1'], ['1', 'A']], CauHoi: [['Câu', 'Dạng bài'], ['1', 'Tự luận']] }).cauHoi[1].dang, 'tu_luan');
 });
