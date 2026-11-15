@@ -154,7 +154,7 @@ test('khối có sẵn: bảng phân tích tự dựng theo đề (số câu, ch
   await B.rpc('gvTaoPhieuLo', bd.dsDot[0].maDot, so, bd.dsDot[0].canTao);
   const ds = Object.values(await B.rpc('gvDsPhieuLan', bd.dsDot[0].maDot)).filter((x) => x && x.maPhieu);
   const xem = async (ten) => (await B.rpc('gvXemPhieu', ds.find((x) => x.hoTen === ten).maPhieu)).d.htmlMau;
-  const goc = da.CauHoi.slice(1).map((r) => r[4]);
+  const goc = da.CauHoi.slice(1).map((r) => r[5]);
   const h5 = await xem('Hồ An'), h6 = await xem('Vũ Bình');
   assert.ok(!/class="khoi"/.test(h5), 'khối đã được dựng');
   assert.equal((h5.match(/<tr>/g) || []).length, 3 * 2 + 22, '3 bảng: 22 hàng câu + mỗi bảng 1 hàng tiêu đề + 1 hàng tổng');

@@ -2832,7 +2832,7 @@
         moPop([the('div', { class: 'dau-pop' }, [the('b', { text: 'Phần tự động: ' + kk.ten }), dongPop]), the('p', { class: 'goi-y', text: kk.moTa + '. Hệ thống tự điền phần này cho từng học sinh khi tạo phiếu.' }),
           chonPhan ? the('label', { class: 'chon-phan-khoi' }, [the('span', { text: 'Dạng bài (' + monMau() + ')' }), chonPhan]) : null,
           chonPhan ? the('label', { class: 'chon-phan-khoi' }, [the('span', { text: 'Tiêu đề' }), oTenPhan]) : null,
-          chonPhan ? the('p', { class: 'goi-y', text: 'Lấy từ: các câu thuộc phần có dạng bài này trong cấu trúc đề chọn khi gửi kết quả (câu nào thuộc phần nào theo cột "Phần" ở tab CauHoi của file đáp án). Tiêu đề: gõ ở ô trên để thay cả dòng, hoặc để trống để hệ thống tự ghi "1. PHẦN I: " + tên phần ở tab ThongTin. Đổi môn của mẫu ở cuối trang.' }) : null,
+          chonPhan ? the('p', { class: 'goi-y', text: 'Lấy từ: các câu có cột "Dạng bài" = dạng đã chọn ở tab CauHoi của file đáp án, dù câu nằm ở phần nào (không ghi dạng bài thì hệ thống tự nhận theo đáp án). "Tổng điểm" của bảng = điểm các câu dạng này, chấm theo dạng bài. Tiêu đề: gõ ở ô trên để thay cả dòng, hoặc để trống để hệ thống tự ghi. Đổi môn của mẫu ở cuối trang.' }) : null,
           the('div', { class: 'chan-pop' }, [
             the('button', { type: 'button', class: 'phu nho', text: '↑ Đưa lên', disabled: k.previousElementSibling ? null : 'disabled', onclick: function () { doiCho(-1); } }),
             the('button', { type: 'button', class: 'phu nho', text: '↓ Đưa xuống', disabled: k.nextElementSibling ? null : 'disabled', onclick: function () { doiCho(1); } }),

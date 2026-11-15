@@ -103,11 +103,11 @@ test('điểm giáo viên nhập vẫn được ưu tiên theo từng phần', (
 
 test('mã đề đảo thứ tự câu: tab CauHoi dạng ngang (cột mã đề = câu số mấy trong mã đề) hoặc dạng "Mã đề | Câu | Câu gốc"; thiếu thì cảnh báo', () => {
   const da = L.taoMauDapAn();
-  assert.deepEqual(da.CauHoi[0], ['Câu', 'Phần', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể', '105', '106']);
-  assert.deepEqual(da.CauHoi[1].slice(5), ['1', '2'], 'câu gốc 1 = câu 1 mã 105 = câu 2 mã 106');
+  assert.deepEqual(da.CauHoi[0], ['Câu', 'Phần', 'Dạng bài', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể', '105', '106']);
+  assert.deepEqual(da.CauHoi[1].slice(6), ['1', '2'], 'câu gốc 1 = câu 1 mã 105 = câu 2 mã 106');
   const td = ['STT', 'Họ và tên', 'Lớp', 'Mã đề thi', ...Array.from({ length: 22 }, (_, i) => 'Câu ' + (i + 1))];
   const r5 = ['1', 'An', 'Toán 1', '105', ...da.DapAn[1].slice(1)], r6 = ['2', 'Bình', 'Toán 1', '106', ...da.DapAn[2].slice(1)];
-  const goc = da.CauHoi.slice(1).map((r) => r[4]);
+  const goc = da.CauHoi.slice(1).map((r) => r[5]);
   const kiemTra = (cauHoi, ten) => {
     const g = L.ghepHaiFile(L.docFileKetQua({ KetQua: [td, r5, r6] }), L.docFileDapAn({ DapAn: da.DapAn, CauHoi: cauHoi }), {});
     const c5 = L.chamBai_(g, g.hocSinh[0]), c6 = L.chamBai_(g, g.hocSinh[1]);
@@ -120,10 +120,10 @@ test('mã đề đảo thứ tự câu: tab CauHoi dạng ngang (cột mã đề
   };
   kiemTra(da.CauHoi, 'dạng ngang');
   const doc = [['Mã đề', 'Câu', 'Câu gốc', 'Phần', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể']]
-    .concat(da.CauHoi.slice(1).map((r) => ['', r[0], '', r[1], r[2], r[3], r[4]]))
+    .concat(da.CauHoi.slice(1).map((r) => ['', r[0], '', r[1], r[3], r[4], r[5]]))
     .concat(Array.from({ length: 12 }, (_, i) => ['106', String(i + 1), String(i % 2 ? i : i + 2), '', '', '', '']));
   kiemTra(doc, 'dạng dọc');
-  const chiGoc = L.docFileDapAn({ DapAn: da.DapAn, CauHoi: da.CauHoi.map((r) => r.slice(0, 5)) });
+  const chiGoc = L.docFileDapAn({ DapAn: da.DapAn, CauHoi: da.CauHoi.map((r) => r.slice(0, 6)) });
   assert.match(L.ghepHaiFile(L.docFileKetQua({ KetQua: [td, r5, r6] }), chiGoc, {}).canhBao.join(' '), /chỉ có 1 bộ chủ đề/);
 });
 
@@ -150,4 +150,19 @@ test('khối phân tích chọn theo dạng bài (data-dang); tiêu đề tự �
   assert.match(out, /<b>Phần 2 – Đúng\/Sai<\/b>/);
   assert.match(out, /1\. PHẦN I: /);
   assert.ok(out.indexOf('Phần 2 – Đúng') < out.indexOf('1. PHẦN I'));
+});
+
+test('cột "Dạng bài" (tab CauHoi) quyết định câu vào phần nào, không phụ thuộc cột "Phần"', () => {
+  const ct = layCauTrucCoSan('thpt2025-toan');
+  // đề 5 câu: trắc nghiệm, đúng sai, trắc nghiệm, tự luận, đúng sai — xen kẽ, cột Phần ghi lung tung
+  const dung = ['A', 'DSDS', 'B', '0.5', 'SSDD'];
+  const td = ['STT', 'Họ và tên', 'Lớp', 'Mã đề thi', 'Câu 1', 'Câu 2', 'Câu 3', 'Câu 4', 'Câu 5'];
+  const kq = L.docFileKetQua({ KetQua: [td, ['1', 'An', 'Toán 1', '101', 'A', 'DSDS', 'C', '0,5', 'SSDD']] });
+  const da = L.docFileDapAn({ DapAn: [['Mã đề', 'Câu 1', 'Câu 2', 'Câu 3', 'Câu 4', 'Câu 5'], ['101', ...dung]],
+    CauHoi: [['Câu', 'Phần', 'Dạng bài', 'Chủ đề'], ['1', 'III', 'Trắc nghiệm ABCD', 'a'], ['2', 'I', 'Đúng sai', 'b'], ['3', 'II', 'TN', 'c'], ['4', 'I', 'Tự luận', 'd'], ['5', '', 'đúng sai', 'e']] });
+  const g = L.ghepHaiFile(kq, da, {}, ct);
+  assert.deepEqual(Object.keys(g.cauHoi).map((p) => g.cauHoi[p].map((q) => q.cauGoc)), [[1, 3], [2, 5], [4]]);
+  const c = L.chamBai_(g, g.hocSinh[0]);
+  assert.deepEqual(c.phan.map((p) => [p.dang, p.diem]), [['trac_nghiem', '0.25'], ['dung_sai', '2.00'], ['tra_loi_ngan', '0.50']]);
+  assert.deepEqual(g.canhBao.filter((x) => /dạng bài/.test(x)), []);
 });

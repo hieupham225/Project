@@ -152,6 +152,22 @@ export function moTaCauTruc(ct) {
   }).join(' · ') + ' — tổng ' + so(diemToiDa(ct)) + ' điểm';
 }
 /** Danh sách môn của các cấu trúc có sẵn (giữ thứ tự). */
+/** Tên dạng bài ghi trong file đáp án (cột "Dạng bài" tab CauHoi). */
+export const TEN_DANG_FILE = { trac_nghiem: 'Trắc nghiệm ABCD', dung_sai: 'Đúng sai', tra_loi_ngan: 'Tự luận', dien_tu: 'Điền từ', sap_xep: 'Sắp xếp' };
+
+/** "Trắc nghiệm ABCD" / "TN" / "Đúng sai" / "Tự luận" / "Trả lời ngắn" / mã dạng -> mã dạng; không nhận ra -> ''. */
+export function chuanHoaDang(s) {
+  var k = chuoi(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/[^a-z_]/g, '');
+  if (!k) return '';
+  if (DANG_CAU[k]) return k;
+  if (/dungsai|^ds$/.test(k)) return 'dung_sai';
+  if (/tracnghiem|abcd|^tn$|nhieuphuongan/.test(k)) return 'trac_nghiem';
+  if (/traloingan|tuluan|^tl$|^tln$/.test(k)) return 'tra_loi_ngan';
+  if (/dientu|vietlai/.test(k)) return 'dien_tu';
+  if (/sapxep/.test(k)) return 'sap_xep';
+  return '';
+}
+
 export const DS_MON = CAU_TRUC_CO_SAN.map(function (c) { return c.mon; }).filter(function (m, i, a) { return a.indexOf(m) === i; });
 /** Cấu trúc mặc định của 1 môn (cấu trúc có sẵn đầu tiên của môn đó). */
 export function cauTrucCuaMon(mon) {

@@ -134,6 +134,9 @@ export function chamBai_(kq, h) {
   var ttCau = function (q) { return (maDe && q.theoDe && q.theoDe[maDe]) || q; };
   var dn = h.diemNhap || {};
   var nhapTheoThuTu = [dn.p1, dn.p2, dn.p3];
+  // cột "Điểm trắc nghiệm / đúng sai / tự luận" gắn theo dạng bài (mỗi dạng 1 phần), không theo vị trí phần
+  var nhapTheoDang = { trac_nghiem: dn.p1, dung_sai: dn.p2, tra_loi_ngan: dn.p3, dien_tu: dn.p3 };
+  var dangDuyNhat = ct.phan.every(function (p, i) { return ct.phan.findIndex(function (x) { return x.dang === p.dang; }) === i; });
 
   var phan = ct.phan.map(function (p, iP) {
     var dang = CT.DANG_CAU[p.dang];
@@ -144,7 +147,7 @@ export function chamBai_(kq, h) {
       tuTinh += r.diem;
       return Object.assign({ cau: q.cau, chuDe: t.chuDe, mucDo: t.mucDo, noiDung: t.noiDung, hs: hs, dung: dung }, r);
     });
-    var nhap = (dn.theoPhan && dn.theoPhan[p.ma] != null ? dn.theoPhan[p.ma] : nhapTheoThuTu[iP]);
+    var nhap = (dn.theoPhan && dn.theoPhan[p.ma] != null ? dn.theoPhan[p.ma] : dangDuyNhat ? nhapTheoDang[p.dang] : nhapTheoThuTu[iP]);
     var diem = nhap != null && nhap !== '' ? soThuc_(nhap, 0) : tuTinh;
     return { ma: p.ma, ten: p.ten, dang: p.dang, diem: diem, toiDa: cau.length * dang.toiDa(p), cau: cau };
   });
@@ -542,11 +545,11 @@ export function docFileDapAn(so) {
     var k = bangCh[hc].map(khongDau_);
     var cc = { cau: k.indexOf('cau'), phan: k.indexOf('phan'), chuDe: timChiSo_(k, ['chudekienthuc', 'chude']), mucDo: timChiSo_(k, ['mucdo']),
       noiDung: timChiSo_(k, ['noidungphantichcuthe', 'noidungphantich', 'noidung']), maDe: timChiSo_(k, ['made', 'madethi']),
-      cauGoc: timChiSo_(k, ['caugoc', 'caudegoc', 'cautrongdegoc']) };
+      cauGoc: timChiSo_(k, ['caugoc', 'caudegoc', 'cautrongdegoc']), dang: timChiSo_(k, ['dangbai', 'dang', 'dangcau', 'dangcauhoi']) };
     // Dạng ngang: mỗi hàng = 1 câu đề gốc; cột tiêu đề là mã đề ("101" | "Mã 101" | "Mã đề 101"), ô = số thứ tự câu đó trong mã đề
     var cotMa = [];
     bangCh[hc].forEach(function (h, j) {
-      if (j === cc.cau || j === cc.maDe || j === cc.cauGoc) return;
+      if (j === cc.cau || j === cc.maDe || j === cc.cauGoc || j === cc.dang) return;
       var ma = khongDau_(String(h || '')).replace(/^(?:made|ma)/, '');
       if (ma && dapAn[ma]) cotMa.push({ j: j, ma: ma });
     });
@@ -554,7 +557,7 @@ export function docFileDapAn(so) {
     bangCh.slice(hc + 1).forEach(function (r) {
       var n = parseInt(oChuoi_(r, cc.cau), 10);
       if (!n) return;
-      var tt = { phan: chuanHoaPhan_(oChuoi_(r, cc.phan)), chuDe: oChuoi_(r, cc.chuDe), mucDo: oChuoi_(r, cc.mucDo), noiDung: oChuoi_(r, cc.noiDung) };
+      var tt = { phan: chuanHoaPhan_(oChuoi_(r, cc.phan)), dang: CT.chuanHoaDang(oChuoi_(r, cc.dang)), chuDe: oChuoi_(r, cc.chuDe), mucDo: oChuoi_(r, cc.mucDo), noiDung: oChuoi_(r, cc.noiDung) };
       var goc = parseInt(oChuoi_(r, cc.cauGoc), 10);
       // 1 ô "Mã đề" có thể ghi nhiều mã: "101, 103"
       var dsMa = oChuoi_(r, cc.maDe).split(/[,;\s]+/).map(khongDau_).filter(Boolean);
@@ -574,7 +577,7 @@ export function docFileDapAn(so) {
     tre.forEach(function (x) {
       var g = cauHoi[x.goc], tt = theoDe[x.n][x.ma];
       if (!g) return;
-      ['chuDe', 'mucDo', 'noiDung', 'phan'].forEach(function (f) { if (!tt[f]) tt[f] = g[f]; });
+      ['chuDe', 'mucDo', 'noiDung', 'phan', 'dang'].forEach(function (f) { if (!tt[f]) tt[f] = g[f]; });
     });
   }
   // Thông tin chung (tùy chọn) — giống tab ThongTin của mẫu cũ
@@ -642,17 +645,32 @@ export function ghepHaiFile(kqF, da, thongTinThem, cauTruc) {
     })[0];
     return p ? p.ma : cauTruc.phan[cauTruc.phan.length - 1].ma;
   };
+  // Cột "Dạng bài" (tab CauHoi) quyết định câu thuộc phần nào của cấu trúc đề (phần có dạng đó): khối phân tích, điểm phần
+  // đều theo dạng bài. Cột "Phần" chỉ dùng khi không ghi dạng bài.
+  var MA_THEO_DANG_V1 = { trac_nghiem: 'I', dung_sai: 'II', tra_loi_ngan: 'III' };
+  var khongCoDang = {};
+  var phanTheoDang = function (dang, n) {
+    if (!dang) return '';
+    var p = cauTruc ? cauTruc.phan.filter(function (x) { return x.dang === dang; })[0] : null;
+    var ma = cauTruc ? (p && p.ma) : MA_THEO_DANG_V1[dang];
+    if (!ma) (khongCoDang[dang] = khongCoDang[dang] || []).push(n);
+    return ma || '';
+  };
   dsCau.forEach(function (n, k) {
     var meta = (da && da.cauHoi[n]) || {};
-    var phan = cauTruc
+    var theoDang = phanTheoDang(meta.dang, n);
+    var phan = theoDang || (cauTruc
       ? (meta.phan && cauHoi[meta.phan] ? meta.phan : phanTheoThuTu ? phanTheoThuTu[k] : doanTheoCauTruc(n))
       : (cauHoi[meta.phan] && meta.phan) || doanPhan_(Object.keys(dapAn).map(function (m) { return dapAn[m].dapAn[n]; })) ||
-        doanPhan_(kqF.hocSinh.map(function (h) { return h.traLoiGoc[n]; })) || 'III';
+        doanPhan_(kqF.hocSinh.map(function (h) { return h.traLoiGoc[n]; })) || 'III');
     var q = { cau: cauHoi[phan].length + 1, cauGoc: n, chuDe: meta.chuDe || '', mucDo: meta.mucDo || '', noiDung: meta.noiDung || '', dapAn: { '': '' } };
     Object.keys(dapAn).forEach(function (m) { if (dapAn[m].dapAn[n]) q.dapAn[m] = dapAn[m].dapAn[n]; });
     if (da && da.theoDe[n]) { q.theoDe = {}; Object.keys(da.theoDe[n]).forEach(function (m) { var x = da.theoDe[n][m]; q.theoDe[m] = { chuDe: x.chuDe || q.chuDe, mucDo: x.mucDo || q.mucDo, noiDung: x.noiDung || q.noiDung }; }); }
     cauHoi[phan].push(q);
     viTri[n] = phan + '.' + q.cau;
+  });
+  Object.keys(khongCoDang).forEach(function (d) {
+    canhBao.push('Câu ' + khongCoDang[d].join(', ') + ' ghi dạng bài "' + CT.TEN_DANG_FILE[d] + '" nhưng cấu trúc đề "' + ((cauTruc && cauTruc.ten) || 'Toán') + '" không có phần dạng này — hệ thống xếp theo cột Phần / đáp án.');
   });
   // Nhiều mã đề có đáp án khác nhau (đảo câu) mà tab CauHoi chỉ có 1 bộ chủ đề -> chủ đề / nội dung trên phiếu có thể không khớp câu của từng mã đề
   var dsMa = Object.keys(dapAn);
@@ -818,8 +836,8 @@ function taoMauDapAnTheoCauTruc_(ct) {
     kc.forEach(function (x) { for (var n = x.tu; n <= x.den; n++) r.push(dapAnMau_(x.p, n - x.tu, lech)); });
     return r;
   });
-  var cauHoi = [['Câu', 'Phần', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể', '101', '102']];
-  kc.forEach(function (x) { for (var n = x.tu; n <= x.den; n++) cauHoi.push([String(n), x.p.ma, '', '', '', String(n), String(n)]); });
+  var cauHoi = [['Câu', 'Phần', 'Dạng bài', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể', '101', '102']];
+  kc.forEach(function (x) { for (var n = x.tu; n <= x.den; n++) cauHoi.push([String(n), x.p.ma, CT.TEN_DANG_FILE[x.p.dang] || '', '', '', '', String(n), String(n)]); });
   return {
     DapAn: [tieuDe].concat(hai),
     CauHoi: cauHoi,
@@ -838,7 +856,7 @@ function taoMauDapAnTheoCauTruc_(ct) {
       return ['    – Câu ' + x.tu + (x.den > x.tu ? '–' + x.den : '') + ': Phần ' + x.p.ma + ' — ' + TEN_DANG_HD[x.p.dang](x.p) + '.'];
     }), [
       x_dt_(ct),
-      ['• Tab CauHoi (tùy chọn): chủ đề, mức độ, nội dung từng câu — hiện trên phiếu. Cột "Phần" đã điền sẵn theo cấu trúc đề.'],
+      ['• Tab CauHoi (tùy chọn): chủ đề, mức độ, nội dung từng câu — hiện trên phiếu. Cột "Dạng bài" (' + Object.keys(CT.TEN_DANG_FILE).map(function (d) { return CT.TEN_DANG_FILE[d]; }).join(' / ') + ') quyết định câu vào bảng nào trên phiếu và cách chấm, điểm; cột "Phần" chỉ để nhóm câu.'],
       ['• Mỗi hàng là 1 câu của ĐỀ GỐC (chủ đề, nội dung ghi 1 lần). Cột "101", "102"…: câu đó là câu số mấy trong từng mã đề (thêm cột cho đủ mã đề; ô trống = giữ vị trí như đề gốc).'],
       ['• Tab ThongTin (tùy chọn): tiêu đề phiếu, mô tả, ngày thi, mô tả từng phần.']
     ])
@@ -856,12 +874,13 @@ export function taoMauDapAn(cauTruc) {
   var de = MAU_FILE_KET_QUA.DeThi.slice(1); // Phần | Câu | Chủ đề | Mức độ | Nội dung | Đáp án (mã 105)
   // Tab CauHoi: mỗi hàng = 1 câu của đề gốc (chủ đề, nội dung gõ 1 lần); cột mã đề "105", "106": câu đó là câu số mấy trong mã đề.
   // Ví dụ: mã 105 giữ thứ tự đề gốc; mã 106 đảo câu phần I (đổi chỗ từng cặp: câu gốc 1 là câu 2 của mã 106…)
-  var cauHoi = [['Câu', 'Phần', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể', '105', '106']];
+  var cauHoi = [['Câu', 'Phần', 'Dạng bài', 'Chủ đề kiến thức', 'Mức độ', 'Nội dung phân tích cụ thể', '105', '106']];
+  var dangTheoPhan = { I: 'trac_nghiem', II: 'dung_sai', III: 'tra_loi_ngan' };
   var dapAn105 = [], dapAn106 = [];
   var doi = { A: 'B', B: 'C', C: 'D', D: 'A' };
   var doiCho = function (n) { return n <= 12 ? (n % 2 ? n + 1 : n - 1) : n; }; // câu gốc n <-> câu doiCho(n) của mã 106
   de.forEach(function (r, i) {
-    cauHoi.push([String(i + 1), r[0], r[2], r[3], r[4], String(i + 1), String(doiCho(i + 1))]);
+    cauHoi.push([String(i + 1), r[0], CT.TEN_DANG_FILE[dangTheoPhan[r[0]]] || '', r[2], r[3], r[4], String(i + 1), String(doiCho(i + 1))]);
     dapAn105.push(r[5]);
   });
   de.forEach(function (r, i) {
@@ -886,7 +905,8 @@ export function taoMauDapAn(cauTruc) {
     HuongDan: [
       ['HƯỚNG DẪN — BẢNG ĐÁP ÁN THEO MÃ ĐỀ'],
       ['• Tab DapAn: mỗi mã đề 1 dòng. Cột "Câu 1" … "Câu N" là đáp án đúng. Đúng/sai viết "ĐSĐS" hoặc "Đ,S,Đ,S".'],
-      ['• Tab CauHoi (tùy chọn): chủ đề, mức độ, nội dung từng câu — hiện trên phiếu. "Phần" (I/II/III) để trống thì hệ thống tự nhận theo đáp án.'],
+      ['• Tab CauHoi (tùy chọn): chủ đề, mức độ, nội dung từng câu — hiện trên phiếu.'],
+      ['• Cột "Dạng bài": Trắc nghiệm ABCD / Đúng sai / Tự luận — quyết định câu vào bảng nào trên phiếu, chấm và tính điểm theo dạng. Cột "Phần" chỉ để nhóm câu. Để trống thì hệ thống tự nhận theo đáp án.'],
       ['• Tab CauHoi: mỗi hàng là 1 câu của ĐỀ GỐC — ghi chủ đề, nội dung 1 lần.'],
       ['• Mã đề đảo thứ tự câu: thêm 1 cột cho mỗi mã đề (tiêu đề cột là mã đề, VD "101", "102"…). Ô = câu đó là câu số mấy trong mã đề.'],
       ['   VD hàng câu 1, cột "106" ghi 2: câu 1 của đề gốc là câu 2 của mã 106. Ô để trống / không có cột cho mã đề: giữ đúng vị trí như đề gốc.'],
