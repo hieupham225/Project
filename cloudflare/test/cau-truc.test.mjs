@@ -126,3 +126,8 @@ test('mã đề đảo thứ tự câu: tab CauHoi dạng ngang (cột mã đề
   const chiGoc = L.docFileDapAn({ DapAn: da.DapAn, CauHoi: da.CauHoi.map((r) => r.slice(0, 5)) });
   assert.match(L.ghepHaiFile(L.docFileKetQua({ KetQua: [td, r5, r6] }), chiGoc, {}).canhBao.join(' '), /chỉ có 1 bộ chủ đề/);
 });
+
+test('cột điểm không có chữ "Điểm": "Trắc nghiệm", "Đúng sai", "Tự luận", "Tổng" vẫn nhận', () => {
+  const kq = L.docFileKetQua({ KetQua: [['STT', 'Họ và tên', 'Lớp', 'Mã đề thi', 'Trắc nghiệm', 'Đúng sai', 'Tự luận', 'Tổng'], ['1', 'An', 'Toán 1', '101', '3', '3.5', '2.65', '9.15']] });
+  assert.deepEqual(kq.hocSinh[0].diemNhap, { p1: '3', p2: '3.5', p3: '2.65', tong: '9.15' });
+});

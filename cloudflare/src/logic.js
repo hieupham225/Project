@@ -77,8 +77,8 @@ export function phanTichFile_(so) {
   var ck = {
     stt: hk.indexOf('stt'), maHs: timChiSo_(hk, ['mahs', 'mahocsinh']), ten: timChiSo_(hk, aliasTen),
     lop: timChiSo_(hk, ['lop', 'loptoan', 'lophoc']), maDe: timChiSo_(hk, ['made', 'madethi']),
-    p1: timChiSo_(hk, ['diemphani', 'diemphan1', 'diemp1']), p2: timChiSo_(hk, ['diemphanii', 'diemphan2', 'diemp2']),
-    p3: timChiSo_(hk, ['diemphaniii', 'diemphan3', 'diemp3']), tong: timChiSo_(hk, ['tongdiem', 'diemtong']),
+    p1: timChiSo_(hk, ALIAS_P1), p2: timChiSo_(hk, ALIAS_P2),
+    p3: timChiSo_(hk, ALIAS_P3), tong: timChiSo_(hk, ALIAS_TONG),
     sdt: timChiSo_(hk, ['sdtphuhuynh', 'sdt', 'sodienthoai', 'sdtph']),
     uu: timChiSo_(hk, ['uudiem']), nhuoc: timChiSo_(hk, ['nhuocdiem']),
     khacPhuc: timChiSo_(hk, ['huongkhacphuc', 'khacphuc']), loiKhuyen: timChiSo_(hk, ['loikhuyen'])
@@ -274,6 +274,12 @@ export function khongDau_(s) {
     .replace(/[đĐ]/g, 'd').toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
+// Tên cột điểm từng phần (đã bỏ dấu, bỏ khoảng trắng). Có hoặc không có chữ "Điểm" phía trước đều nhận.
+var ALIAS_P1 = ['diemtracnghiem', 'diemphani', 'diemphan1', 'diemp1', 'tracnghiem', 'phani', 'phan1'];
+var ALIAS_P2 = ['diemdungsai', 'diemphanii', 'diemphan2', 'diemp2', 'dungsai', 'phanii', 'phan2'];
+var ALIAS_P3 = ['diemdientu', 'diemtraloingan', 'diemtuluan', 'diemphaniii', 'diemphan3', 'diemp3', 'dientu', 'traloingan', 'tuluan', 'phaniii', 'phan3'];
+var ALIAS_TONG = ['tongdiem', 'diemtong', 'tong'];
+
 export function timChiSo_(dsKhoa, dsTen) {
   for (var i = 0; i < dsTen.length; i++) { var j = dsKhoa.indexOf(dsTen[i]); if (j >= 0) return j; }
   return -1;
@@ -465,10 +471,7 @@ export function docFileKetQua(so) {
     stt: hk.indexOf('stt'), thuHang: timChiSo_(hk, ['thuhang', 'xephang', 'hang']), maHs: timChiSo_(hk, ['mahs', 'mahocsinh']),
     ten: timChiSo_(hk, ALIAS_TEN), lop: timChiSo_(hk, ['lop', 'loptoan', 'lophoc', 'nhomlop', 'nhom']),
     sbd: timChiSo_(hk, ['sobaodanh', 'sbd']), maDe: timChiSo_(hk, ['madethi', 'made', 'ma']), sdt: timChiSo_(hk, ['sdtphuhuynh', 'sdt', 'sodienthoai']),
-    p1: timChiSo_(hk, ['diemtracnghiem', 'diemphani', 'diemphan1', 'diemp1']),
-    p2: timChiSo_(hk, ['diemdungsai', 'diemphanii', 'diemphan2', 'diemp2']),
-    p3: timChiSo_(hk, ['diemdientu', 'diemtraloingan', 'diemtuluan', 'diemphaniii', 'diemphan3', 'diemp3']),
-    tong: timChiSo_(hk, ['tongdiem', 'diemtong']),
+    p1: timChiSo_(hk, ALIAS_P1), p2: timChiSo_(hk, ALIAS_P2), p3: timChiSo_(hk, ALIAS_P3), tong: timChiSo_(hk, ALIAS_TONG),
     uuNhuoc: timChiSo_(hk, ['uunhuoc', 'uunhuocdiem', 'nhanxet']), uu: timChiSo_(hk, ['uudiem']), nhuoc: timChiSo_(hk, ['nhuocdiem']),
     khacPhuc: timChiSo_(hk, ['huongkhacphuc', 'khacphuc']), loiKhuyen: timChiSo_(hk, ['loikhuyen'])
   };
