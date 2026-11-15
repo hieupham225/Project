@@ -131,3 +131,14 @@ test('cột điểm không có chữ "Điểm": "Trắc nghiệm", "Đúng sai",
   const kq = L.docFileKetQua({ KetQua: [['STT', 'Họ và tên', 'Lớp', 'Mã đề thi', 'Trắc nghiệm', 'Đúng sai', 'Tự luận', 'Tổng'], ['1', 'An', 'Toán 1', '101', '3', '3.5', '2.65', '9.15']] });
   assert.deepEqual(kq.hocSinh[0].diemNhap, { p1: '3', p2: '3.5', p3: '2.65', tong: '9.15' });
 });
+
+test('khối phân tích theo từng phần: data-phan chọn phần, data-ten đổi tên phần, giữ thứ tự trong mẫu', async () => {
+  const KP = await import('../src/khoi-phieu.js');
+  const d = KP.phieuMinhHoa();
+  const html = '<div class="khoi" data-khoi="phan-tich" data-phan="II" data-ten="Đúng &amp; sai">x</div><p>giữa</p><div class="khoi" data-khoi="phan-tich" data-phan="I">y</div><div class="khoi" data-khoi="phan-tich" data-phan="IV">z</div>';
+  const out = KP.dungKhoi(html, d);
+  assert.match(out, /PHẦN II: Đúng &amp; sai/);
+  assert.ok(out.indexOf('PHẦN II') < out.indexOf('giữa') && out.indexOf('giữa') < out.indexOf('PHẦN I:'), 'phần II đứng trước phần I');
+  assert.equal((out.match(/PHẦN /g) || []).length, 2, 'phần IV không có thì để trống');
+  assert.equal(L.chuanHoaPhan_('Phần 4'), 'IV');
+});

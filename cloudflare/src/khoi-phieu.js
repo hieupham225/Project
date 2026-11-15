@@ -30,8 +30,8 @@ function cacPhan(c) {
   return ds;
 }
 
-function bangPhan(d, p) {
-  var tenPhan = (d.tenPhan && d.tenPhan[p.ma]) || p.ten || '', moTa = d.moTaPhan && d.moTaPhan[p.ma];
+function bangPhan(d, p, tenRieng) {
+  var tenPhan = tenRieng || (d.tenPhan && d.tenPhan[p.ma]) || p.ten || '', moTa = d.moTaPhan && d.moTaPhan[p.ma];
   var coHs = p.dang !== 'tra_loi_ngan' || p.cau.some(function (q) { return q.hs; });
   var h = '<p style="margin:6pt 0 2pt"><b>' + p.so + '. PHẦN ' + e(p.ma) + ': ' + e(tenPhan) + '</b></p>' + (moTa ? '<p style="margin:0 0 2pt">' + e(moTa) + '</p>' : '');
   h += '<table style="' + BANG + '"><tr><th style="' + TH + ';width:6%">Câu</th><th style="' + TH + ';width:22%">Chủ đề kiến thức</th><th style="' + TH + '">Nội dung phân tích cụ thể</th>' +
@@ -49,8 +49,9 @@ function bangPhan(d, p) {
 }
 
 var DUNG = {
-  'phan-tich': function (d, phan) {
-    return cacPhan(d.cham || {}).filter(function (p) { return !phan || p.ma === phan; }).map(function (p) { return bangPhan(d, p); }).join('');
+  'phan-tich': function (d, phan, tt) {
+    var ten = phan && tt && tt.ten;
+    return cacPhan(d.cham || {}).filter(function (p) { return !phan || p.ma === phan; }).map(function (p) { return bangPhan(d, p, ten); }).join('');
   },
   'bang-diem': function (d) {
     var c = d.cham || {}, dm = c.diem || {};
@@ -85,11 +86,18 @@ var DUNG = {
   }
 };
 
+/** data-khoi / data-phan / data-ten của thẻ khối (đã bỏ mã hóa &amp; …). */
+function docThuocTinh(s) {
+  var o = {}, re = /data-([a-z]+)="([^"]*)"/g, m;
+  while ((m = re.exec(s))) o[m[1]] = m[2].replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+  return o;
+}
+
 /** Thay các khối trong mẫu bằng nội dung dựng từ phiếu d. */
 export function dungKhoi(html, d) {
-  return String(html).replace(/<(div|span) class="khoi" data-khoi="([a-z-]+)"(?: data-phan="([^"]*)")?[^>]*>[\s\S]*?<\/\1>/g, function (m, the, ma, phan) {
-    var f = DUNG[ma];
-    return f ? '<' + the + ' class="khoi-da-dung">' + f(d, phan || '') + '</' + the + '>' : '';
+  return String(html).replace(/<(div|span) (class="khoi"[^>]*)>[\s\S]*?<\/\1>/g, function (m, the, thuocTinh) {
+    var tt = docThuocTinh(thuocTinh), f = DUNG[tt.khoi];
+    return f ? '<' + the + ' class="khoi-da-dung">' + f(d, tt.phan || '', tt) + '</' + the + '>' : '';
   });
 }
 
@@ -101,7 +109,7 @@ export function giuChoKhoi(ma, phan) {
 }
 
 /** Dựng 1 khối (trình chỉnh mẫu hiển thị bản minh họa bên trong khối). */
-export function dungMotKhoi(ma, phan, d) { var f = DUNG[ma]; return f ? f(d, phan || '') : ''; }
+export function dungMotKhoi(ma, phan, d, tt) { var f = DUNG[ma]; return f ? f(d, phan || '', tt || {}) : ''; }
 
 /** Dữ liệu minh họa (1 học sinh, đề rút gọn) để trình chỉnh mẫu cho thấy mỗi phần tự động trông thế nào. */
 export function phieuMinhHoa() {

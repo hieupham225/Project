@@ -60,7 +60,7 @@ export function phanTichFile_(so) {
     var o = function (r, j) { return j >= 0 ? String(r[j] == null ? '' : r[j]).trim() : ''; };
     deThi.slice(hDe + 1).forEach(function (r) {
       var phan = chuanHoaPhan_(o(r, c.phan)), cau = parseInt(o(r, c.cau), 10);
-      if (!phan || !cau) return;
+      if (!phan || !cau || !cauHoi[phan]) return;
       var dapAn = { '': o(r, c.dapAn) };
       cotMaDe.forEach(function (x) { if (o(r, x.j)) dapAn[x.ma] = o(r, x.j); });
       cauHoi[phan].push({ cau: cau, chuDe: o(r, c.chuDe), mucDo: o(r, c.mucDo), noiDung: o(r, c.noiDung), dapAn: dapAn });
@@ -292,7 +292,7 @@ export function timDongTieuDe_(bang, dieuKien) {
 
 export function chuanHoaPhan_(s) {
   var k = khongDau_(s).replace(/^phan/, '');
-  return { i: 'I', '1': 'I', ii: 'II', '2': 'II', iii: 'III', '3': 'III' }[k] || '';
+  return { i: 'I', '1': 'I', ii: 'II', '2': 'II', iii: 'III', '3': 'III', iv: 'IV', '4': 'IV', v: 'V', '5': 'V', vi: 'VI', '6': 'VI' }[k] || '';
 }
 
 export function chuanHoaDapAn_(s) { return CT.chuanHoaDapAn(s); }
@@ -646,7 +646,7 @@ export function ghepHaiFile(kqF, da, thongTinThem, cauTruc) {
     var meta = (da && da.cauHoi[n]) || {};
     var phan = cauTruc
       ? (meta.phan && cauHoi[meta.phan] ? meta.phan : phanTheoThuTu ? phanTheoThuTu[k] : doanTheoCauTruc(n))
-      : meta.phan || doanPhan_(Object.keys(dapAn).map(function (m) { return dapAn[m].dapAn[n]; })) ||
+      : (cauHoi[meta.phan] && meta.phan) || doanPhan_(Object.keys(dapAn).map(function (m) { return dapAn[m].dapAn[n]; })) ||
         doanPhan_(kqF.hocSinh.map(function (h) { return h.traLoiGoc[n]; })) || 'III';
     var q = { cau: cauHoi[phan].length + 1, cauGoc: n, chuDe: meta.chuDe || '', mucDo: meta.mucDo || '', noiDung: meta.noiDung || '', dapAn: { '': '' } };
     Object.keys(dapAn).forEach(function (m) { if (dapAn[m].dapAn[n]) q.dapAn[m] = dapAn[m].dapAn[n]; });

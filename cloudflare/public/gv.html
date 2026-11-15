@@ -340,6 +340,9 @@
   iframe.khung-mau { flex: 1 1 auto; min-height: 360px; width: 100%; border: 1px solid var(--vien-dam); border-radius: var(--r-phan-tu); background: #E9E6E0; }
   .pop-mau { position: fixed; z-index: 40; width: min(360px, calc(100vw - 16px)); max-height: min(440px, 70vh); display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--be-mat); border: 1px solid var(--vien-dam); border-radius: var(--r-phan-tu); box-shadow: var(--bong-cao); }
   .pop-mau .dau-pop { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; font-size: 13px; }
+  .pop-mau .chon-phan-khoi { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; margin: 4px 0; }
+  .pop-mau .chon-phan-khoi select, .pop-mau .chon-phan-khoi input { flex: 1; min-width: 0; }
+  .pop-mau .chon-phan-khoi span { flex: none; width: 92px; }
   .pop-mau .dong-pop { min-height: 24px; height: 24px; width: 24px; padding: 0; background: none; color: var(--phu); flex: none; }
   .pop-mau input[type=search] { width: 100%; height: var(--cao-nho); }
   .ds-chon-truong { overflow: auto; min-height: 60px; display: flex; flex-direction: column; }
@@ -975,6 +978,7 @@
   function the(tag, thuocTinh, con) {
     var el = document.createElement(tag);
     Object.keys(thuocTinh || {}).forEach(function (k) {
+      if (thuocTinh[k] == null || thuocTinh[k] === false) return; // null/false = không đặt thuộc tính (VD disabled: null)
       if (k === 'text') el.textContent = thuocTinh[k];
       else if (k === 'class') el.className = thuocTinh[k];
       else if (k.indexOf('on') === 0) el.addEventListener(k.slice(2), thuocTinh[k]);
@@ -2698,6 +2702,7 @@
     var mauCoSan = function () {
       var cd = DL.caiDat || {}, k = function (ma, the_) { var x = (DL.khoiPhieu || []).filter(function (y) { return y.ma === ma; })[0]; the_ = the_ || 'div';
         return '<' + the_ + ' class="khoi" data-khoi="' + ma + '">' + (x ? x.ten : ma) + '</' + the_ + '>'; };
+      var kp = function (phan) { return '<div class="khoi" data-khoi="phan-tich" data-phan="' + phan + '">Bảng phân tích từng câu</div>'; };
       var tr = function (ten, kieu) { return '<span class="truong" data-truong="' + ten + '" style="' + (kieu || 'color:#d40000;font-weight:bold') + '">«' + ten + '»</span>'; };
       var p = function (noi, st) { return '<p style="margin:0;' + (st || '') + '">' + noi + '</p>'; };
       var html = '<div class="mau-word" style="width:523pt;font-family:\'Times New Roman\',serif;font-size:12pt;line-height:1.35;color:#000">' +
@@ -2710,7 +2715,7 @@
         '<table style="border-collapse:collapse;width:100%"><tbody><tr><td>' + p('<b>1. Họ và tên:</b> ' + tr('Họ_và_tên')) + '</td><td>' + p('<b>2. Lớp:</b> ' + tr('Lớp')) + '</td><td>' + p('<b>3. Mã đề thi:</b> ' + tr('Mã_đề_thi')) + '</td></tr>' +
         '<tr><td>' + p('<b>4. Số báo danh:</b> ' + tr('Số_báo_danh', 'font-weight:normal')) + '</td><td colspan="2">' + p('<b>5. Xếp hạng:</b> ' + k('xep-hang', 'span')) + '</td></tr></tbody></table>' +
         p('<b>6. Kết quả cụ thể:</b>') + k('bang-diem') + k('cac-lan') +
-        '<p style="margin:6pt 0;border-bottom:1.5pt solid #000"></p>' + p('<b>B. PHÂN TÍCH BÀI THI</b>') + k('phan-tich') + k('nhan-xet') + '</div>';
+        '<p style="margin:6pt 0;border-bottom:1.5pt solid #000"></p>' + p('<b>B. PHÂN TÍCH BÀI THI</b>') + kp('I') + kp('II') + kp('III') + k('nhan-xet') + '</div>';
       return { id: '', ten: 'Phân tích bài thi (tự đủ số câu)', html: html, trang: { rong: 595.3, cao: 841.9, tren: 36, duoi: 36, trai: 36, phai: 36, rongToiDa: 523 }, tenTep: '' };
     };
 
@@ -2734,8 +2739,10 @@
         [].forEach.call(vung().querySelectorAll('.khoi'), function (k) {
           var ma = k.getAttribute('data-khoi'), kk = tenKhoi(ma);
           k.setAttribute('contenteditable', 'false');
-          k.innerHTML = (k.tagName === 'SPAN' ? '' : '<span class="nhan-khoi">⚙ Phần tự động: ' + kk.ten + ' — hệ thống tự điền cho từng học sinh</span>') +
-            (minhHoa ? window.KhoiPhieu.dungMotKhoi(ma, k.getAttribute('data-phan') || '', minhHoa) : kk.ten);
+          var ph = k.getAttribute('data-phan') || '', moTaPhan = ma === 'phan-tich' ? (ph ? ' · Phần ' + ph + ' (các câu có cột Phần = ' + ph + ' trong file đáp án)' : ' · Tất cả các phần') : '';
+          var noi = minhHoa ? window.KhoiPhieu.dungMotKhoi(ma, ph, minhHoa, { ten: k.getAttribute('data-ten') || '' }) : kk.ten;
+          if (minhHoa && !noi && ma === 'phan-tich') noi = '<p style="margin:4pt 0;color:#666;font-style:italic">(Phiếu minh họa không có Phần ' + xmlAnToan(ph) + '. Đề có Phần ' + xmlAnToan(ph) + ' thì bảng các câu của phần đó hiện ở đây; đề không có thì chỗ này để trống.)</p>';
+          k.innerHTML = (k.tagName === 'SPAN' ? '' : '<span class="nhan-khoi">⚙ Phần tự động: ' + kk.ten + xmlAnToan(moTaPhan) + ' — hệ thống tự điền cho từng học sinh</span>') + noi;
         });
         demCho();
       };
@@ -2784,8 +2791,30 @@
       };
       var chonKhoi = function (k) {
         var kk = tenKhoi(k.getAttribute('data-khoi'));
+        var ma = k.getAttribute('data-khoi'), chonPhan = null;
+        // đổi chỗ với đoạn / bảng / khối liền trước hoặc liền sau (VD đưa Phần II lên trước Phần I)
+        var doiCho = function (huong) {
+          var ben = huong < 0 ? k.previousElementSibling : k.nextElementSibling; if (!ben) return;
+          luuLS(); if (huong < 0) ben.before(k); else ben.after(k);
+          anPop(); k.scrollIntoView({ block: 'center' }); setTimeout(function () { chonKhoi(k); k.classList.add('dang-chon'); }, 60);
+        };
+        if (ma === 'phan-tich') {
+          var hienTai = k.getAttribute('data-phan') || '';
+          chonPhan = the('select', { 'aria-label': 'Phần hiển thị' }, [['', 'Tất cả các phần']].concat(['I', 'II', 'III', 'IV', 'V', 'VI'].map(function (x) { return [x, 'Phần ' + x]; }))
+            .map(function (x) { return the('option', { value: x[0], text: x[1], selected: x[0] === hienTai ? 'selected' : null }); }));
+          chonPhan.onchange = function () { luuLS(); if (chonPhan.value) k.setAttribute('data-phan', chonPhan.value); else k.removeAttribute('data-phan'); trinhBay(); k.classList.add('dang-chon'); oTenPhan.disabled = !chonPhan.value; };
+          var oTenPhan = the('input', { type: 'text', maxlength: 200, 'aria-label': 'Tên phần', placeholder: 'Để trống: lấy "Tên phần" ở tab ThongTin file đáp án', value: k.getAttribute('data-ten') || '', disabled: hienTai ? null : 'disabled' });
+          oTenPhan.onchange = function () { luuLS(); var v = oTenPhan.value.trim(); if (v) k.setAttribute('data-ten', v); else k.removeAttribute('data-ten'); trinhBay(); k.classList.add('dang-chon'); };
+          oTenPhan.onkeydown = function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); oTenPhan.blur(); } };
+        }
         moPop([the('div', { class: 'dau-pop' }, [the('b', { text: 'Phần tự động: ' + kk.ten }), dongPop]), the('p', { class: 'goi-y', text: kk.moTa + '. Hệ thống tự điền phần này cho từng học sinh khi tạo phiếu.' }),
-          the('div', { class: 'chan-pop' }, [the('button', { type: 'button', class: 'nguy nho', text: 'Xóa phần này', onclick: function () { luuLS(); k.remove(); demCho(); anPop(); } })])],
+          chonPhan ? the('label', { class: 'chon-phan-khoi' }, [the('span', { text: 'Hiển thị các câu của' }), chonPhan]) : null,
+          chonPhan ? the('label', { class: 'chon-phan-khoi' }, [the('span', { text: 'Tên phần' }), oTenPhan]) : null,
+          chonPhan ? the('p', { class: 'goi-y', text: 'Lấy từ: các câu có cột "Phần" = phần đã chọn trong tab CauHoi của file đáp án (không có cột Phần thì chia theo cấu trúc đề). Tên phần: gõ ở ô trên, hoặc để trống để lấy từ tab ThongTin ("Tên phần I"…). Mỗi phần nên là một khối riêng để chèn chữ, tiêu đề xen giữa các phần.' }) : null,
+          the('div', { class: 'chan-pop' }, [
+            the('button', { type: 'button', class: 'phu nho', text: '↑ Đưa lên', disabled: k.previousElementSibling ? null : 'disabled', onclick: function () { doiCho(-1); } }),
+            the('button', { type: 'button', class: 'phu nho', text: '↓ Đưa xuống', disabled: k.nextElementSibling ? null : 'disabled', onclick: function () { doiCho(1); } }),
+            the('button', { type: 'button', class: 'nguy nho', text: 'Xóa phần này', onclick: function () { luuLS(); k.remove(); demCho(); anPop(); } })])],
           tuRect(k.getBoundingClientRect()));
         dongPop.onclick = anPop;
       };
@@ -2863,6 +2892,10 @@
         var ma = chonKhoiChen.value; chonKhoiChen.value = ''; if (!ma || xemThu) return;
         luuLS();
         var el = doc().createElement(ma === 'xep-hang' ? 'span' : 'div'); el.className = 'khoi'; el.setAttribute('data-khoi', ma);
+        if (ma === 'phan-tich') {
+          var daCo = [].map.call(vung().querySelectorAll('.khoi[data-khoi="phan-tich"]'), function (x) { return x.getAttribute('data-phan') || ''; });
+          el.setAttribute('data-phan', ['I', 'II', 'III', 'IV', 'V', 'VI'].filter(function (x) { return daCo.indexOf(x) < 0; })[0] || 'I');
+        }
         var sel = doc().getSelection(), n = sel && sel.rangeCount ? sel.getRangeAt(0).startContainer : null, e = n && (n.nodeType === 1 ? n : n.parentElement);
         var goc = vung().querySelector('.mau-word') || vung();
         if (ma === 'xep-hang' && e && goc.contains(e)) { var r = sel.getRangeAt(0); r.collapse(false); r.insertNode(el); }
