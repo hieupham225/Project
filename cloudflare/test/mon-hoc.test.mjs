@@ -94,3 +94,28 @@ test('chọn tay cấu trúc khác gợi ý; lớp mới trong file nhận môn 
   assert.equal(dl.monLop['Anh 11 mới'], 'Tiếng Anh');
   await assert.rejects(A.rpc('gvXemTruoc', so, { cauTruc: 'khong-co' }), /Không tìm thấy cấu trúc/);
 });
+
+test('cấu trúc đề tự tạo: nhân bản, chấm theo cấu trúc mới, không sửa được cấu trúc có sẵn, không xóa khi đang dùng', async () => {
+  const phan = [{ ten: 'Trắc nghiệm', dang: 'trac_nghiem', soCau: 8, diemMoiCau: '0,5' }, { ten: 'Đúng sai', dang: 'dung_sai', soCau: 2, bangDiem: [0, 0.1, 0.25, 0.5, 3] }];
+  await assert.rejects(A.rpc('gvLuuCauTruc', { id: 'thpt2025-toan', ten: 'X', mon: 'Toán', phan }), /không sửa được/);
+  await assert.rejects(A.rpc('gvLuuCauTruc', { ten: 'Lỗi', mon: 'Toán', phan: [{ dang: 'trac_nghiem', soCau: 0, diemMoiCau: 1 }] }), /số câu/);
+  let dl = await A.rpc('gvLuuCauTruc', { ten: 'Lý – kiểm tra 15 phút', mon: 'Vật lí', phan });
+  const ct = dl.cauTrucDe.find((c) => c.ten === 'Lý – kiểm tra 15 phút');
+  assert.ok(ct && !ct.coSan && /tổng 10 điểm/.test(ct.moTa), JSON.stringify(ct));
+  await assert.rejects(A.rpc('gvLuuCauTruc', { ten: 'lý – KIỂM TRA 15 phút', mon: 'Vật lí', phan }), /Đã có cấu trúc/);
+  const mau = await A.rpc('gvLayMau', 'Lý 11A', ct.id);
+  assert.ok(mau.ketQua.KetQua[0].includes('Câu 10') && !mau.ketQua.KetQua[0].includes('Câu 11'));
+  const so = { kq: dien(mau.ketQua, mau.dapAn), da: mau.dapAn };
+  const xt = await A.rpc('gvXemTruoc', so, { cauTruc: ct.id });
+  assert.deepEqual(xt.phanDe.map((p) => p.soCau), [8, 2]);
+  assert.equal(xt.hocSinh[0].tongDiem, '9.50', 'sai câu 1 (0,5đ)');
+  const bd = await A.rpc('gvBatDauDot', so, { baiThi: 'KT 15 phút lý', cauTruc: ct.id });
+  await A.rpc('gvTaoPhieuLo', bd.dsDot[0].maDot, so, bd.dsDot[0].canTao);
+  await assert.rejects(A.rpc('gvXoaCauTruc', ct.id), /đang dùng cho 1 lần thi/);
+  dl = await A.rpc('gvLuuCauTruc', { id: ct.id, ten: 'Lý – 15 phút', mon: 'Vật lí', phan });
+  assert.ok(dl.cauTrucDe.some((c) => c.id === ct.id && c.ten === 'Lý – 15 phút' && c.soLanDung === 1));
+  dl = await A.rpc('gvLuuCauTruc', { ten: 'Tạm', mon: 'Toán', phan });
+  const tam = dl.cauTrucDe.find((c) => c.ten === 'Tạm');
+  dl = await A.rpc('gvXoaCauTruc', tam.id);
+  assert.ok(!dl.cauTrucDe.some((c) => c.id === tam.id));
+});

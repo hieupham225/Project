@@ -108,6 +108,17 @@ CREATE TABLE IF NOT EXISTS mau_phieu (
 );
 CREATE INDEX IF NOT EXISTS ix_mp_kg ON mau_phieu(kg);
 
+-- Cấu trúc đề do quản trị tự tạo (cấu trúc có sẵn nằm trong mã nguồn)
+CREATE TABLE IF NOT EXISTS cau_truc (
+  id         TEXT PRIMARY KEY,
+  kg         TEXT NOT NULL REFERENCES khong_gian(id) ON DELETE CASCADE,
+  mon        TEXT NOT NULL DEFAULT '',
+  ten        TEXT NOT NULL,
+  du_lieu    TEXT NOT NULL,                -- JSON: { phan: [...] }
+  ngay_tao   TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_ct_kg ON cau_truc(kg);
+
 -- Đếm số lần thử (đăng nhập, tra cứu mã) để chống dò
 CREATE TABLE IF NOT EXISTS gioi_han (
   khoa       TEXT PRIMARY KEY,              -- vd 'dn:1.2.3.4:28812345' (loại:ip:phút)

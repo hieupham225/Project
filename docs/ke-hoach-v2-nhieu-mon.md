@@ -86,10 +86,17 @@ Thay cho giai đoạn 3 cũ ("Phiếu tổng quát"). Chờ 2 file Word trộn t
 | **2. Dữ liệu + chọn môn** | Bảng `cau_truc`, môn của lớp, chuyển đổi dữ liệu. Thêm ô chọn **Môn / cấu trúc đề** khi gửi kết quả. File mẫu kết quả và đáp án sinh theo cấu trúc; báo lỗi khi file không khớp cấu trúc. | Gửi được đề Lý (18/4/6) và đề Tiếng Anh 40 câu, ra đúng số câu và tổng 10. |
 | **3. Mẫu phiếu từ Word** | Bộ đọc .docx trộn thư → mẫu phiếu web; ghép trường ↔ dữ liệu; thư viện mẫu phiếu; chọn mẫu khi gửi kết quả. Mẫu "Phân tích bài thi" là mặc định. | 2 file Word của thầy dựng ra phiếu web giống bản Word; phiếu Toán cũ không đổi. |
 | **4. Tiếng Anh đủ dạng + tự luận** | Các dạng `dien_tu`, `sap_xep`, `tu_luan` (tổng điểm hoặc theo tiêu chí). | Gửi được đề Tiếng Anh trung tâm có đủ 4 dạng. |
-| **5. Cài đặt → Cấu trúc đề** | Quản trị xem, nhân bản, sửa, ẩn cấu trúc. Lớp chọn môn mặc định. | Quản trị tự tạo được đề "15 câu trắc nghiệm + 2 câu tự luận" và gửi được. |
+| **5. Cấu trúc đề** (✅ staging 15/11: tab riêng, nhân bản / sửa / xóa; migration 0006) | Quản trị xem, nhân bản, sửa, ẩn cấu trúc. Lớp chọn môn mặc định. | Quản trị tự tạo được đề "15 câu trắc nghiệm + 2 câu tự luận" và gửi được. |
 | **6. Báo cáo theo môn** | Tổng hợp lọc theo môn; trang phụ huynh tách biểu đồ theo môn. | — |
 
 Giai đoạn 1–3 cho ra bản dùng được với Toán, Lý, Hóa, Sinh và Tiếng Anh trắc nghiệm. Giai đoạn 4–5 hoàn thiện Tiếng Anh đủ dạng và đề tự tạo.
+
+## Chốt thêm (15/11/2026)
+
+- **Dạng bài quyết định mọi thứ**: tab CauHoi của file đáp án có cột **"Dạng bài"** (Trắc nghiệm ABCD / Đúng sai / Tự luận…). Câu vào khối phân tích nào, chấm thế nào, điểm phần — đều theo dạng bài; cột "Phần" chỉ để nhóm. Khối phân tích trong mẫu phiếu chọn theo dạng bài (danh sách dạng theo môn của mẫu), đổi thứ tự, đổi tiêu đề tùy ý.
+- **Ưu tiên điểm chấm từ file kết quả + file đáp án.** Cột điểm giáo viên nhập chỉ dùng cho phần không chấm được (không có bài làm, VD tự luận chấm tay). Lệch thì cảnh báo ở màn xem trước khi tạo phiếu (tên học sinh, điểm file ≠ điểm chấm).
+- **Cấu trúc đề tự tạo**: cấu trúc THPT 2025 có sẵn không sửa được; quản trị nhân bản rồi sửa bản sao (dạng bài, số câu, điểm mỗi câu, bảng điểm đúng sai). Không xóa được khi đang dùng.
+- Khi đưa lên production: chạy migration theo thứ tự 0003 → 0004 → 0005 → 0006.
 
 ## Rủi ro và cách giữ an toàn
 

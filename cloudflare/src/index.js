@@ -361,6 +361,14 @@ class NguCanh {
   duocLop(ten) { const l = this.lopTheoTen(ten); return l ? this.duocLopId(l.id) : this.tatCaLop; }
   kiemTraLop(ten) { if (!this.duocLop(ten)) throw new Loi('Bạn không phụ trách lớp "' + ten + '".', 403); }
   duocHocSinh(h) { return this.tatCaLop || h.nhomId.some((id) => this.duocLopId(id)); }
+  /** Cấu trúc đề quản trị tự tạo của không gian (đọc 1 lần mỗi yêu cầu). */
+  async cauTrucRieng() {
+    if (!this._ctRieng) {
+      const r = (await this.db.prepare('SELECT id, mon, ten, du_lieu, ngay_tao FROM cau_truc WHERE kg = ? ORDER BY mon, ten').bind(this.kg).all()).results;
+      this._ctRieng = r.map((x) => Object.assign({}, JSON.parse(x.du_lieu), { id: x.id, mon: x.mon, ten: x.ten, ngayTao: x.ngay_tao }));
+    }
+    return this._ctRieng;
+  }
   yeuCauQuanTri() { if (!this.nd.quanTri) throw new Loi('Chỉ chủ / quản trị mới làm được thao tác này.', 403); }
 
   async hocSinh() {
@@ -503,8 +511,10 @@ const HAM = {
       khoiPhieu: KP.CAC_KHOI,
       mauPhieu: mau.map((m) => ({ id: m.id, ten: m.ten, soTruong: JSON.parse(m.truong).length, tenTep: m.ten_tep, ngayTao: m.ngay_tao,
         soLanDung: lt.filter((d) => d.mauPhieu === m.id).length })),
-      cauTrucDe: L.CAU_TRUC_CO_SAN.map((ct) => ({ id: ct.id, mon: ct.mon, ten: ct.ten, moTa: L.moTaCauTruc(ct),
-        phan: ct.phan.map((p) => ({ ma: p.ma, ten: p.ten, dang: p.dang, soCau: p.soCau })) })),
+      cauTrucDe: L.CAU_TRUC_CO_SAN.map((ct) => Object.assign({ coSan: true }, ct)).concat(await c.cauTrucRieng()).map((ct) => ({
+        id: ct.id, mon: ct.mon, ten: ct.ten, moTa: L.moTaCauTruc(ct), coSan: !!ct.coSan, ngayTao: ct.ngayTao || '',
+        soLanDung: ct.coSan ? 0 : lt.filter((d) => d.cauTruc === ct.id).length,
+        phan: ct.phan.map((p) => ({ ma: p.ma, ten: p.ten, dang: p.dang, soCau: p.soCau, diemMoiCau: p.diemMoiCau, phuongAn: p.phuongAn, soY: p.soY, bangDiem: p.bangDiem })) })),
       tatCaNhom: nd.quanTri ? c.lop.map((l) => l.ten) : [],
       taiKhoan: nd.quanTri ? await dsThanhVien(c) : [],
       caiDat: { tenTrungTam: nd.tenKg, khauHieu: nd.caiDat.khauHieu || '', logo: nd.caiDat.logo || '' },
@@ -790,7 +800,7 @@ const HAM = {
     tuyChon = tuyChon || {};
     if (!so || !so.kq) return { ok: false, loi: 'Chưa có bảng kết quả học sinh.' };
     const idCauTruc = tuyChon.cauTruc || cauTrucGoiY(c, so);
-    const kq = docHaiFile(so, '', idCauTruc);
+    const kq = await docHaiFile(c, so, '', idCauTruc);
     if (!kq.ok) return kq;
     const mau = tuyChon.mauPhieu ? await layMauPhieu(c.db, c.kg, tuyChon.mauPhieu) : null;
     const dsHs = await c.hocSinh();
@@ -830,7 +840,7 @@ const HAM = {
     if (!baiThiGoc) throw new Loi('Vui lòng nhập tên bài thi.');
     if (!so || !so.kq) return { ok: false, loi: 'Chưa có bảng kết quả học sinh.' };
     const idCauTruc = tuyChon.cauTruc || cauTrucGoiY(c, so);
-    const kq = docHaiFile(so, baiThiGoc, idCauTruc);
+    const kq = await docHaiFile(c, so, baiThiGoc, idCauTruc);
     const monDe = kq.cauTruc ? kq.cauTruc.mon : '';
     const idMau = L.chuoi_(tuyChon.mauPhieu);
     if (idMau) await layMauPhieu(c.db, c.kg, idMau); // kiểm tra mẫu tồn tại
@@ -914,7 +924,7 @@ const HAM = {
     const dot = lt.find((d) => d.maDot === maDot);
     if (!dot) throw new Loi('Không tìm thấy lần thi.');
     if (!c.duocLopId(dot.lopId)) throw new Loi('Bạn không phụ trách lớp "' + dot.nhom + '".', 403);
-    const kq = docHaiFile(so, dot.baiThi, dot.cauTruc);
+    const kq = await docHaiFile(c, so, dot.baiThi, dot.cauTruc);
     if (!kq.ok) throw new Loi(kq.loi);
     const mau = dot.mauPhieu ? await layMauPhieu(c.db, c.kg, dot.mauPhieu) : null;
     const theoMa = {};
@@ -1156,6 +1166,57 @@ const HAM = {
     return { id: m.id, ten: m.ten, html: m.html, truong: JSON.parse(m.truong), trang: JSON.parse(m.trang), tenTep: m.ten_tep };
   },
 
+  /** Lưu cấu trúc đề tự tạo (chỉ quản trị). Cấu trúc có sẵn không sửa được — nhân bản rồi sửa bản sao. */
+  async gvLuuCauTruc(c, ct) {
+    c.yeuCauQuanTri();
+    ct = ct || {};
+    const id = L.chuoi_(ct.id);
+    if (id && L.layCauTrucCoSan(id)) throw new Loi('Cấu trúc có sẵn không sửa được — hãy nhân bản rồi sửa bản sao.');
+    const ten = L.chuoi_(ct.ten).slice(0, 120), mon = L.chuoi_(ct.mon).slice(0, 40);
+    const LA_MA = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+    const so = (v) => Number(String(v == null ? '' : v).replace(',', '.'));
+    const phan = (Array.isArray(ct.phan) ? ct.phan : []).slice(0, LA_MA.length).map((p, i) => {
+      const dang = L.chuoi_(p.dang);
+      const x = { ma: LA_MA[i], ten: L.chuoi_(p.ten).slice(0, 120) || ((L.DANG_CAU[dang] && L.DANG_CAU[dang].ten) || 'Phần ' + LA_MA[i]), dang, soCau: so(p.soCau) };
+      if (dang === 'dung_sai') {
+        x.soY = 4;
+        const bd = (Array.isArray(p.bangDiem) ? p.bangDiem : []).map(so);
+        x.bangDiem = bd.length === 5 && bd.every((v) => v >= 0) ? bd : [0, 0.1, 0.25, 0.5, 1];
+        x.diemMoiCau = x.bangDiem[4];
+      } else x.diemMoiCau = so(p.diemMoiCau);
+      if (dang === 'trac_nghiem') x.phuongAn = /^(ABCD|ABCDE|ABC)$/.test(L.chuoi_(p.phuongAn).toUpperCase()) ? L.chuoi_(p.phuongAn).toUpperCase() : 'ABCD';
+      return x;
+    });
+    const moi = { ten, mon, phan };
+    const loi = L.kiemTraCauTruc(moi);
+    if (loi.length) throw new Loi(loi.join(' '));
+    const trung = (await c.cauTrucRieng()).find((x) => x.id !== id && L.khongDau_(x.ten) === L.khongDau_(ten));
+    if (trung || L.CAU_TRUC_CO_SAN.some((x) => L.khongDau_(x.ten) === L.khongDau_(ten))) throw new Loi('Đã có cấu trúc đề tên "' + ten + '".');
+    if (id) {
+      const r = await c.db.prepare('UPDATE cau_truc SET mon = ?, ten = ?, du_lieu = ? WHERE id = ? AND kg = ?').bind(mon, ten, JSON.stringify({ phan }), id, c.kg).run();
+      if (!r.meta.changes) throw new Loi('Không tìm thấy cấu trúc đề.');
+    } else {
+      await c.db.prepare('INSERT INTO cau_truc (id, kg, mon, ten, du_lieu, ngay_tao) VALUES (?, ?, ?, ?, ?, ?)').bind('ct-' + taoId(), c.kg, mon, ten, JSON.stringify({ phan }), ngayVN()).run();
+    }
+    c._ctRieng = null;
+    const kq = await HAM.gvTaiDuLieu(c);
+    kq.thongBao = 'Đã lưu cấu trúc đề "' + ten + '" (tổng ' + L.dinhDangSo_(L.diemToiDa(moi)) + ' điểm).';
+    return kq;
+  },
+
+  async gvXoaCauTruc(c, id) {
+    c.yeuCauQuanTri();
+    id = L.chuoi_(id);
+    if (L.layCauTrucCoSan(id)) throw new Loi('Cấu trúc có sẵn không xóa được.');
+    const dung = (await c.lanThi()).filter((d) => d.cauTruc === id).length;
+    if (dung) throw new Loi('Cấu trúc đề đang dùng cho ' + dung + ' lần thi — chưa xóa được (gửi lại các lần thi đó cần cấu trúc này).');
+    await c.db.prepare('DELETE FROM cau_truc WHERE id = ? AND kg = ?').bind(id, c.kg).run();
+    c._ctRieng = null;
+    const kq = await HAM.gvTaiDuLieu(c);
+    kq.thongBao = 'Đã xóa cấu trúc đề.';
+    return kq;
+  },
+
   async gvXoaMauPhieu(c, id) {
     c.yeuCauQuanTri();
     const dung = (await c.lanThi()).filter((d) => d.mauPhieu === id).length;
@@ -1169,7 +1230,7 @@ const HAM = {
   /** File mẫu: bảng kết quả (điền sẵn danh sách lớp) + bảng đáp án theo mã đề. */
   async gvLayMau(c, nhom, idCauTruc) {
     nhom = L.chuoi_(nhom);
-    const ct = cauTrucTheoId(idCauTruc || (nhom && c.lopTheoTen(nhom) && L.cauTrucCuaMon(c.lopTheoTen(nhom).mon)) || 'thpt2025-toan');
+    const ct = await cauTrucTheoId(c, idCauTruc || (nhom && c.lopTheoTen(nhom) && L.cauTrucCuaMon(c.lopTheoTen(nhom).mon)) || 'thpt2025-toan');
     const tenCuoi = (s) => s.split(' ').pop();
     const theoTen = (a, b) => tenCuoi(a.hoTen).localeCompare(tenCuoi(b.hoTen), 'vi') || a.hoTen.localeCompare(b.hoTen, 'vi');
     const hs = (await c.hocSinh()).filter((h) => c.duocHocSinh(h));
@@ -1451,10 +1512,10 @@ function chuanMon(mon) {
 }
 
 /** Cấu trúc đề theo id (trống -> cách chấm Toán v1). */
-function cauTrucTheoId(id) {
+async function cauTrucTheoId(c, id) {
   if (!id) return null;
-  const ct = L.layCauTrucCoSan(id);
-  if (!ct) throw new Loi('Không tìm thấy cấu trúc đề "' + id + '".');
+  const ct = L.layCauTrucCoSan(id) || (await c.cauTrucRieng()).find((x) => x.id === id);
+  if (!ct) throw new Loi('Không tìm thấy cấu trúc đề "' + id + '" (có thể đã bị xóa).');
   return ct;
 }
 
@@ -1467,9 +1528,9 @@ function cauTrucGoiY(c, so) {
 }
 
 /** Đọc 2 file tải lên (dạng sổ { tênTab: [[ô…]] }) theo cấu trúc đề. */
-function docHaiFile(so, baiThi, cauTrucId) {
+async function docHaiFile(c, so, baiThi, cauTrucId) {
   if (!so || !so.kq) return { ok: false, loi: 'Chưa có bảng kết quả học sinh.' };
-  return L.ghepHaiFile(L.docFileKetQua(so.kq), so.da ? L.docFileDapAn(so.da) : null, { tieuDe: baiThi ? baiThi.toUpperCase() : '' }, cauTrucTheoId(cauTrucId));
+  return L.ghepHaiFile(L.docFileKetQua(so.kq), so.da ? L.docFileDapAn(so.da) : null, { tieuDe: baiThi ? baiThi.toUpperCase() : '' }, await cauTrucTheoId(c, cauTrucId));
 }
 
 /** Dữ liệu 1 phiếu (lưu JSON; trình duyệt dựng phiếu từ đây). */
