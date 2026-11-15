@@ -99,3 +99,30 @@ export function giuChoKhoi(ma, phan) {
   var the = ma === 'xep-hang' ? 'span' : 'div'; // xếp hạng nằm trong dòng chữ ("Xếp hạng: 3 / 33")
   return '<' + the + ' class="khoi" data-khoi="' + ma + '"' + (phan ? ' data-phan="' + e(phan) + '"' : '') + '>' + e(k ? k.ten + (phan ? ' · Phần ' + phan : '') : ma) + '</' + the + '>';
 }
+
+/** Dựng 1 khối (trình chỉnh mẫu hiển thị bản minh họa bên trong khối). */
+export function dungMotKhoi(ma, phan, d) { var f = DUNG[ma]; return f ? f(d, phan || '') : ''; }
+
+/** Dữ liệu minh họa (1 học sinh, đề rút gọn) để trình chỉnh mẫu cho thấy mỗi phần tự động trông thế nào. */
+export function phieuMinhHoa() {
+  var cau = function (n, chuDe, noiDung, hs, dung) { return { cau: n, chuDe: chuDe, mucDo: '', noiDung: noiDung, hs: hs, dung: dung, ok: hs === dung }; };
+  var ds = function (n, chuDe, noiDung, hs, dung) {
+    var kyTu = hs.split(',').map(function (c, i) { return { c: c, ok: c.replace('Đ', 'D') === dung[i] }; });
+    return { cau: n, chuDe: chuDe, mucDo: '', noiDung: noiDung, hs: hs, dung: dung, kyTu: kyTu, soDung: kyTu.filter(function (k) { return k.ok; }).length };
+  };
+  return {
+    hoTen: 'Nguyễn Văn An', thuHang: '3', soXepHang: 33, lan: 2, ngayThi: '28/09/2026',
+    tenPhan: { I: 'Câu trắc nghiệm nhiều phương án lựa chọn.', II: 'Câu trắc nghiệm đúng sai.', III: 'Trả lời ngắn' },
+    moTaPhan: { I: '(Minh họa: rút gọn còn vài câu — khi tạo phiếu sẽ đủ số câu và đúng chủ đề theo mã đề của từng học sinh.)' },
+    lichSu: [{ lan: 1, ngayThi: '28/08/2026', tong: '7.25' }], chenhLech: '+1.25', tangDiem: true,
+    nhanXet: { uu: 'Nắm vững kiến thức cơ bản, trình bày cẩn thận.', nhuoc: 'Còn nhầm lẫn ở câu vận dụng.', khacPhuc: 'Luyện thêm các dạng bài vận dụng.' },
+    cham: {
+      phan: [
+        { ma: 'I', dang: 'trac_nghiem', diem: '2.50', toiDa: '3', cau: [cau(1, 'Lượng giác', 'Giá trị lượng giác của góc', 'A', 'A'), cau(2, 'Hàm số lượng giác', 'Tập xác định, tập giá trị', 'C', 'B'), cau(3, 'Dãy số / Cấp số', 'Cấp số cộng', 'D', 'D')] },
+        { ma: 'II', dang: 'dung_sai', diem: '3.50', toiDa: '4', cau: [ds(1, 'Hàm số lượng giác', 'a) Tập xác định…\nb) GTLN / GTNN…', 'Đ,S,Đ,S', 'DSDS'), ds(2, 'Phương trình lượng giác', 'a) Kiểm tra nghiệm…\nb) Số nghiệm…', 'Đ,Đ,S,S', 'DDSD')] },
+        { ma: 'III', dang: 'tra_loi_ngan', diem: '2.50', toiDa: '3', cau: [cau(1, 'Lượng giác', 'Tính giá trị biểu thức', '-4/5', '-4/5'), cau(2, 'Tổ hợp', 'Bài toán đếm nâng cao', '70', '72')] }
+      ],
+      diem: { tong: '8.50', maxTong: '10' }
+    }
+  };
+}
