@@ -15,3 +15,15 @@ binding = "DB"
 database_name = "phieu-ket-qua"
 # Tạo bằng: npx wrangler d1 create phieu-ket-qua --location apac (đổi id nếu deploy vào tài khoản khác)
 database_id = "d2b3f42c-dd31-48a2-bbc7-98de15b20d7b"
+
+# ---------- STAGING: trang thử nghiệm cho bản v2, dữ liệu riêng, không đụng trang thật ----------
+# Deploy: npm run deploy:staging   (trang thật vẫn là: npm run deploy)
+[env.staging]
+name = "phieu-ket-qua-staging"
+workers_dev = true
+preview_urls = false
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "phieu-ket-qua-staging"
+database_id = "aaddc8f7-c6c6-4984-907b-7fd28275db5f"

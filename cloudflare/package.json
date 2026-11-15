@@ -8,6 +8,8 @@
     "db:local": "wrangler d1 execute phieu-ket-qua --local --file=schema.sql",
     "db:remote": "wrangler d1 execute phieu-ket-qua --remote --file=schema.sql",
     "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "db:staging": "wrangler d1 execute phieu-ket-qua-staging --env staging --remote --file=schema.sql",
     "test": "node --test test/*.test.mjs"
   },
   "devDependencies": {
