@@ -261,9 +261,10 @@
   .menu-them .nut-icon { font-size: 20px; line-height: 1; letter-spacing: 1px; }
   .menu-ds { position: absolute; right: 0; top: calc(100% + 6px); z-index: 8; min-width: 180px; padding: 6px; background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-phan-tu); box-shadow: var(--bong-cao); display: flex; flex-direction: column; }
   .menu-ds.an { display: none; }
-  .menu-ds button { justify-content: flex-start; width: 100%; min-height: 40px; padding: 0 12px; border-radius: var(--r-trong); background: none; color: var(--chu); font-weight: 500; }
+  .menu-ds button { justify-content: flex-start; gap: 10px; width: 100%; min-height: 40px; padding: 0 12px; white-space: nowrap; text-align: left; border-radius: var(--r-trong); background: none; color: var(--chu); font-weight: 500; }
   .menu-ds button:hover:not(:disabled) { background: var(--phu-hover); }
   .menu-ds button.do { color: var(--do); }
+  .menu-ds .icon-menu { width: 20px; flex: none; text-align: center; font-size: 15px; }
   .menu-ds button.an { display: none; }
   /* Huy hiệu hạng trong danh sách phiếu */
   .huy-hieu { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; height: 24px; padding: 0 8px; border-radius: var(--r-tron); font-size: 12px; font-weight: 700; color: var(--phu); background: none; }
@@ -662,10 +663,11 @@
               <div class="menu-them">
                 <button id="nutThemTacVu" type="button" class="nut-icon lon" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác khác" title="Thao tác khác">⋯</button>
                 <div id="menuLop" class="menu-ds an" role="menu">
-                  <button id="nutDoiTenLop" type="button" role="menuitem">Đổi tên lớp</button>
-                  <button id="nutMonLop" type="button" role="menuitem">Môn học</button>
-                  <button id="nutWordMaLop" type="button" role="menuitem">⬇ Mã tra cứu cả lớp (Word)</button>
-                  <button id="nutXoaLop" type="button" role="menuitem" class="do">Xóa lớp</button>
+                  <button id="nutDoiTenLop" type="button" role="menuitem"><span class="icon-menu" aria-hidden="true">✏️</span>Đổi tên lớp</button>
+                  <button id="nutMonLop" type="button" role="menuitem"><span class="icon-menu" aria-hidden="true">📚</span>Môn học</button>
+                  <button id="nutWordMaLop" type="button" role="menuitem"><span class="icon-menu" aria-hidden="true">📄</span>Mã tra cứu cả lớp (Word)</button>
+                  <button id="nutExcelMaLop" type="button" role="menuitem"><span class="icon-menu" aria-hidden="true">📊</span>Mã tra cứu cả lớp (Excel)</button>
+                  <button id="nutXoaLop" type="button" role="menuitem" class="do"><span class="icon-menu" aria-hidden="true">🗑️</span>Xóa lớp</button>
                 </div>
               </div>
               <button id="nutGuiKqLop">📤 Gửi kết quả</button>
@@ -1460,15 +1462,34 @@
     }
     return new Blob([CFB.write(zip, { fileType: 'zip', type: 'array' })], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
   }
-  $('nutWordMaLop').onclick = function () {
-    if (!window.XLSX || !XLSX.CFB) return bao('Không tải được thư viện tạo file. Kiểm tra kết nối mạng.', true);
-    var n = lopMo, tenCuoi = function (s) { return s.split(' ').pop(); };
-    var ds = hsCuaLop(n).slice().sort(function (a, b) { return tenCuoi(a.hoTen).localeCompare(tenCuoi(b.hoTen), 'vi') || a.hoTen.localeCompare(b.hoTen, 'vi'); });
-    if (!ds.length) return bao('Lớp chưa có học sinh.', true);
-    var a = the('a', { href: URL.createObjectURL(taoDocxMaTraCuu(n, ds)), download: tenFileKhongDau('Ma_tra_cuu_' + n) + '.docx' });
-    document.body.appendChild(a); a.click(); a.remove();
+  // Danh sách mã tra cứu của lớp đang mở, sắp theo tên (A–Z); null nếu không xuất được
+  function dsMaLop() {
+    if (!window.XLSX || !XLSX.CFB) { bao('Không tải được thư viện tạo file. Kiểm tra kết nối mạng.', true); return null; }
+    var tenCuoi = function (s) { return s.split(' ').pop(); };
+    var ds = hsCuaLop(lopMo).slice().sort(function (a, b) { return tenCuoi(a.hoTen).localeCompare(tenCuoi(b.hoTen), 'vi') || a.hoTen.localeCompare(b.hoTen, 'vi'); });
+    if (!ds.length) { bao('Lớp chưa có học sinh.', true); return null; }
+    return ds;
+  }
+  function baoThieuSbd(ds) {
     var thieu = ds.filter(function (h) { return !h.sbd; }).length;
     if (thieu) bao(thieu + ' học sinh chưa có số báo danh — cột SBD của các em để trống. Bổ sung bằng mẫu phiếu nhập lớp.');
+  }
+  $('nutWordMaLop').onclick = function () {
+    var n = lopMo, ds = dsMaLop(); if (!ds) return;
+    var a = the('a', { href: URL.createObjectURL(taoDocxMaTraCuu(n, ds)), download: tenFileKhongDau('Ma_tra_cuu_' + n) + '.docx' });
+    document.body.appendChild(a); a.click(); a.remove();
+    baoThieuSbd(ds);
+  };
+  $('nutExcelMaLop').onclick = function () {
+    var n = lopMo, ds = dsMaLop(); if (!ds) return;
+    var bang = [['STT', 'Họ và tên', 'Lớp', 'Số báo danh', 'Mã tra cứu', 'SĐT phụ huynh']];
+    ds.forEach(function (h, i) { bang.push([String(i + 1), h.hoTen, n, h.sbd || '', h.maTraCuu, h.sdt || '']); });
+    var wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet(bang);
+    Object.keys(ws).forEach(function (o) { if (o[0] !== '!') { ws[o].t = 's'; ws[o].z = '@'; } });
+    ws['!cols'] = [{ wch: 5 }, { wch: 30 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 16 }];
+    XLSX.utils.book_append_sheet(wb, ws, 'Ma tra cuu');
+    XLSX.writeFile(wb, tenFileKhongDau('Ma_tra_cuu_' + n) + '.xlsx');
+    baoThieuSbd(ds);
   };
   $('nutMonLop').onclick = function () {
     var n = lopMo, cu = (DL.monLop || {})[n] || '';
