@@ -1,5 +1,9 @@
 # Nhật ký phiên bản
 
+## Chưa phát hành (staging)
+
+- Đổi tên sản phẩm **EduLens → EduShow** (tên EduLens đã có bên khác dùng, không mua được tên miền); tên miền dự kiến edushow.xyz.
+
 ## v1.1.3 — 16/11/2026 (đã lên production, không có migration)
 
 Chỉ đổi giao diện, máy chủ và cơ sở dữ liệu giữ nguyên.

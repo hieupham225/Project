@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Giáo viên · EduLens</title>
+<title>Giáo viên · EduShow</title>
 <meta name="description" content="Giáo viên quản lý lớp, gửi kết quả thi và phiếu phân tích bài thi cho từng phụ huynh.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -696,7 +696,7 @@
   <!-- Đăng nhập / đăng ký -->
   <div id="manDangNhap" class="an">
     <form id="formDangNhap" class="dang-nhap">
-      <p class="thuong-hieu">EduLens</p>
+      <p class="thuong-hieu">EduShow</p>
       <h1>Đăng nhập giáo viên</h1>
       <p class="goi-y" style="margin:0">Gửi kết quả thi và phiếu phân tích bài thi riêng cho từng phụ huynh.</p>
       <label class="o">Email<input id="dnTen" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
@@ -706,7 +706,7 @@
       <p class="chuyen-dk">Chưa có tài khoản? <a id="denDangKy" href="#dang-ky">Đăng ký miễn phí</a></p>
     </form>
     <form id="formDangKy" class="dang-nhap an">
-      <p class="thuong-hieu">EduLens</p>
+      <p class="thuong-hieu">EduShow</p>
       <h1>Đăng ký tài khoản</h1>
       <p class="goi-y" style="margin:0">Dành cho giáo viên dạy riêng hoặc trung tâm. Sau khi đăng ký có thể mời thêm giáo viên khác.</p>
       <label class="o">Họ và tên<input id="dkHoTen" type="text" autocomplete="name" required></label>
@@ -3723,7 +3723,7 @@
     if (DL.toi && DL.toi.hoTen) dau.appendChild(the('div', { class: 'dong-tk' }, [avatar(DL.toi.hoTen), the('div', {}, [the('b', { text: DL.toi.hoTen }),
       DL.toi.email ? the('div', { class: 'goi-y', text: DL.toi.email }) : null,
       the('div', { class: 'goi-y', text: (DL.toi.vaiTro || '') + (DL.toi.khongGian && DL.toi.khongGian.ten ? ' · ' + DL.toi.khongGian.ten : '') })])]));
-    document.title = ((DL.toi && DL.toi.khongGian && DL.toi.khongGian.ten) || 'Giáo viên') + ' · EduLens';
+    document.title = ((DL.toi && DL.toi.khongGian && DL.toi.khongGian.ten) || 'Giáo viên') + ' · EduShow';
     var dangChon = document.querySelector('.tab.chon');
     if (!qt && dangChon && dangChon.classList.contains('chi-quan-tri')) document.querySelector('[data-tab=tabLop]').click();
   }

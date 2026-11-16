@@ -1,4 +1,4 @@
-# EduLens — phiếu kết quả học tập, mỗi phụ huynh chỉ xem được điểm của con mình
+# EduShow — phiếu kết quả học tập, mỗi phụ huynh chỉ xem được điểm của con mình
 
 Giáo viên (dạy riêng hoặc trung tâm) **tự đăng ký tài khoản**, tạo lớp, rồi tải lên **2 file**:
 **bảng kết quả học sinh** và **bảng đáp án theo mã đề**. Hệ thống tự ghép từng học sinh với đáp án của đúng mã đề em đó làm, chấm, và tạo **phiếu "Kết quả kiểm tra"** cho từng em.
