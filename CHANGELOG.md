@@ -1,6 +1,6 @@
 # Nhật ký phiên bản
 
-## Chưa phát hành (staging)
+## v1.1.1 — 16/11/2026 (đã lên production, không có migration)
 
 - Đặt tên sản phẩm **EduLens**: tiêu đề tab trang phụ huynh và trang giáo viên, nhãn trên màn đăng nhập / đăng ký, dòng nhỏ cuối trang tra cứu. Phiếu gửi phụ huynh vẫn mang tên và logo trung tâm; địa chỉ web giữ nguyên.
 - File đáp án mẫu giữ 2 cột mã đề ví dụ (mã không trộn để trống, mã có trộn điền vị trí câu).
