@@ -10,8 +10,24 @@ export const CAC_KHOI = [
   { ma: 'bang-diem', ten: 'Điểm các phần', moTa: 'Điểm theo từng dạng bài, VD Trắc nghiệm: …/…; Đúng sai: …/…; Tự luận: …/…; Tổng điểm: …/…' },
   { ma: 'cac-lan', ten: 'Kết quả các lần làm', moTa: 'Điểm các lần làm trước + so với lần trước (chỉ hiện từ lần 2)' },
   { ma: 'xep-hang', ten: 'Xếp hạng', moTa: 'Hạng trong lớp, VD 3 / 33 (khi file có cột Thứ hạng)' },
-  { ma: 'nhan-xet', ten: 'Nhận xét', moTa: 'Ưu điểm, Nhược điểm, Hướng khắc phục, Lời khuyên (mục trống tự ẩn)' }
+  { ma: 'nhan-xet', ten: 'Nhận xét', moTa: 'Ưu điểm, Nhược điểm, Hướng khắc phục, Lời khuyên (mục trống tự ẩn)' },
+  { ma: 'theo-chu-de', ten: 'Kết quả theo chủ đề', moTa: 'Mỗi chủ đề kiến thức: số câu đúng / tổng và các câu chưa đúng (chủ đề yếu lên đầu; không tính câu tự luận)' }
 ];
+
+/** Đọc điểm thành chữ: 7.25 -> "Bảy phẩy hai lăm" (trường «Điểm_bằng_chữ»). */
+export function diemBangChu(x) {
+  var n = parseFloat(x); if (isNaN(n)) return '';
+  var SO = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+  var doc2 = function (k) {
+    if (k < 10) return SO[k];
+    var c = Math.floor(k / 10), dv = k % 10, t = (c === 1 ? 'mười' : SO[c] + ' mươi');
+    if (!dv) return t;
+    return t + ' ' + (dv === 5 ? 'lăm' : dv === 1 && c > 1 ? 'mốt' : dv === 4 && c > 1 ? 'tư' : SO[dv]);
+  };
+  var nguyen = Math.floor(n + 1e-9), le = Math.round((n - nguyen) * 100), s = doc2(nguyen);
+  if (le) s += ' phẩy ' + (le % 10 ? (le < 10 ? 'không ' + SO[le] : doc2(le)) : SO[le / 10]);
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
 
 function e(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 var DO = 'color:#d40000;font-weight:bold', XANH = 'color:#00a040;font-weight:bold';
@@ -86,6 +102,24 @@ var DUNG = {
       '<tr><td style="' + OG + '"><b>Tổng điểm</b></td>' + ls.map(function (x) { return '<td style="' + OG + '">' + e(x.tong) + '</td>'; }).join('') +
       '<td style="' + OG + ';' + DO + '">' + e((d.cham || {}).diem && d.cham.diem.tong) + '</td><td style="' + OG + ';' + (d.tangDiem ? XANH : d.giamDiem ? DO : '') + '">' +
       e(d.chenhLech) + (d.tangDiem ? ' ▲' : d.giamDiem ? ' ▼' : '') + '</td></tr></table>';
+  },
+  'theo-chu-de': function (d) {
+    var cd = {}, thuTu = [];
+    cacPhan(d.cham || {}).forEach(function (p) {
+      if (p.dang === 'tu_luan') return;
+      (p.cau || []).forEach(function (q) {
+        var k = q.chuDe || '(Chưa ghi chủ đề)'; if (!cd[k]) { cd[k] = { dung: 0, tong: 0, sai: [] }; thuTu.push(k); }
+        var ok = p.dang === 'dung_sai' ? (q.kyTu || []).length && q.kyTu.every(function (x) { return x.ok; }) : q.ok;
+        cd[k].tong++; if (ok) cd[k].dung++; else cd[k].sai.push(p.ma + '.' + q.cau);
+      });
+    });
+    if (!thuTu.length) return '';
+    thuTu.sort(function (a, b) { return cd[a].dung / cd[a].tong - cd[b].dung / cd[b].tong; });
+    return '<p style="margin:6pt 0 2pt"><b>Kết quả theo chủ đề</b></p><table style="' + BANG + '"><tr><th style="' + TH + ';text-align:left">Chủ đề kiến thức</th><th style="' + TH + ';width:16%">Đúng / Tổng</th><th style="' + TH + ';width:34%">Câu chưa đúng</th></tr>' +
+      thuTu.map(function (k) {
+        var x = cd[k], tot = x.dung === x.tong;
+        return '<tr><td style="' + O + '">' + e(k) + '</td><td style="' + OG + ';' + (tot ? XANH : x.dung * 2 < x.tong ? DO : 'font-weight:bold') + '">' + x.dung + ' / ' + x.tong + '</td><td style="' + O + '">' + (x.sai.length ? e(x.sai.join(', ')) : '<span style="' + XANH + '">Đúng hết</span>') + '</td></tr>';
+      }).join('') + '</table>';
   },
   'xep-hang': function (d) {
     return d.thuHang ? '<span style="' + DO + '">' + e(d.thuHang) + '</span>' + (d.soXepHang ? ' / ' + e(d.soXepHang) : '') : '';

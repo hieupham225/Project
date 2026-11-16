@@ -456,7 +456,7 @@
   .tong-ct { font-weight: 600; margin: 0; }
   @media (max-width: 640px) { .luoi-phan-ct { grid-template-columns: 1fr 1fr; } .luoi-phan-ct .o-ct { grid-column: 1 / -1; } }
   .chan-mau .gian { flex: 1; } .chan-mau .ten-mau { flex: 0 1 380px; min-width: 200px; } .chan-mau .ten-mau input { width: 100%; } .chan-mau .mon-mau { flex: 0 1 180px; min-width: 130px; } .chan-mau .mon-mau select { width: 100%; }
-  .luoi-cach { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; max-width: 900px; width: 100%; margin: 24px auto; }
+  .luoi-cach { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; max-width: 980px; width: 100%; margin: 24px auto; }
   .the-cach { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; text-align: left; padding: 22px; min-height: 0; height: auto; border-radius: var(--r-khung); background: var(--be-mat); color: var(--chu); border: 1px solid var(--vien); box-shadow: var(--bong-thap); white-space: normal; font-size: 14px; }
   .the-cach b { font-size: 17px; } .icon-cach { font-size: 30px; }
   button.the-cach:hover:not(:disabled), button.the-cach:active { background: var(--be-mat); color: var(--chu); }
@@ -3010,7 +3010,7 @@
       ['Gồm', 'Đầu phiếu kiểu tờ giấy thi, khung Điểm (kèm điểm bằng chữ) và Nhận xét, phân tích bài làm từng câu (như mẫu Kết quả kiểm tra), kết quả theo chủ đề, chỗ ký của giáo viên và phụ huynh'],
       ['Số câu', 'Tự đủ theo cấu trúc đề của bài thi'],
       ['Đang dùng', soDung('kieu:bai-kiem-tra')]],
-      [['eye', 'Xem mẫu', xemKieu('bai-kiem-tra', 'Bài kiểm tra')]], xemKieu('bai-kiem-tra', 'Bài kiểm tra')));
+      [['eye', 'Xem mẫu', xemKieu('bai-kiem-tra', 'Bài kiểm tra')], ['document-duplicate', 'Tạo mẫu mới từ mẫu này', function () { manMau().coSan('bai-kiem-tra'); }]], xemKieu('bai-kiem-tra', 'Bài kiểm tra')));
     (DL.mauPhieu || []).forEach(function (m) {
       var mo = function () { goi('gvLayMauPhieu', m.id).then(function (mp) { manMau().chinh({ id: mp.id, ten: mp.ten, html: mp.html, trang: mp.trang, tenTep: mp.tenTep }); }).catch(baoLoi); };
       var muc = [['pencil-square', 'Mở / chỉnh sửa', mo]];
@@ -3189,6 +3189,9 @@
     ['Số_báo_danh', 'Số báo danh', 'Danh sách học sinh / cột Số báo danh trong file kết quả'],
     ['Mã_đề_thi', 'Mã đề thi', 'Cột Mã đề thi trong file kết quả'],
     ['Tổng_điểm', 'Tổng điểm', 'Hệ thống chấm từ file kết quả + file đáp án'],
+    ['Điểm_tối_đa', 'Điểm tối đa', 'Cấu trúc đề (tổng điểm các phần, thường là 10)'],
+    ['Điểm_bằng_chữ', 'Điểm bằng chữ', 'Hệ thống đọc tổng điểm thành chữ, VD "Bảy phẩy hai lăm"'],
+    ['Môn', 'Môn kiểm tra', 'Môn của cấu trúc đề'],
     ['Tiêu_đề', 'Tên bài thi', 'Tab ThongTin của file đáp án ("Tiêu đề phiếu"), trống thì lấy tên bài thi nhập khi gửi kết quả'],
     ['Mô_tả', 'Mô tả bài thi', 'Tab ThongTin của file đáp án ("Mô tả"); sửa được ở Bài thi > Sửa'],
     ['Lần', 'Lần làm', 'Hệ thống tự đếm (lần 1, 2…)'],
@@ -3283,7 +3286,8 @@
       var the1 = function (icon, ten, moTa, viec) { return the('button', { type: 'button', class: 'the-cach', onclick: viec }, [the('span', { class: 'icon-cach' }, [ic(icon)]), the('b', { text: ten }), the('span', { class: 'goi-y', text: moTa })]); };
       than.appendChild(the('div', { class: 'luoi-cach' }, [
         the1('document-text', 'Dùng file Word đang dùng', 'File trộn thư (mail merge), hoặc phiếu Word đã điền sẵn của 1 học sinh. Hệ thống giữ nguyên bố cục và tự nhận ra những chỗ thay đổi theo từng học sinh.', function () { taiFile(null); }),
-        the1('sparkles', 'Dùng mẫu có sẵn', 'Mẫu "Kết quả kiểm tra" gồm thông tin học sinh, điểm, bảng phân tích từng câu, nhận xét — tự đủ số câu theo đề, dùng cho mọi bài thi. Sửa chữ, thêm logo tùy ý.', function () { chinh(mauCoSan()); })]));
+        the1('sparkles', 'Mẫu có sẵn · Classic', 'Giao diện "Kết quả kiểm tra": thông tin học sinh, điểm từng phần, bảng phân tích từng câu, nhận xét — tự đủ các phần theo cấu trúc đề, dùng cho mọi bài thi. Sửa chữ, thêm logo tùy ý.', function () { chinh(mauCoSan()); }),
+        the1('clipboard-document-list', 'Mẫu có sẵn · Bài kiểm tra', 'Giao diện kiểu tờ giấy thi: đầu phiếu trường / bài kiểm tra, khung Điểm (kèm bằng chữ) và Nhận xét, phân tích bài làm từng câu, kết quả theo chủ đề — tự đủ các phần theo cấu trúc đề.', function () { chinh(mauCoSan('bai-kiem-tra')); })]));
     };
 
     /* Bước 2: tải file Word (+ Excel) */
@@ -3319,11 +3323,29 @@
     };
 
     /* Mẫu có sẵn: đầu phiếu + thông tin học sinh + phần tự động */
-    var mauCoSan = function () {
+    var mauCoSan = function (kieu) {
       var cd = DL.caiDat || {}, k = function (ma, the_) { var x = (DL.khoiPhieu || []).filter(function (y) { return y.ma === ma; })[0]; the_ = the_ || 'div';
         return '<' + the_ + ' class="khoi" data-khoi="' + ma + '">' + (x ? x.ten : ma) + '</' + the_ + '>'; };
       var tr = function (ten, kieu) { return '<span class="truong" data-truong="' + ten + '" style="' + (kieu || 'color:#d40000;font-weight:bold') + '">«' + ten + '»</span>'; };
       var p = function (noi, st) { return '<p style="margin:0;' + (st || '') + '">' + noi + '</p>'; };
+      if (kieu === 'bai-kiem-tra') { // giao diện "Bài kiểm tra" (kiểu tờ giấy thi)
+        var o = 'border:1px solid #000;padding:4pt 6pt;vertical-align:top';
+        var htmlBkt = '<div class="mau-word" style="width:523pt;font-family:\'Times New Roman\',serif;font-size:12pt;line-height:1.35;color:#000">' +
+          '<table style="border-collapse:collapse;width:100%"><colgroup><col style="width:46%"><col></colgroup><tbody><tr><td style="vertical-align:top">' +
+          (cd.logo ? '<p style="margin:0;text-align:center"><img src="' + cd.logo + '" alt="" style="max-height:56pt;max-width:150pt"></p>' : '') +
+          p(tr('Tên_trung_tâm', 'font-weight:bold;text-transform:uppercase'), 'text-align:center') +
+          p('Họ và tên: ' + tr('Họ_và_tên')) + p('SBD: ' + tr('Số_báo_danh') + ' &nbsp; Lớp: ' + tr('Lớp')) + p('Ngày kiểm tra: ' + tr('Ngày_thi') + ' &nbsp; Lần: ' + tr('Lần')) +
+          '</td><td style="vertical-align:top">' + p(tr('Tiêu_đề', 'font-weight:bold;font-size:13pt')) + p(tr('Mô_tả', 'font-style:italic')) +
+          p('Môn kiểm tra: ' + tr('Môn', 'font-weight:bold')) + p('Mã đề: <span style="border:1px solid #000;padding:1pt 10pt">' + tr('Mã_đề_thi') + '</span>') + '</td></tr></tbody></table>' +
+          '<p style="margin:6pt 0;border-bottom:1.5pt dashed #555"></p>' +
+          '<table style="border-collapse:collapse;width:100%"><colgroup><col style="width:22%"><col style="width:30%"><col></colgroup><tbody>' +
+          '<tr><td style="' + o + ';text-align:center;font-weight:bold">Điểm</td><td style="' + o + ';text-align:center;font-weight:bold">Điểm từng phần</td><td style="' + o + ';text-align:center;font-weight:bold">Nhận xét của giáo viên</td></tr>' +
+          '<tr><td style="' + o + ';text-align:center">' + p(tr('Tổng_điểm', 'color:#d40000;font-weight:bold;font-size:24pt') + '/' + tr('Điểm_tối_đa', 'font-weight:bold'), 'text-align:center') +
+          p('(' + tr('Điểm_bằng_chữ', 'font-style:italic') + ')', 'text-align:center') + '</td>' +
+          '<td style="' + o + '"><div class="khoi" data-khoi="bang-diem">Điểm các phần</div></td><td style="' + o + '">' + k('nhan-xet') + '</td></tr></tbody></table>' +
+          p('<b><u>PHÂN TÍCH BÀI LÀM</u></b>', 'text-align:center;margin-top:6pt') + '<div class="khoi" data-khoi="phan-tich">Bảng phân tích từng câu</div>' + k('theo-chu-de') + '</div>';
+        return { id: '', ten: 'Bài kiểm tra (tự đủ số câu)', html: htmlBkt, trang: { mon: 'Toán', rong: 595.3, cao: 841.9, tren: 36, duoi: 36, trai: 36, phai: 36, rongToiDa: 523 }, tenTep: '' };
+      }
       var html = '<div class="mau-word" style="width:523pt;font-family:\'Times New Roman\',serif;font-size:12pt;line-height:1.35;color:#000">' +
         '<table style="border-collapse:collapse;width:100%"><colgroup><col style="width:30%"><col></colgroup><tbody><tr>' +
         '<td style="vertical-align:middle;text-align:center">' + (cd.logo ? '<img src="' + cd.logo + '" alt="" style="max-height:70pt;max-width:150pt">' : '') +
@@ -3770,7 +3792,7 @@
       };
       veDsMuc();
     };
-    _manMau = { chonCach: chonCach, taiFile: taiFile, chinh: chinh, coSan: function () { chinh(mauCoSan()); } };
+    _manMau = { chonCach: chonCach, taiFile: taiFile, chinh: chinh, coSan: function (kieu) { chinh(mauCoSan(kieu)); } };
     return _manMau;
   }
 

@@ -1469,7 +1469,8 @@ async function layMauPhieu(db, kg, id) {
 function giaTriPhieu(d, logo) {
   const ch = d.cham || { diem: {} };
   const heThong = { Họ_và_tên: d.hoTen, Lớp: d.lop, Số_báo_danh: d.sbd, SBD: d.sbd, Mã_đề_thi: d.maDe, Tổng_điểm: ch.diem.tong, Lần: d.lan,
-    Ngày_thi: d.ngayThi, Mã_phiếu: d.maPhieu, Tên_trung_tâm: d.trungTam, Tiêu_đề: d.tieuDe, Mô_tả: d.moTa, Logo: logo || '' };
+    Ngày_thi: d.ngayThi, Mã_phiếu: d.maPhieu, Tên_trung_tâm: d.trungTam, Tiêu_đề: d.tieuDe, Mô_tả: d.moTa, Logo: logo || '',
+    Môn: (ch.cauTruc && ch.cauTruc.mon) || '', Điểm_tối_đa: ch.diem.maxTong, Điểm_bằng_chữ: KP.diemBangChu(ch.diem.tong) };
   return Object.assign(heThong, d.giaTri || {});
 }
 /** Phiếu dùng mẫu Word: điền mẫu thành HTML để trang phụ huynh / giáo viên hiển thị và tạo PDF. */
