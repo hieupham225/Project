@@ -38,6 +38,14 @@
   h2 { font-size: 17px; line-height: 1.41; font-weight: 700; margin: 0 0 12px; letter-spacing: -.005em; }
   .thanh { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
   .gian { flex: 1; }
+  /* Icon (Heroicons outline) */
+  .ic { width: 18px; height: 18px; flex: none; vertical-align: -4px; }
+  .ic.ic-16 { width: 16px; height: 16px; }
+  button.nho .ic, .nut.nho .ic { width: 16px; height: 16px; }
+  .tab .ic { width: 18px; height: 18px; margin-right: 6px; vertical-align: -4px; }
+  .duong-dan .ic { width: 16px; height: 16px; margin-right: 4px; vertical-align: -3px; }
+  .goi-y > .ic, .nhan > .ic, .trang > .ic, .da-sua > .ic, .tieu-de-hd .ic { width: 15px; height: 15px; margin-right: 4px; vertical-align: -3px; }
+  .icon-cach .ic { width: 30px; height: 30px; }
   /* Nút: Primary (đen), Secondary (.phu, xám nhạt), Destructive (.nguy, đỏ nhạt) */
   button, .nut { font: 500 14px/20px var(--font); min-height: var(--cao); padding: 0 16px; border-radius: var(--r-tron); border: 0; background: var(--mau); color: var(--tren-mau); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background-color .125s var(--em), opacity .125s, transform .1s; }
   button:hover:not(:disabled), .nut:hover { background: #2E2924; }
@@ -109,7 +117,9 @@
   .nhom-dau td { background: #E9EEF8; padding: 0 !important; border-top: 1px solid #D5DEEE; border-bottom: 1px solid #D5DEEE; }
   .nut-nhom { display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; min-height: 46px; padding: 0 14px; border: 0; border-radius: 0; background: none; color: var(--xanh-duong-chu); font: inherit; text-align: left; cursor: pointer; box-shadow: inset 4px 0 0 #3B6FD9; }
   button.nut-nhom:hover:not(:disabled) { background: #DDE5F4; color: var(--xanh-duong-chu); }
-  .nut-nhom .mui-ten { display: inline-block; width: 14px; font-size: 13px; transition: transform .15s var(--em); }
+  .nut-nhom .mui-ten { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; flex: none; transition: transform .15s var(--em); }
+  .nut-nhom .mui-ten .ic { width: 20px; height: 20px; stroke-width: 2; }
+  button.nut-nhom:active:not(:disabled) { transform: none; }
   .nhom-dau.dong .mui-ten { transform: rotate(-90deg); }
   .nut-nhom .ten-nhom { font-weight: 700; font-size: 15px; }
   .nut-nhom .dem-nhom { color: var(--phu); font-size: 13px; font-weight: 500; }
@@ -653,14 +663,14 @@
 
   <div class="tabs an" id="thanhTabs">
     <div class="dai-tab" role="tablist">
-      <button class="tab chon" data-tab="tabLop">🏫 Lớp học</button>
-      <button class="tab" data-tab="tabHs">👩‍🎓 Học sinh</button>
-      <button class="tab" data-tab="tabDot">🗂️ Bài thi</button>
-      <button class="tab" data-tab="tabTongHop">📊 Tổng hợp</button>
-      <button class="tab chi-quan-tri" data-tab="tabMauPhieu">📝 Mẫu phiếu</button>
-      <button class="tab chi-quan-tri" data-tab="tabCauTruc">🧩 Cấu trúc đề</button>
-      <button class="tab chi-quan-tri" data-tab="tabTaiKhoan">👥 Giáo viên</button>
-      <button class="tab chi-quan-tri" data-tab="tabCaiDat">⚙️ Cài đặt</button>
+      <button class="tab chon" data-tab="tabLop"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5"/></svg>Lớp học</button>
+      <button class="tab" data-tab="tabHs"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>Học sinh</button>
+      <button class="tab" data-tab="tabDot"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z"/></svg>Bài thi</button>
+      <button class="tab" data-tab="tabTongHop"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>Tổng hợp</button>
+      <button class="tab chi-quan-tri" data-tab="tabMauPhieu"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>Mẫu phiếu</button>
+      <button class="tab chi-quan-tri" data-tab="tabCauTruc"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25 1.875c0 .369.128.713.349 1.003.215.283.401.604.401.959v0a.64.64 0 0 1-.657.643 48.39 48.39 0 0 1-4.163-.3c.186 1.613.293 3.25.315 4.907a.656.656 0 0 1-.658.663v0c-.355 0-.676-.186-.959-.401a1.647 1.647 0 0 0-1.003-.349c-1.036 0-1.875 1.007-1.875 2.25s.84 2.25 1.875 2.25c.369 0 .713-.128 1.003-.349.283-.215.604-.401.959-.401v0c.31 0 .555.26.532.57a48.039 48.039 0 0 1-.642 5.056c1.518.19 3.058.309 4.616.354a.64.64 0 0 0 .657-.643v0c0-.355-.186-.676-.401-.959a1.647 1.647 0 0 1-.349-1.003c0-1.035 1.008-1.875 2.25-1.875 1.243 0 2.25.84 2.25 1.875 0 .369-.128.713-.349 1.003-.215.283-.4.604-.4.959v0c0 .333.277.599.61.58a48.1 48.1 0 0 0 5.427-.63 48.05 48.05 0 0 0 .582-4.717.532.532 0 0 0-.533-.57v0c-.355 0-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035 0-1.875-1.007-1.875-2.25s.84-2.25 1.875-2.25c.37 0 .713.128 1.003.349.283.215.604.401.96.401v0a.656.656 0 0 0 .658-.663 48.422 48.422 0 0 0-.37-5.36c-1.886.342-3.81.574-5.766.689a.578.578 0 0 1-.61-.58v0Z"/></svg>Cấu trúc đề</button>
+      <button class="tab chi-quan-tri" data-tab="tabTaiKhoan"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"/></svg>Giáo viên</button>
+      <button class="tab chi-quan-tri" data-tab="tabCaiDat"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/> <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>Cài đặt</button>
     </div>
     <div class="nguoi-dung">
       <select id="chonKg" class="kg-chon an" title="Đổi trung tâm / lớp học"></select>
@@ -693,21 +703,21 @@
 
       <div id="lopCt" class="an">
         <div class="dau-trang">
-          <a id="nutVeDsLop" class="duong-dan" href="#lop">← Lớp học</a>
+          <a id="nutVeDsLop" class="duong-dan" href="#lop"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/></svg>Lớp học</a>
           <div class="hang-tieu-de">
             <h1 id="ctTenLop"></h1>
             <div class="cum">
               <div class="menu-them">
-                <button id="nutThemTacVu" type="button" class="nut-icon lon" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác khác" title="Thao tác khác">⋯</button>
+                <button id="nutThemTacVu" type="button" class="nut-icon lon" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác khác" title="Thao tác khác"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"/></svg></button>
                 <div id="menuLop" class="menu-ds an" role="menu">
-                  <button id="nutDoiTenLop" type="button" role="menuitem"><span class="icon-menu" aria-hidden="true">✏️</span>Đổi tên lớp</button>
-                  <button id="nutMonLop" type="button" role="menuitem"><span class="icon-menu" aria-hidden="true">📚</span>Môn học</button>
-                  <button id="nutWordMaLop" type="button" role="menuitem"><span class="icon-menu" aria-hidden="true">📄</span>Mã tra cứu cả lớp (Word)</button>
-                  <button id="nutExcelMaLop" type="button" role="menuitem"><span class="icon-menu" aria-hidden="true">📊</span>Mã tra cứu cả lớp (Excel)</button>
-                  <button id="nutXoaLop" type="button" role="menuitem" class="do"><span class="icon-menu" aria-hidden="true">🗑️</span>Xóa lớp</button>
+                  <button id="nutDoiTenLop" type="button" role="menuitem"><span class="icon-menu" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"/></svg></span>Đổi tên lớp</button>
+                  <button id="nutMonLop" type="button" role="menuitem"><span class="icon-menu" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg></span>Môn học</button>
+                  <button id="nutWordMaLop" type="button" role="menuitem"><span class="icon-menu" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg></span>Mã tra cứu cả lớp (Word)</button>
+                  <button id="nutExcelMaLop" type="button" role="menuitem"><span class="icon-menu" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5"/></svg></span>Mã tra cứu cả lớp (Excel)</button>
+                  <button id="nutXoaLop" type="button" role="menuitem" class="do"><span class="icon-menu" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg></span>Xóa lớp</button>
                 </div>
               </div>
-              <button id="nutGuiKqLop">📤 Gửi kết quả</button>
+              <button id="nutGuiKqLop"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"/></svg>Gửi kết quả</button>
             </div>
           </div>
         </div>
@@ -722,8 +732,8 @@
           <div class="thanh">
             <h2 id="ctTieuDeHs" style="margin:0"></h2>
             <span class="gian"></span>
-            <button id="nutThemCoSan" type="button" class="nut-icon lon" title="Thêm học sinh đã có vào lớp" aria-label="Thêm học sinh đã có vào lớp"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M19 8v6M16 11h6"/></svg></button>
-            <button id="nutThemMoiVaoLop" type="button" class="nut-icon lon" title="Học sinh mới / nhập Excel" aria-label="Học sinh mới / nhập Excel"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4"/><path d="m7 9 5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></button>
+            <button id="nutThemCoSan" type="button" class="nut-icon lon" title="Thêm học sinh đã có vào lớp" aria-label="Thêm học sinh đã có vào lớp"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"/></svg></button>
+            <button id="nutThemMoiVaoLop" type="button" class="nut-icon lon" title="Học sinh mới / nhập Excel" aria-label="Học sinh mới / nhập Excel"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg></button>
           </div>
           <table class="ds">
             <thead><tr><th>Mã HS</th><th>SBD</th><th>Họ tên</th><th>Học cả lớp khác</th><th>SĐT phụ huynh</th><th>Mã tra cứu</th><th></th></tr></thead>
@@ -734,7 +744,7 @@
           <div class="thanh">
             <h2 style="margin:0">Bài thi của lớp</h2>
             <span class="gian"></span>
-            <button id="nutTongHopLop" class="phu nho">📊 Xem tổng hợp</button>
+            <button id="nutTongHopLop" class="phu nho"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>Xem tổng hợp</button>
           </div>
           <table class="ds">
             <thead><tr><th>Bài thi</th><th>Lần</th><th>Ngày thi</th><th>Số phiếu</th><th>Điểm TB</th><th>Trạng thái</th></tr></thead>
@@ -762,7 +772,7 @@
       </div>
 
       <div id="formHs" class="phu-trang an"><div class="hop hop-form" role="dialog" aria-modal="true" aria-labelledby="formHsTieuDe">
-        <div class="dau-hop"><h2 id="formHsTieuDe">Thêm học sinh</h2><button type="button" class="dong-x phu" data-dong aria-label="Đóng">✕</button></div>
+        <div class="dau-hop"><h2 id="formHsTieuDe">Thêm học sinh</h2><button type="button" class="dong-x phu" data-dong aria-label="Đóng"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button></div>
         <div class="luoi">
           <label class="o">Họ và tên *<input id="fTen" type="text"></label>
           <div class="o">
@@ -785,12 +795,12 @@
       </div></div>
 
       <div id="formNhieu" class="phu-trang an"><div class="hop hop-form" role="dialog" aria-modal="true" aria-labelledby="tieuDeNhieu">
-        <div class="dau-hop"><h2 id="tieuDeNhieu">Thêm nhiều học sinh</h2><button type="button" class="dong-x phu" data-dong aria-label="Đóng">✕</button></div>
-        <div class="hang-mau-nhap"><button id="nutMauNhapLop" type="button" class="phu">⬇ Tải mẫu phiếu nhập lớp (Excel)</button><span class="goi-y" id="ghiChuMauNhap"></span></div>
+        <div class="dau-hop"><h2 id="tieuDeNhieu">Thêm nhiều học sinh</h2><button type="button" class="dong-x phu" data-dong aria-label="Đóng"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button></div>
+        <div class="hang-mau-nhap"><button id="nutMauNhapLop" type="button" class="phu"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>Tải mẫu phiếu nhập lớp (Excel)</button><span class="goi-y" id="ghiChuMauNhap"></span></div>
         <p class="goi-y" style="margin-top:0">Dán các cột <b>Số báo danh – Họ tên – Ngày sinh – Lớp – SĐT phụ huynh</b> từ Excel, hoặc chọn file Excel.<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">File Excel cần dòng tiêu đề "Số báo danh", "Họ và tên", "Ngày sinh", "Lớp", "SĐT phụ huynh"… (dùng mẫu phiếu nhập lớp, hoặc file kết quả thi). Mỗi em được tự cấp Mã HS và mã tra cứu. Số báo danh gồm chữ số (thường 8 số), cố định cả khóa. Em đã có (cùng SBD, hoặc cùng tên trong lớp) chỉ được bổ sung SBD / ngày sinh / SĐT còn trống; em <b>trùng tên với học sinh ở lớp khác</b> (vd học thêm môn) sẽ được hỏi lại để <b>gộp vào cùng 1 mã tra cứu</b> hoặc tạo học sinh mới.</span></button></p>
         <textarea id="danNhieu" placeholder="Số báo danh	Họ và tên	Ngày sinh	Lớp	SĐT phụ huynh&#10;24010001	Nguyễn Văn An	15/03/2009	Toán 2	0912345678"></textarea>
         <div class="chan-hop">
-          <label class="nut phu">📄 Chọn file Excel…<input id="fileHs" type="file" accept=".xlsx,.xls,.csv" class="an"></label>
+          <label class="nut phu"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12-3-3m0 0-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>Chọn file Excel…<input id="fileHs" type="file" accept=".xlsx,.xls,.csv" class="an"></label>
           <span class="gian"></span>
           <button id="nutHuyNhieu" class="phu">Hủy</button>
           <button id="nutLuuNhieu">Thêm từ ô dán</button>
@@ -814,12 +824,12 @@
     <!-- ============ GỬI KẾT QUẢ (theo lớp) ============ -->
     <section id="tabGui" class="an">
       <div class="dau-trang">
-        <a id="nutVeBaiThi" class="duong-dan" href="#bai-thi">← Bài thi</a>
+        <a id="nutVeBaiThi" class="duong-dan" href="#bai-thi"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/></svg>Bài thi</a>
         <div class="hang-tieu-de">
           <h1>Gửi kết quả<span class="chu-dai"> thi</span><button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Tải lên bảng kết quả (có cột <b>Lớp</b>) và bảng đáp án. Hệ thống tự đưa từng dòng vào đúng lớp, đúng học sinh — một file có thể gồm nhiều lớp.</span></button></h1>
           <div class="cum">
-            <button id="nutTaiMauLop" class="phu"><span>⬇ Mẫu<span class="chu-dai"> bảng</span> kết quả</span></button>
-            <button id="nutTaiMauDapAn" class="phu">⬇ Mẫu đáp án</button>
+            <button id="nutTaiMauLop" class="phu"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg><span>Mẫu<span class="chu-dai"> bảng</span> kết quả</span></button>
+            <button id="nutTaiMauDapAn" class="phu"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>Mẫu đáp án</button>
           </div>
         </div>
       </div>
@@ -835,7 +845,7 @@
           <div>
             <h3>① Bảng kết quả học sinh<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Mỗi học sinh 1 dòng: lớp, mã đề, đáp án đã chọn, điểm, nhận xét. Dùng được luôn bảng tổng hợp đang dùng để trộn thư Word.</span></button></h3>
             <div class="thanh" style="margin:0">
-              <label class="nut">📄 Chọn file Excel…<input id="fileKq" type="file" accept=".xlsx,.xls,.csv" class="an"></label>
+              <label class="nut"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12-3-3m0 0-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>Chọn file Excel…<input id="fileKq" type="file" accept=".xlsx,.xls,.csv" class="an"></label>
               <input id="linkKq" type="text" placeholder="hoặc link Google Sheet" style="width:170px">
               <button id="nutDocLink" class="phu nho">Đọc</button>
             </div>
@@ -844,7 +854,7 @@
           <div>
             <h3>② Bảng đáp án theo mã đề<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Mỗi mã đề 1 dòng (Mã đề | Câu 1…N). Thêm tab CauHoi để có chủ đề / nội dung từng câu trên phiếu. Không có file này thì hệ thống dùng đáp án chép trong bảng kết quả (nếu có).</span></button></h3>
             <div class="thanh" style="margin:0">
-              <label class="nut">📄 Chọn file Excel…<input id="fileDa" type="file" accept=".xlsx,.xls,.csv" class="an"></label>
+              <label class="nut"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12-3-3m0 0-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>Chọn file Excel…<input id="fileDa" type="file" accept=".xlsx,.xls,.csv" class="an"></label>
               <input id="linkDa" type="text" placeholder="hoặc link Google Sheet" style="width:170px">
               <button id="nutDocLinkDa" class="phu nho">Đọc</button>
               <button id="nutBoDa" class="phu nho an">Bỏ file</button>
@@ -867,7 +877,7 @@
             <button class="phu nho" data-hd="boqua">Bỏ qua</button>
             <span class="doi-lop"><select id="lopChoGhep" class="qd"></select><button class="phu nho" data-hd="lop">Đổi lớp</button></span>
             <span class="gian"></span>
-            <button class="phu nho" data-hd="bochon" aria-label="Bỏ chọn"><span class="chu-dai">Bỏ chọn</span><span class="chu-ngan">✕</span></button>
+            <button class="phu nho" data-hd="bochon" aria-label="Bỏ chọn"><span class="chu-dai">Bỏ chọn</span><span class="chu-ngan"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></span></button>
           </div>
           <table class="ds" id="bangGhep">
             <thead><tr><th><input id="chonTatCaGhep" class="chon-tat-ca" type="checkbox" aria-label="Chọn tất cả dòng"></th><th>STT</th><th>Họ tên trong file</th><th>Mã HS trong file</th><th>Lớp</th><th>Mã đề</th><th>Tổng điểm</th><th>Là học sinh nào?</th></tr></thead>
@@ -887,7 +897,7 @@
           <label id="khuGhiDe" class="an" style="display:flex;gap:8px;align-items:center;margin-top:8px">
             <input id="gGhiDe" type="checkbox"> <span id="chuGhiDe"></span></label>
           <div class="thanh" style="margin-top:12px">
-            <button id="nutXemThu" class="phu">👁 Xem thử phiếu</button>
+            <button id="nutXemThu" class="phu"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/> <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>Xem thử phiếu</button>
             <button id="nutTaoPhieu">Tạo phiếu</button>
           </div>
         </div>
@@ -900,7 +910,7 @@
         <div class="hang-tieu-de">
           <h1>Bài thi<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Phụ huynh chỉ xem được các lần thi đã <b>Công bố</b>. Xóa một lần thi sẽ xóa toàn bộ phiếu của lần đó.</span></button></h1>
           <div class="cum">
-            <button id="nutMoGui"><span>📤 Gửi kết quả<span class="chu-dai"> thi</span></span></button>
+            <button id="nutMoGui"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"/></svg><span>Gửi kết quả<span class="chu-dai"> thi</span></span></button>
           </div>
         </div>
         <div class="hang-loc">
@@ -919,8 +929,8 @@
           <h1>Tổng hợp<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Ô xanh: ≥ 80% điểm tối đa · Ô đỏ: &lt; 50%. "Trung bình" và "Tiến bộ" tính theo thang 10; Tiến bộ = điểm lần gần nhất − điểm lần đầu. Huy hiệu #1–#3 cạnh tên: hạng trong lớp theo điểm trung bình.</span></button></h1>
           <div class="cum">
             <div class="phan-doan" role="group" aria-label="Kiểu xem">
-              <button type="button" data-che="bang" title="Xem dạng bảng" aria-label="Xem dạng bảng" aria-pressed="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></svg></button>
-              <button type="button" data-che="bieu-do" title="Xem dạng biểu đồ đường" aria-label="Xem dạng biểu đồ đường" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-5 4 3 5-7"/></svg></button>
+              <button type="button" data-che="bang" title="Xem dạng bảng" aria-label="Xem dạng bảng" aria-pressed="true"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5"/></svg></button>
+              <button type="button" data-che="bieu-do" title="Xem dạng biểu đồ đường" aria-label="Xem dạng biểu đồ đường" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5m.75-9 3-3 2.148 2.148A12.061 12.061 0 0 1 16.5 7.605"/></svg></button>
             </div>
           </div>
         </div>
@@ -979,7 +989,7 @@
         <div class="o-link"><span>Link trang giáo viên:</span><code id="tkLinkGv"></code><button class="phu nho" id="tkChepLink">Sao chép</button></div>
       </div>
       <div id="formTk" class="phu-trang an"><div class="hop hop-form" role="dialog" aria-modal="true" aria-labelledby="formTkTieuDe">
-        <div class="dau-hop"><h2 id="formTkTieuDe">Thêm giáo viên</h2><button type="button" class="dong-x phu" data-dong aria-label="Đóng">✕</button></div>
+        <div class="dau-hop"><h2 id="formTkTieuDe">Thêm giáo viên</h2><button type="button" class="dong-x phu" data-dong aria-label="Đóng"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button></div>
         <div class="luoi">
           <label class="o">Email *<input id="tkTen" type="email" placeholder="vd: lan.nguyen@gmail.com" autocapitalize="none" spellcheck="false"></label>
           <label class="o">Họ tên *<input id="tkHoTen" type="text" placeholder="vd: Nguyễn Thị Lan"></label>
@@ -1053,7 +1063,7 @@
   <!-- Hộp xem 1 phiếu: chồng lên danh sách phiếu, đóng chỉ đóng phiếu này -->
   <div id="hopPhieu" class="phu-trang an" style="z-index:22">
     <div class="hop" role="dialog" aria-modal="true" aria-labelledby="phieuTieuDe">
-      <div class="thanh" style="margin-bottom:10px"><button id="phieuVe" class="phu nho">← Danh sách</button><h2 id="phieuTieuDe" class="gian" style="margin:0;font-size:15px"></h2>
+      <div class="thanh" style="margin-bottom:10px"><button id="phieuVe" class="phu nho"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/></svg>Danh sách</button><h2 id="phieuTieuDe" class="gian" style="margin:0;font-size:15px"></h2>
         <button id="phieuTruoc" class="phu nho" aria-label="Phiếu trước">‹</button><button id="phieuSau" class="phu nho" aria-label="Phiếu sau">›</button>
         <button id="phieuDong" class="phu nho">Đóng</button></div>
       <div id="phieuNoiDung"></div>
@@ -1062,7 +1072,7 @@
   <!-- Hộp hỏi xác nhận / nhập chữ (thay confirm/prompt của trình duyệt) -->
   <div id="hopHoi" class="phu-trang an" style="z-index:30">
     <div class="hop hop-hoi" role="dialog" aria-modal="true">
-      <div class="dau-hop an" id="hoiDau"><h2 id="hoiTieuDe"></h2><button type="button" id="hoiDong" class="dong-x phu" aria-label="Đóng">✕</button></div>
+      <div class="dau-hop an" id="hoiDau"><h2 id="hoiTieuDe"></h2><button type="button" id="hoiDong" class="dong-x phu" aria-label="Đóng"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button></div>
       <p id="hoiNoiDung" style="white-space:pre-line;margin-top:0"></p>
       <label class="o an" id="hoiNhanO"><span id="hoiNhan"></span><input id="hoiNhap" type="text" class="an" style="width:100%"></label>
       <label class="o an" id="hoiChonO" style="margin-top:12px"><span id="hoiChonNhan"></span><select id="hoiChon" style="width:100%"></select></label>
@@ -1110,16 +1120,26 @@
   function goi(ten) {
     return guiApi('/api/rpc', { ham: ten, thamSo: Array.prototype.slice.call(arguments, 1) });
   }
+  /* Bộ icon Heroicons (outline 24) — bộ icon mặc định của design system Astryx */
+  var ICON = {"academic-cap": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5\"/>", "arrow-down": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M19.5 13.5 12 21m0 0-7.5-7.5M12 21V3\"/>", "arrow-down-tray": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3\"/>", "arrow-left": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18\"/>", "arrow-path": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99\"/>", "arrow-right": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3\"/>", "arrow-up": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18\"/>", "arrow-up-tray": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5\"/>", "arrow-uturn-left": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3\"/>", "book-open": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25\"/>", "chart-bar": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z\"/>", "chat-bubble-oval-left-ellipsis": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z\"/>", "check": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"m4.5 12.75 6 6 9-13.5\"/>", "check-circle": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z\"/>", "chevron-down": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"m19.5 8.25-7.5 7.5-7.5-7.5\"/>", "clipboard-document-list": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z\"/>", "cog-6-tooth": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z\"/> <path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z\"/>", "document-arrow-up": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12-3-3m0 0-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z\"/>", "document-duplicate": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75\"/>", "document-text": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z\"/>", "ellipsis-horizontal": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z\"/>", "exclamation-triangle": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z\"/>", "eye": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z\"/> <path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z\"/>", "folder-open": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776\"/>", "megaphone": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 1 1 0-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 0 1-1.44-4.282m3.102.069a18.03 18.03 0 0 1-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 0 1 8.835 2.535M10.34 6.66a23.847 23.847 0 0 0 8.835-2.535m0 0A23.74 23.74 0 0 0 18.795 3m.38 1.125a23.91 23.91 0 0 1 1.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 0 0 1.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 0 1 0 3.46\"/>", "paper-airplane": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5\"/>", "pencil": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125\"/>", "pencil-square": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10\"/>", "presentation-chart-line": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5m.75-9 3-3 2.148 2.148A12.061 12.061 0 0 1 16.5 7.605\"/>", "puzzle-piece": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M14.25 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25 1.875c0 .369.128.713.349 1.003.215.283.401.604.401.959v0a.64.64 0 0 1-.657.643 48.39 48.39 0 0 1-4.163-.3c.186 1.613.293 3.25.315 4.907a.656.656 0 0 1-.658.663v0c-.355 0-.676-.186-.959-.401a1.647 1.647 0 0 0-1.003-.349c-1.036 0-1.875 1.007-1.875 2.25s.84 2.25 1.875 2.25c.369 0 .713-.128 1.003-.349.283-.215.604-.401.959-.401v0c.31 0 .555.26.532.57a48.039 48.039 0 0 1-.642 5.056c1.518.19 3.058.309 4.616.354a.64.64 0 0 0 .657-.643v0c0-.355-.186-.676-.401-.959a1.647 1.647 0 0 1-.349-1.003c0-1.035 1.008-1.875 2.25-1.875 1.243 0 2.25.84 2.25 1.875 0 .369-.128.713-.349 1.003-.215.283-.4.604-.4.959v0c0 .333.277.599.61.58a48.1 48.1 0 0 0 5.427-.63 48.05 48.05 0 0 0 .582-4.717.532.532 0 0 0-.533-.57v0c-.355 0-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035 0-1.875-1.007-1.875-2.25s.84-2.25 1.875-2.25c.37 0 .713.128 1.003.349.283.215.604.401.96.401v0a.656.656 0 0 0 .658-.663 48.422 48.422 0 0 0-.37-5.36c-1.886.342-3.81.574-5.766.689a.578.578 0 0 1-.61-.58v0Z\"/>", "sparkles": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z\"/>", "table-cells": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5\"/>", "trash": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0\"/>", "user-circle": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z\"/>", "user-group": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z\"/>", "user-plus": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z\"/>", "users": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z\"/>", "x-circle": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z\"/>", "x-mark": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M6 18 18 6M6 6l12 12\"/>"};
+  function ic(ten) {
+    var t = document.createElement('template');
+    t.innerHTML = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">' + (ICON[ten] || '') + '</svg>';
+    return t.content.firstChild;
+  }
   function the(tag, thuocTinh, con) {
     var el = document.createElement(tag);
     Object.keys(thuocTinh || {}).forEach(function (k) {
       if (thuocTinh[k] == null || thuocTinh[k] === false) return; // null/false = không đặt thuộc tính (VD disabled: null)
+      if (k === 'icon' || k === 'iconSau') return;
       if (k === 'text') el.textContent = thuocTinh[k];
       else if (k === 'class') el.className = thuocTinh[k];
       else if (k.indexOf('on') === 0) el.addEventListener(k.slice(2), thuocTinh[k]);
       else el.setAttribute(k, thuocTinh[k]);
     });
     (con || []).forEach(function (c) { if (c != null) el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    if (thuocTinh && thuocTinh.icon) el.insertBefore(ic(thuocTinh.icon), el.firstChild);
+    if (thuocTinh && thuocTinh.iconSau) el.appendChild(ic(thuocTinh.iconSau));
     return el;
   }
   var hetHanTB;
@@ -1241,9 +1261,9 @@
 
   /* Ô mã tra cứu: mã + nút biểu tượng "sao chép mã" + "xem tin nhắn gửi phụ huynh" */
   var BIEU_TUONG = {
-    chep: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5"/></svg>',
-    xong: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
-    tinNhan: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12.5a7.5 7.5 0 0 1-11.1 6.6L4 20.5l1.4-4.6A7.5 7.5 0 1 1 20 12.5z"/><path d="M8.5 11h7M8.5 14h4.5"/></svg>'
+    chep: '<svg class="ic ic-16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75"/></svg>',
+    xong: '<svg class="ic ic-16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>',
+    tinNhan: '<svg class="ic ic-16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"/></svg>'
   };
   function nutIcon(icon, nhan, khiBam) {
     var b = the('button', { type: 'button', class: 'nut-icon', title: nhan, 'aria-label': nhan, onclick: khiBam });
@@ -1302,7 +1322,7 @@
       var hs = hsCuaLop(n), dot = dotCuaLop(n), moi = dot[0];
       var the1 = the('div', { class: 'the-lop', tabindex: 0, role: 'button' }, [
         the('div', { class: 'dau-the-lop' }, [the('div', { class: 'ten-the-lop' }, [the('h3', { text: n }), (DL.monLop || {})[n] ? the('span', { class: 'nhan-mon', text: DL.monLop[n] }) : null]),
-          the('button', { class: 'phu nho', text: '📤 Gửi kết quả', onclick: function (e) { e.stopPropagation(); guiKqChoLop(n); } })]),
+          the('button', { class: 'phu nho', onclick: function (e) { e.stopPropagation(); guiKqChoLop(n); } }, [ic('paper-airplane'), 'Gửi kết quả'])]),
         the('div', { class: 'so-lieu' }, [oSo(hs.length, 'học sinh'), oSo(soBai(dot), 'bài thi'), oSo(dot.length, 'lần thi'), oSo(diemTB(maDot(dot)), 'điểm TB')]),
         the('div', { class: 'gan-nhat', text: moi ? 'Gần nhất: ' + tenLanThi(moi) + (moi.ngayThi ? ' · ' + moi.ngayThi : '') + (moi.congBo ? '' : ' (chưa công bố)') : 'Chưa có bài thi' })
       ]);
@@ -1399,7 +1419,7 @@
     $('ctTabHs').textContent = 'Học sinh (' + hs.length + ')'; $('ctTabBt').textContent = 'Bài thi (' + dot.length + ')';
     doiTabLop(ctTab);
     var tb = $('bangHsLop'); tb.textContent = '';
-    if (!hs.length) tb.appendChild(the('tr', {}, [the('td', { colspan: 7, class: 'goi-y', text: 'Lớp chưa có học sinh. Bấm nút 👤+ (thêm học sinh đã có) hoặc ⬆ (học sinh mới / nhập Excel) ở góc phải. Cũng có thể gửi kết quả thi lần đầu: hệ thống tự thêm các em trong file.' })]));
+    if (!hs.length) tb.appendChild(the('tr', {}, [the('td', { colspan: 7, class: 'goi-y', text: 'Lớp chưa có học sinh. Bấm nút thêm học sinh đã có hoặc nút học sinh mới / nhập Excel ở góc phải. Cũng có thể gửi kết quả thi lần đầu: hệ thống tự thêm các em trong file.' })]));
     hs.slice().sort(function (a, b) { return a.maHs < b.maHs ? -1 : 1; }).forEach(function (h, i) {
       var khac = h.nhom.filter(function (x) { return x !== n; });
       tb.appendChild(the('tr', {}, [
@@ -1416,7 +1436,7 @@
       ]));
     });
     var tbd = $('bangDotLop'); tbd.textContent = '';
-    if (!dot.length) tbd.appendChild(the('tr', {}, [the('td', { colspan: 6, class: 'goi-y', text: 'Chưa có bài thi. Bấm "📤 Gửi kết quả" để tạo phiếu cho lớp.' })]));
+    if (!dot.length) tbd.appendChild(the('tr', {}, [the('td', { colspan: 6, class: 'goi-y', text: 'Chưa có bài thi. Bấm "Gửi kết quả" để tạo phiếu cho lớp.' })]));
     dot.forEach(function (d) {
       tbd.appendChild(the('tr', {}, [the('td', {}, [the('b', { text: d.baiThi })]), the('td', { text: 'Lần ' + d.lan }), the('td', { text: d.ngayThi || '' }),
         the('td', { text: d.soPhieu }), the('td', {}, [the('b', { text: diemTB([d.maDot]) })]), the('td', {}, [the('span', { class: 'nhan ' + (d.congBo ? 'co' : 'moi'), text: d.congBo ? 'Đã công bố' : 'Chưa công bố' })])]));
@@ -1562,7 +1582,7 @@
   $('nutThemCoSan').onclick = function () {
     var n = lopMo;
     var ds = DL.hocSinh.filter(function (h) { return h.nhom.indexOf(n) < 0; });
-    if (!ds.length) return bao('Tất cả học sinh đã ở trong lớp này. Dùng nút ⬆ (học sinh mới / nhập Excel) để thêm em mới.', true);
+    if (!ds.length) return bao('Tất cả học sinh đã ở trong lớp này. Dùng nút học sinh mới / nhập Excel để thêm em mới.', true);
     var tim = the('input', { type: 'search', placeholder: 'Tìm theo tên, mã HS…', style: 'width:100%' });
     var khung = the('div', { class: 'ds-co-san' });
     var chon = {};
@@ -1710,7 +1730,7 @@
       var co = daChon.indexOf(khoaTen(n)) >= 0;
       o.appendChild(the('div', { class: 'muc-lop' + (co ? ' chon' : ''), role: 'option', 'aria-selected': co ? 'true' : 'false',
         onmousedown: function (e) { e.preventDefault(); }, onclick: function () { chonLop(n); } },
-        [the('span', { class: 'o-tick', text: co ? '✓' : '' }), the('span', { text: n }), the('span', { class: 'goi-y', text: hsCuaLop(n).length + ' em' })]));
+        [the('span', { class: 'o-tick' }, co ? [ic('check')] : []), the('span', { text: n }), the('span', { class: 'goi-y', text: hsCuaLop(n).length + ' em' })]));
     });
     var trung = (DL.nhom || []).concat(lopChon).some(function (n) { return khoaTen(n) === kt; });
     if (tu && !trung) {
@@ -1887,26 +1907,26 @@
       the('div', { class: 'chan-hop' }, [
         the('button', { class: 'phu', text: 'Sao chép bảng', title: 'Không tải được file? Sao chép bảng để dán vào Excel', onclick: function () { dong(); chepMauKq(chon); } }),
         the('span', { class: 'gian' }),
-        the('button', { text: '⬇ Tải mẫu', onclick: function () { dong(); taiMauKq(chon); } })])]));
+        the('button', { onclick: function () { dong(); taiMauKq(chon); } }, [ic('arrow-down-tray'), 'Tải mẫu'])])]));
   };
   $('nutTaiMauDapAn').onclick = function () {
     if (!window.XLSX) return bao('Không tải được thư viện Excel. Kiểm tra kết nối mạng.', true);
     goi('gvLayMau', '', $('gCauTruc').value).then(function (mau) { luuXlsx(mau.dapAn, 'Dap_an_theo_ma_de.xlsx'); }).catch(baoLoi);
   };
 
-  function trangFile(id, chu, kieu) { var el = $(id); el.textContent = chu; el.className = 'trang' + (kieu ? ' ' + kieu : ''); }
+  function trangFile(id, chu, kieu) { var el = $(id); el.textContent = chu; el.className = 'trang' + (kieu ? ' ' + kieu : ''); if (kieu === 'ok' || kieu === 'loi') el.insertBefore(ic(kieu === 'ok' ? 'check-circle' : 'x-circle'), el.firstChild); }
   /* Nạp 1 trong 2 file: loai = 'kq' (kết quả) | 'da' (đáp án) */
   function napFile(loai, so, tenNguon) {
     soHienTai = soHienTai || { kq: null, da: null };
     soHienTai[loai] = so;
     var id = loai === 'kq' ? 'tenFileKq' : 'tenFileDa';
     $('nutBoDa').classList.toggle('an', !soHienTai.da);
-    if (!soHienTai.kq) { trangFile(id, '✔ ' + tenNguon + ' — giờ chọn bảng kết quả học sinh.', 'ok'); return Promise.resolve(); }
+    if (!soHienTai.kq) { trangFile(id, tenNguon + ' — giờ chọn bảng kết quả học sinh.', 'ok'); return Promise.resolve(); }
     trangFile(id, 'Đang đọc ' + tenNguon + '…');
     var lanDau = loai === 'kq';
     if (lanDau) { xemTruoc = null; quyetDinhKq = {}; quyetDinhLop = {}; chonGhep = {}; dangTao = null; }
     return taiXemTruoc(lanDau).then(function (ok) {
-      trangFile(id, ok ? '✔ ' + tenNguon : '✖ ' + tenNguon + ' — xem thông báo lỗi', ok ? 'ok' : 'loi');
+      trangFile(id, ok ? tenNguon : tenNguon + ' — xem thông báo lỗi', ok ? 'ok' : 'loi');
       if (ok && loai === 'kq' && !soHienTai.da) trangFile('tenFileDa', xemTruoc && xemTruoc.maDe.length ? 'Chưa chọn — đang dùng đáp án chép trong bảng kết quả (' + xemTruoc.maDe.length + ' mã đề).' : 'Chưa chọn file đáp án.', '');
     });
   }
@@ -1964,7 +1984,7 @@
       var lopGoiY = canLop.filter(function (h) { return h.goiYLop.length; });
       var canChonDs = kq.hocSinh.filter(function (h) { return h.trangThai === 'canChon'; });
       tt.appendChild(the('p', { class: 'goi-y' }, ['Dòng "cần chọn": hãy chọn ở cột Lớp / cột cuối, hoặc ',
-        the('button', { class: 'phu nho', text: '☑ Chọn ' + canChonDs.length + ' dòng cần chọn', onclick: function () {
+        the('button', { class: 'phu nho', icon: 'check', text: 'Chọn ' + canChonDs.length + ' dòng cần chọn', onclick: function () {
           chonGhep = {}; canChonDs.forEach(function (h) { chonGhep[h.chiSo] = 1; }); veXemTruoc(xemTruoc);
           $('thanhChonGhep').scrollIntoView({ block: 'nearest' });
         } }), ' để xử lý một lần. ',
@@ -1986,7 +2006,7 @@
       if (h.trangThai === 'loi' && !h.nhom) oLop = the('span', { class: 'goi-y', text: h.lopFile || '—' });
       else {
         var sl = the('select', { class: 'qd' });
-        if (!h.nhom) sl.appendChild(the('option', { value: '', text: '⚠ Chọn lớp…' }));
+        if (!h.nhom) sl.appendChild(the('option', { value: '', text: 'Chọn lớp…' }));
         var dsL = (DL.nhom || []).slice();
         if (h.nhom && dsL.indexOf(h.nhom) < 0) dsL.unshift(h.nhom);
         h.goiYLop.forEach(function (g) { if (dsL.indexOf(g) < 0) dsL.unshift(g); });
@@ -2009,7 +2029,7 @@
       else {
         var lop = lopCua(kq, h.nhom);
         var sel = the('select', { class: 'qd' });
-        if (h.trangThai === 'canChon') sel.appendChild(the('option', { value: '', text: '⚠ Chọn học sinh…' }));
+        if (h.trangThai === 'canChon') sel.appendChild(the('option', { value: '', text: 'Chọn học sinh…' }));
         var daCo = {};
         var gTrong = the('optgroup', { label: 'Học sinh trong lớp ' + h.nhom });
         if (h.hs && !h.themVaoLop) { gTrong.appendChild(the('option', { value: h.hs.maHs, text: h.hs.hoTen + ' · ' + h.hs.maHs })); daCo[h.hs.maHs] = 1; }
@@ -2026,7 +2046,7 @@
         sel.appendChild(the('option', { value: 'boqua', text: 'Bỏ qua dòng này (không tạo phiếu)' }));
         sel.value = h.trangThai === 'co' ? h.hs.maHs : h.trangThai === 'moi' ? 'moi' : h.trangThai === 'boqua' ? 'boqua' : '';
         sel.onchange = function () { if (sel.value) { quyetDinhKq[h.chiSo] = sel.value; taiXemTruoc(false); } };
-        var nhan = h.trangThai === 'co' ? the('span', { class: 'nhan co', text: h.themVaoLop ? '✔ thêm vào lớp' : '✔' })
+        var nhan = h.trangThai === 'co' ? the('span', { class: 'nhan co', icon: 'check', text: h.themVaoLop ? 'thêm vào lớp' : '' })
           : h.trangThai === 'moi' ? the('span', { class: 'nhan moi', text: h.tuDong ? 'Mới (tự động)' : 'Mới' })
           : h.trangThai === 'boqua' ? the('span', { class: 'nhan', text: 'Bỏ qua' })
           : the('span', { class: 'nhan xacnhan', text: h.lyDo });
@@ -2037,13 +2057,13 @@
       cb.onchange = function () { if (cb.checked) chonGhep[h.chiSo] = 1; else delete chonGhep[h.chiSo]; capNhatChonGhep(); };
       tb.appendChild(the('tr', { class: chonGhep[h.chiSo] ? 'dang-chon' : '' }, [the('td', {}, [cb]), the('td', { text: h.stt }), the('td', {}, [the('b', { text: h.hoTen })]), the('td', { text: h.maHsFile || '—' }),
         the('td', {}, [oLop]), the('td', { text: h.maDe || '—' }), the('td', {}, [h.tongDiem + ' / ' + h.maxTong, (h.lechDiem || []).length ? the('span', { class: 'nhan xacnhan lech-diem', title: 'Điểm trong file khác điểm hệ thống chấm (phiếu dùng điểm hệ thống chấm)',
-          text: '⚠ ' + h.lechDiem.map(function (x) { return x.ten.replace(/\.$/, '') + ': file ' + x.file + ' ≠ chấm ' + x.cham; }).join(' · ') }) : null]), the('td', {}, [o])]));
+          icon: 'exclamation-triangle', text: h.lechDiem.map(function (x) { return x.ten.replace(/\.$/, '') + ': file ' + x.file + ' ≠ chấm ' + x.cham; }).join(' · ') }) : null]), the('td', {}, [o])]));
     });
 
     var kv = $('khuVang'); kv.textContent = '';
     kq.nhom.forEach(function (x) {
       if (!x.vang.length) return;
-      kv.appendChild(the('p', { class: 'goi-y', text: '⚠ Lớp ' + x.nhom + ': ' + x.vang.length + ' học sinh KHÔNG có kết quả trong file (vắng thi?) — sẽ không có phiếu:' }));
+      kv.appendChild(the('p', { class: 'goi-y', icon: 'exclamation-triangle', text: 'Lớp ' + x.nhom + ': ' + x.vang.length + ' học sinh KHÔNG có kết quả trong file (vắng thi?) — sẽ không có phiếu:' }));
       var c = the('div'); x.vang.forEach(function (v) { c.appendChild(the('span', { class: 'chip', text: v.hoTen + ' · ' + v.maHs })); }); kv.appendChild(c);
     });
     capNhatChonGhep();
@@ -2268,7 +2288,7 @@
         the('div', { class: 'so-tien-do' }, [the('b', { text: s.daXong + ' / ' + s.tong }), the('span', { text: ' phiếu đã tạo' })]),
         the('div', { class: 'tien-do' }, [the('div', { style: 'width:' + Math.round(s.daXong / Math.max(s.tong, 1) * 100) + '%' })]),
         the('p', { class: 'goi-y', style: 'margin:0', text: (e.message || String(e)) + ' Bấm "Tiếp tục" để tạo nốt từ chỗ dừng (không tạo lần thi mới).' })
-      ], [the('button', { class: 'phu', text: 'Hủy', onclick: huyTao }), the('span', { class: 'gian' }), the('button', { text: '↻ Tiếp tục', onclick: function () { chayLo(); } })]);
+      ], [the('button', { class: 'phu', text: 'Hủy', onclick: huyTao }), the('span', { class: 'gian' }), the('button', { icon: 'arrow-path', text: 'Tiếp tục', onclick: function () { chayLo(); } })]);
     });
   }
   function huyTao() {
@@ -2319,18 +2339,18 @@
       khuLoi = the('div', {}, [the('p', { style: 'margin:10px 0 4px', text: 'Bỏ qua ' + loi.length + ' dòng:' }), ulLoi]);
     }
     var trangThai = the('p', { class: 'goi-y', style: 'margin:10px 0 0', text: 'Phụ huynh chỉ xem được sau khi công bố. Nên xem vài phiếu trước; có thể công bố sau ở thẻ "Bài thi".' });
-    var nutCB = the('button', { text: '📢 Công bố' + (ketQua.length > 1 ? ' (' + ketQua.length + ' lớp)' : ''), onclick: function () {
+    var nutCB = the('button', { icon: 'megaphone', text: 'Công bố' + (ketQua.length > 1 ? ' (' + ketQua.length + ' lớp)' : ''), onclick: function () {
       nutCB.disabled = true;
       var chay = function (i, dl) {
         if (i >= ketQua.length) return Promise.resolve(dl);
         return goiThuLai('gvCongBo', [ketQua[i].dot.maDot, true], 3).then(function (dl2) { return chay(i + 1, dl2); });
       };
       chay(0).then(function (dl) {
-        capNhat(dl); nutCB.textContent = '✔ Đã công bố'; trangThai.textContent = 'Đã công bố — phụ huynh tra cứu được ngay bằng mã tra cứu.';
+        capNhat(dl); nutCB.textContent = 'Đã công bố'; nutCB.insertBefore(ic('check'), nutCB.firstChild); trangThai.textContent = 'Đã công bố — phụ huynh tra cứu được ngay bằng mã tra cứu.';
         bao('Đã công bố. Phụ huynh có thể tra cứu ngay.');
       }).catch(function (e) { nutCB.disabled = false; baoLoi(e); });
     } });
-    hopTao('✔ Đã tạo ' + tongPhieu + ' phiếu' + (ketQua.length > 1 ? ' cho ' + ketQua.length + ' lớp' : ''), [ul, khuLoi, trangThai],
+    hopTao('Đã tạo ' + tongPhieu + ' phiếu' + (ketQua.length > 1 ? ' cho ' + ketQua.length + ' lớp' : ''), [ul, khuLoi, trangThai],
       [the('button', { class: 'phu', text: 'Xong', onclick: function () { dongHopTao(); datLaiGui(); veBaiThi(); } }), the('span', { class: 'gian' }), nutCB]);
   }
 
@@ -2339,9 +2359,9 @@
   function menuThem(muc, nhan) {
     var ds = the('div', { class: 'menu-ds an', role: 'menu' }, muc.map(function (m) {
       return the('button', { type: 'button', role: 'menuitem', class: m[3] ? 'do' : null, onclick: function () { dongMenuHang(); m[2](); } },
-        [the('span', { class: 'icon-menu', 'aria-hidden': 'true', text: m[0] }), m[1]]);
+        [the('span', { class: 'icon-menu', 'aria-hidden': 'true' }, [ic(m[0])]), m[1]]);
     }));
-    var nut = the('button', { type: 'button', class: 'phu nho nut-icon nut-them-hang', 'aria-haspopup': 'menu', 'aria-expanded': 'false', 'aria-label': nhan || 'Thao tác khác', title: 'Thao tác khác', text: '⋯',
+    var nut = the('button', { type: 'button', class: 'phu nho nut-icon nut-them-hang', 'aria-haspopup': 'menu', 'aria-expanded': 'false', 'aria-label': nhan || 'Thao tác khác', title: 'Thao tác khác', icon: 'ellipsis-horizontal',
       onclick: function (e) { e.stopPropagation(); var mo = ds.classList.contains('an'); dongMenuHang(); if (mo) { ds.classList.remove('an'); nut.setAttribute('aria-expanded', 'true'); } } });
     return the('div', { class: 'menu-them menu-hang' }, [nut, ds]);
   }
@@ -2361,7 +2381,7 @@
       return a.nhom.localeCompare(b.nhom, 'vi', { numeric: true }) || (b.sttTao || 0) - (a.sttTao || 0) || b.lan - a.lan;
     });
     var tb = $('bangDot'); tb.textContent = '';
-    if (!ds.length) tb.appendChild(the('tr', {}, [the('td', { colspan: 7, class: 'goi-y', text: 'Chưa có bài thi nào. Bấm "📤 Gửi kết quả thi" để tải lên bảng kết quả và tạo phiếu.' })]));
+    if (!ds.length) tb.appendChild(the('tr', {}, [the('td', { colspan: 7, class: 'goi-y', text: 'Chưa có bài thi nào. Bấm "Gửi kết quả thi" để tải lên bảng kết quả và tạo phiếu.' })]));
     var nhomTruoc = null, baiTruoc = null;
     ds.forEach(function (d) {
       if (d.nhom !== nhomTruoc) {
@@ -2371,7 +2391,7 @@
           if (NHOM_DOT_DONG[ten]) delete NHOM_DOT_DONG[ten]; else NHOM_DOT_DONG[ten] = 1;
           try { localStorage.setItem('nhomDotDong', JSON.stringify(NHOM_DOT_DONG)); } catch (e) { /* bỏ qua */ }
           veDot();
-        } }, [the('span', { class: 'mui-ten', 'aria-hidden': 'true', text: '▾' }), the('span', { class: 'ten-nhom', text: 'Lớp ' + (ten || '(chưa đặt)') }),
+        } }, [the('span', { class: 'mui-ten', 'aria-hidden': 'true', icon: 'chevron-down' }), the('span', { class: 'ten-nhom', text: 'Lớp ' + (ten || '(chưa đặt)') }),
           the('span', { class: 'dem-nhom', text: soBai(cua) + ' bài thi · ' + cua.reduce(function (a, x) { return a + (x.soPhieu || 0); }, 0) + ' phiếu' + (chuaCB ? ' · ' + chuaCB + ' chưa công bố' : '') })]);
         tb.appendChild(the('tr', { class: 'nhom-dau' + (dong ? ' dong' : '') }, [the('td', { colspan: 7 }, [nut])]));
         nhomTruoc = d.nhom; baiTruoc = null;
@@ -2397,7 +2417,7 @@
         the('td', {}, [the('div', { class: 'cum-thao-tac cum-dot' }, [
           nutCongBo,
           d.soPhieu ? the('button', { class: 'phu nho', text: 'Xem phiếu', onclick: function () { hopDsPhieu(d); } }) : null,
-          menuThem([['✏️', 'Sửa', function () { suaBaiThi(d); }], ['🗑️', 'Xóa lần này', xoa, true]], 'Thao tác khác · ' + tenLanThi(d))])])
+          menuThem([['pencil-square', 'Sửa', function () { suaBaiThi(d); }], ['trash', 'Xóa lần này', xoa, true]], 'Thao tác khác · ' + tenLanThi(d))])])
       ]));
       baiTruoc = d.baiThi;
     });
@@ -2460,7 +2480,7 @@
         var dong = the('tr', {}, [
           the('td', {}, [the('span', { class: 'ten-hang' }, [the('b', { text: p.hoTen }),
             p.hang <= 3 ? the('span', { class: 'huy-hieu h' + p.hang, title: 'Hạng ' + p.hang, text: '#' + p.hang }) : null])]), the('td', { text: p.maHs }),
-          the('td', {}, [p.tongDiem + ' / ' + p.diemToiDa, p.suaTay ? the('span', { class: 'da-sua', title: 'Điểm đã được sửa trên app', text: '✎ đã sửa' }) : null]),
+          the('td', {}, [p.tongDiem + ' / ' + p.diemToiDa, p.suaTay ? the('span', { class: 'da-sua', title: 'Điểm đã được sửa trên app', icon: 'pencil', text: 'đã sửa' }) : null]),
           the('td', {}, [the('div', { class: 'cum-thao-tac cum-cuoi' }, [
             the('button', { class: 'phu nho', text: 'Sửa điểm', onclick: function () { suaDiemPhieu(p, dong, d); } }),
             the('button', { class: 'phu nho', text: 'Xem', onclick: function () { moPhieu(i); } })])])]);
@@ -2866,8 +2886,8 @@
         khu.appendChild(the('div', { class: 'the-phan-ct' }, [
           the('div', { class: 'dau-phan-ct' }, [the('b', { text: 'Phần ' + (i + 1) }),
             the('span', { class: 'cum-thao-tac' }, [
-              the('button', { type: 'button', class: 'phu nho', text: '↑', title: 'Đưa lên', disabled: i ? null : 'disabled', onclick: function () { chuyen(-1); } }),
-              the('button', { type: 'button', class: 'phu nho', text: '↓', title: 'Đưa xuống', disabled: i < phan.length - 1 ? null : 'disabled', onclick: function () { chuyen(1); } }),
+              the('button', { type: 'button', class: 'phu nho', icon: 'arrow-up', 'aria-label': 'Đưa lên', title: 'Đưa lên', disabled: i ? null : 'disabled', onclick: function () { chuyen(-1); } }),
+              the('button', { type: 'button', class: 'phu nho', icon: 'arrow-down', 'aria-label': 'Đưa xuống', title: 'Đưa xuống', disabled: i < phan.length - 1 ? null : 'disabled', onclick: function () { chuyen(1); } }),
               the('button', { type: 'button', class: 'nguy nho', text: 'Xóa', disabled: phan.length > 1 ? null : 'disabled', onclick: function () { phan.splice(i, 1); ve(); } })])]),
           the('div', { class: 'luoi-phan-ct' }, [
             the('label', { class: 'o' }, ['Dạng bài', oD]), the('label', { class: 'o' }, ['Số câu', oS]), chiTiet,
@@ -2885,7 +2905,7 @@
     } });
     moHop(moi ? 'Tạo cấu trúc đề mới' : banSao ? 'Nhân bản cấu trúc đề "' + c.ten + '"' : 'Sửa cấu trúc đề', the('div', { class: 'form-ct' }, [
       the('div', { class: 'luoi' }, [the('label', { class: 'o' }, ['Tên cấu trúc đề', oTen]), the('label', { class: 'o' }, ['Môn', oMon])]),
-      !banSao && c.soLanDung ? the('p', { class: 'goi-y', text: '⚠ Đang dùng cho ' + c.soLanDung + ' lần thi. Phiếu đã tạo giữ nguyên điểm; chỉ khi gửi lại / ghi đè các lần thi đó mới chấm theo cấu trúc mới.' }) : null,
+      !banSao && c.soLanDung ? the('p', { class: 'goi-y', icon: 'exclamation-triangle', text: 'Đang dùng cho ' + c.soLanDung + ' lần thi. Phiếu đã tạo giữ nguyên điểm; chỉ khi gửi lại / ghi đè các lần thi đó mới chấm theo cấu trúc mới.' }) : null,
       khu,
       the('button', { type: 'button', class: 'phu nho', text: '+ Thêm phần', onclick: function () { phan.push({ ten: '', dang: 'trac_nghiem', soCau: 10, diemMoiCau: 0.25, phuongAn: 'ABCD', bangDiem: [0, 0.1, 0.25, 0.5, 1] }); ve(); } }),
       tong,
@@ -3002,7 +3022,7 @@
       tieuDe.textContent = chu;
       buoc.textContent = '';
       (cacBuoc || ['Chọn cách tạo', 'Tải file', 'Kiểm tra phiếu']).forEach(function (x, i) {
-        buoc.appendChild(the('span', { class: 'o-buoc' + (i + 1 === so ? ' dang' : i + 1 < so ? ' xong' : '') }, [the('b', { text: i + 1 < so ? '✓' : String(i + 1) }), x]));
+        buoc.appendChild(the('span', { class: 'o-buoc' + (i + 1 === so ? ' dang' : i + 1 < so ? ' xong' : '') }, [i + 1 < so ? the('b', { icon: 'check' }) : the('b', { text: String(i + 1) }), x]));
       });
       cotPhai = null; veDsMuc = null; boChon = null; than.className = 'than-mau'; chan.classList.remove('an'); nutLuuDau.textContent = ''; 
       than.textContent = ''; chan.textContent = ''; delete than.dataset.daSua; anPop();
@@ -3012,10 +3032,10 @@
     /* Bước 1: chọn cách tạo */
     var chonCach = function () {
       hienBuoc(1, 'Tạo mẫu phiếu');
-      var the1 = function (icon, ten, moTa, viec) { return the('button', { type: 'button', class: 'the-cach', onclick: viec }, [the('span', { class: 'icon-cach', text: icon }), the('b', { text: ten }), the('span', { class: 'goi-y', text: moTa })]); };
+      var the1 = function (icon, ten, moTa, viec) { return the('button', { type: 'button', class: 'the-cach', onclick: viec }, [the('span', { class: 'icon-cach' }, [ic(icon)]), the('b', { text: ten }), the('span', { class: 'goi-y', text: moTa })]); };
       than.appendChild(the('div', { class: 'luoi-cach' }, [
-        the1('📄', 'Dùng file Word đang dùng', 'File trộn thư (mail merge), hoặc phiếu Word đã điền sẵn của 1 học sinh. Hệ thống giữ nguyên bố cục và tự nhận ra những chỗ thay đổi theo từng học sinh.', function () { taiFile(null); }),
-        the1('✨', 'Dùng mẫu có sẵn', 'Mẫu "Phân tích bài thi" gồm thông tin học sinh, điểm, bảng phân tích từng câu, nhận xét — tự đủ số câu theo đề, dùng cho mọi bài thi. Sửa chữ, thêm logo tùy ý.', function () { chinh(mauCoSan()); })]));
+        the1('document-text', 'Dùng file Word đang dùng', 'File trộn thư (mail merge), hoặc phiếu Word đã điền sẵn của 1 học sinh. Hệ thống giữ nguyên bố cục và tự nhận ra những chỗ thay đổi theo từng học sinh.', function () { taiFile(null); }),
+        the1('sparkles', 'Dùng mẫu có sẵn', 'Mẫu "Phân tích bài thi" gồm thông tin học sinh, điểm, bảng phân tích từng câu, nhận xét — tự đủ số câu theo đề, dùng cho mọi bài thi. Sửa chữ, thêm logo tùy ý.', function () { chinh(mauCoSan()); })]));
     };
 
     /* Bước 2: tải file Word (+ Excel) */
@@ -3027,9 +3047,9 @@
         var inp = the('input', { type: 'file', accept: accept, class: 'an' });
         inp.onchange = function () { var f = inp.files[0]; inp.value = ''; if (f) khiChon(f, trangThai); };
         return the('div', { class: 'o-tai' }, [the('div', { class: 'so-tai', text: so }), the('div', {}, [the('b', { text: ten }), the('p', { class: 'goi-y', text: moTa }),
-          the('label', { class: 'nut phu' }, ['📂 Chọn file…', inp]), ' ', trangThai])]);
+          the('label', { class: 'nut phu', icon: 'folder-open' }, ['Chọn file…', inp]), ' ', trangThai])]);
       };
-      var nutTiep = the('button', { text: 'Tiếp tục →', disabled: 'disabled', onclick: function () {
+      var nutTiep = the('button', { text: 'Tiếp tục', iconSau: 'arrow-right', disabled: 'disabled', onclick: function () {
         var kq;
         try { kq = window.MauWord.docMauWord(tepWord, bang ? { duLieu: bang } : undefined); } catch (e) { return bao('Không đọc được file Word này (' + (e && e.message || e) + ').', true); }
         if (!kq.ok) return bao(kq.loi, true);
@@ -3040,12 +3060,12 @@
         oChon('1', 'File Word mẫu phiếu (.docx) — bắt buộc', 'File trộn thư thầy cô đang dùng, hoặc phiếu Word đã điền sẵn của 1 học sinh. File .doc cũ: mở bằng Word rồi Lưu thành .docx.', '.docx', function (f, tt) {
           if (!/\.docx$/i.test(f.name)) return bao('Hãy chọn file Word dạng .docx.', true);
           if (!window.XLSX || !window.MauWord) return bao('Chưa tải xong công cụ đọc file. Kiểm tra kết nối mạng rồi thử lại.', true);
-          docTep(f).then(function (buf) { tepWord = docTepWord(buf); tenWord = f.name; tt.textContent = '✔ ' + f.name; tt.className = 'goi-y ok'; nutTiep.disabled = false; }).catch(baoLoi);
+          docTep(f).then(function (buf) { tepWord = docTepWord(buf); tenWord = f.name; tt.textContent = f.name; tt.insertBefore(ic('check-circle'), tt.firstChild); tt.className = 'goi-y ok'; nutTiep.disabled = false; }).catch(baoLoi);
         }),
         oChon('2', 'File Excel kết quả đã dùng làm phiếu này — nên có', 'Có file này, hệ thống nhận ra đủ mọi chỗ thay đổi theo học sinh (đáp án từng câu, điểm, nhận xét…) và cho xem thử phiếu của từng em. Không có thì chỉ nhận được họ tên, lớp, mã đề, tổng điểm.', '.xlsx,.xls,.csv', function (f, tt) {
-          docTep(f).then(function (buf) { bang = docBangExcel(buf); if (!bang) return bao('Không thấy dòng tiêu đề trong file Excel.', true); tt.textContent = '✔ ' + f.name + ' · ' + bang.dong.length + ' học sinh'; tt.className = 'goi-y ok'; }).catch(baoLoi);
+          docTep(f).then(function (buf) { bang = docBangExcel(buf); if (!bang) return bao('Không thấy dòng tiêu đề trong file Excel.', true); tt.textContent = f.name + ' · ' + bang.dong.length + ' học sinh'; tt.insertBefore(ic('check-circle'), tt.firstChild); tt.className = 'goi-y ok'; }).catch(baoLoi);
         })]));
-      chan.appendChild(the('button', { class: 'phu', text: thay ? 'Hủy' : '← Quay lại', onclick: function () { if (thay) dong(); else chonCach(); } }));
+      chan.appendChild(the('button', { class: 'phu', icon: thay ? null : 'arrow-left', text: thay ? 'Hủy' : 'Quay lại', onclick: function () { if (thay) dong(); else chonCach(); } }));
       chan.appendChild(the('span', { class: 'gian' }));
       chan.appendChild(nutTiep);
     };
@@ -3101,7 +3121,7 @@
           var moTaPhan = ma === 'phan-tich' ? (dg ? ' · ' + tenDang(dg) : ph ? ' · Phần ' + ph : ' · Tất cả các phần') : '';
           var noi = minhHoa ? window.KhoiPhieu.dungMotKhoi(ma, ph, minhHoa, { ten: k.getAttribute('data-ten') || '', dang: dg, thutu: k.getAttribute('data-thutu') || '', nhan: k.getAttribute('data-nhan') || '', muc: k.getAttribute('data-muc') || '' }) : kk.ten;
           if (minhHoa && !noi && ma === 'phan-tich') noi = '<p style="margin:4pt 0;color:#666;font-style:italic">(Phiếu minh họa không có phần ' + xmlAnToan(dg ? tenDang(dg) : 'Phần ' + ph) + '. Đề có phần dạng này thì bảng các câu hiện ở đây; đề không có thì chỗ này để trống.)</p>';
-          k.innerHTML = (k.tagName === 'SPAN' ? '' : '<span class="nhan-khoi">⚙ Phần tự động: ' + kk.ten + xmlAnToan(moTaPhan) + ' — hệ thống tự điền cho từng học sinh</span>') + noi;
+          k.innerHTML = (k.tagName === 'SPAN' ? '' : '<span class="nhan-khoi"><svg width="13" height="13" style="vertical-align:-2px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/> <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg> Phần tự động: ' + kk.ten + xmlAnToan(moTaPhan) + ' — hệ thống tự điền cho từng học sinh</span>') + noi;
         });
         demCho();
         if (laBaCot() && !cotPhai.querySelector('.pop-mau')) veDsMuc();
@@ -3109,7 +3129,7 @@
       var demCho = function () {
         var n = vung() ? truongTrongHtml(vung().innerHTML).length : 0, nk = vung() ? vung().querySelectorAll('.khoi').length : 0;
         huongDan.innerHTML = '';
-        huongDan.appendChild(document.createTextNode(xemThu ? '👁 Đang xem thử phiếu của 1 học sinh. Chọn "Đang chỉnh sửa" để sửa tiếp.'
+        if (xemThu) huongDan.appendChild(ic('eye')); huongDan.appendChild(document.createTextNode(xemThu ? 'Đang xem thử phiếu của 1 học sinh. Chọn "Đang chỉnh sửa" để sửa tiếp.'
           : n + ' chỗ thay đổi theo từng học sinh (tô vàng)' + (nk ? ' · ' + nk + ' phần tự động (khung xanh)' : '') + '. '));
         if (!xemThu) [['Bấm vào chỗ tô vàng', ' để đổi hoặc bỏ. '], ['Bôi đen chữ', ' để thêm chỗ thay đổi. '], ['Gõ trực tiếp', ' để sửa chữ.']].forEach(function (x) {
           huongDan.appendChild(the('b', { text: x[0] })); huongDan.appendChild(document.createTextNode(x[1]));
@@ -3136,7 +3156,7 @@
         setTimeout(function () { if (!laCamUng()) tim.focus(); }, 30);
         return [tim, ds];
       };
-      var dongPop = the('button', { type: 'button', class: 'dong-pop', 'aria-label': 'Đóng', text: '✕', onclick: anPop });
+      var dongPop = the('button', { type: 'button', class: 'dong-pop', 'aria-label': 'Đóng', icon: 'x-mark', onclick: anPop });
 
       var chonTruong = function (s) {
         var r = tuRect(s.getBoundingClientRect());
@@ -3207,9 +3227,9 @@
               var doi = function (d) { var j = i + d; if (j < 0 || j >= muc.length) return; var y = muc[i]; muc[i] = muc[j]; muc[j] = y; luuK(); veK(); };
               khuDiem.appendChild(the('div', { class: 'hang-nhan-diem' }, [o, s,
                 the('span', { class: 'nut-hang' }, [
-                  the('button', { type: 'button', class: 'phu nho', text: '↑', title: 'Đưa lên', disabled: i ? null : 'disabled', onclick: function () { doi(-1); } }),
-                  the('button', { type: 'button', class: 'phu nho', text: '↓', title: 'Đưa xuống', disabled: i < muc.length - 1 ? null : 'disabled', onclick: function () { doi(1); } }),
-                  the('button', { type: 'button', class: 'nguy nho', text: '✕', title: 'Xóa dòng', disabled: muc.length > 1 ? null : 'disabled', onclick: function () { muc.splice(i, 1); luuK(); veK(); } })])]));
+                  the('button', { type: 'button', class: 'phu nho', icon: 'arrow-up', 'aria-label': 'Đưa lên', title: 'Đưa lên', disabled: i ? null : 'disabled', onclick: function () { doi(-1); } }),
+                  the('button', { type: 'button', class: 'phu nho', icon: 'arrow-down', 'aria-label': 'Đưa xuống', title: 'Đưa xuống', disabled: i < muc.length - 1 ? null : 'disabled', onclick: function () { doi(1); } }),
+                  the('button', { type: 'button', class: 'nguy nho', icon: 'x-mark', 'aria-label': 'Xóa dòng', title: 'Xóa dòng', disabled: muc.length > 1 ? null : 'disabled', onclick: function () { muc.splice(i, 1); luuK(); veK(); } })])]));
             });
             khuDiem.appendChild(the('button', { type: 'button', class: 'phu nho', text: '+ Thêm dòng', onclick: function () {
               var chuaCo = dsDangChon.filter(function (dg) { return !muc.some(function (x) { return x.dang === dg; }); })[0] || dsDangChon[0];
@@ -3225,8 +3245,8 @@
           chonPhan ? the('label', { class: 'chon-phan-khoi' }, [the('span', { text: 'Tiêu đề' }), oTenPhan]) : null,
           chonPhan ? the('p', { class: 'goi-y', text: 'Lấy từ: các câu có cột "Dạng bài" = dạng đã chọn ở tab CauHoi của file đáp án, dù câu nằm ở phần nào (không ghi dạng bài thì hệ thống tự nhận theo đáp án). "Tổng điểm" của bảng = điểm các câu dạng này, chấm theo dạng bài. Tiêu đề: gõ ở ô trên để thay cả dòng, hoặc để trống để hệ thống tự ghi. Đổi môn của mẫu ở mục "Thông tin mẫu" (cột trái).' }) : null,
           the('div', { class: 'chan-pop' }, [
-            the('button', { type: 'button', class: 'phu nho', text: '↑ Đưa lên', disabled: k.previousElementSibling ? null : 'disabled', onclick: function () { doiCho(-1); } }),
-            the('button', { type: 'button', class: 'phu nho', text: '↓ Đưa xuống', disabled: k.nextElementSibling ? null : 'disabled', onclick: function () { doiCho(1); } }),
+            the('button', { type: 'button', class: 'phu nho', icon: 'arrow-up', text: 'Đưa lên', disabled: k.previousElementSibling ? null : 'disabled', onclick: function () { doiCho(-1); } }),
+            the('button', { type: 'button', class: 'phu nho', icon: 'arrow-down', text: 'Đưa xuống', disabled: k.nextElementSibling ? null : 'disabled', onclick: function () { doiCho(1); } }),
             the('button', { type: 'button', class: 'nguy nho', text: 'Xóa phần này', onclick: function () { luuLS(); k.remove(); demCho(); anPop(); } })])],
           tuRect(k.getBoundingClientRect()));
         dongPop.onclick = anPop;
@@ -3268,10 +3288,10 @@
       var chonHs = the('select', { 'aria-label': 'Xem thử phiếu của' });
       var veChonHs = function () {
         chonHs.textContent = '';
-        chonHs.appendChild(the('option', { value: '', text: '✎ Đang chỉnh sửa' }));
+        chonHs.appendChild(the('option', { value: '', text: 'Đang chỉnh sửa' }));
         if (!bang) return;
         var cTen = bang.tieuDe.findIndex(function (h) { return /họ\s*(và)?\s*tên/i.test(h); });
-        bang.dong.forEach(function (r, i) { chonHs.appendChild(the('option', { value: i, text: '👁 ' + ((cTen >= 0 ? r[cTen] : '') || 'Dòng ' + (i + 2)) })); });
+        bang.dong.forEach(function (r, i) { chonHs.appendChild(the('option', { value: i, text: ((cTen >= 0 ? r[cTen] : '') || 'Dòng ' + (i + 2)) })); });
       };
       chonHs.onchange = function () {
         anPop();
@@ -3286,7 +3306,7 @@
         [].forEach.call(vung().querySelectorAll('.truong'), function (s) { s.textContent = '«' + nhanTruong(s.getAttribute('data-truong'), bang) + '»'; });
         vung().contentEditable = 'false'; demCho();
       };
-      var nutExcel = the('label', { class: 'nut phu nho' }, [bang ? '📄 Đổi file Excel…' : '📄 Thêm file Excel kết quả…', (function () {
+      var nutExcel = the('label', { class: 'nut phu nho', icon: 'document-arrow-up' }, [bang ? 'Đổi file Excel…' : 'Thêm file Excel kết quả…', (function () {
         var inp = the('input', { type: 'file', accept: '.xlsx,.xls,.csv', class: 'an' });
         inp.onchange = function () {
           var fx = inp.files[0]; inp.value = ''; if (!fx) return;
@@ -3386,7 +3406,7 @@
           sauKhiChen(el, ma);
         });
       };
-      var nutHoanTac = the('button', { type: 'button', class: 'phu nho', text: '↶ Hoàn tác', disabled: 'disabled', onclick: function () {
+      var nutHoanTac = the('button', { type: 'button', class: 'phu nho', icon: 'arrow-uturn-left', text: 'Hoàn tác', disabled: 'disabled', onclick: function () {
         if (!lichSu.length || xemThu) return; vung().innerHTML = lichSu.pop(); trinhBay(); anPop(); nutHoanTac.disabled = !lichSu.length;
       } });
 
@@ -3462,7 +3482,7 @@
         nhom('Phần tự động', [the('p', { class: 'goi-y nho-keo', text: 'Kéo thẻ vào phiếu (vạch cam là chỗ thả), hoặc bấm thẻ để chèn tại con trỏ.' }), chonKhoiChen]),
         nhom('Chỉnh sửa', [nutHoanTac, huongDan]),
         (m.canhBao || []).length ? nhom('Lưu ý khi đọc file', [the('ul', { class: 'canh-bao' }, m.canhBao.map(function (c) { return the('li', { text: c }); }))]) : null,
-        !m.id && !m.tep ? the('button', { class: 'phu nho', text: '← Chọn cách khác', onclick: function () { if (!than.dataset.daSua || confirm('Bỏ các chỉnh sửa?')) chonCach(); } }) : null
+        !m.id && !m.tep ? the('button', { class: 'phu nho', icon: 'arrow-left', text: 'Chọn cách khác', onclick: function () { if (!than.dataset.daSua || confirm('Bỏ các chỉnh sửa?')) chonCach(); } }) : null
       ].filter(Boolean));
       cotPhai = the('aside', { class: 'cot-phai' });
       than.appendChild(cotTrai);
@@ -3485,7 +3505,7 @@
             [].forEach.call(vung().querySelectorAll('.dang-chon'), function (x) { x.classList.remove('dang-chon'); });
             el.scrollIntoView({ block: 'center' });
             if (laKhoi) { el.classList.add('dang-chon'); chonKhoi(el); } else chonTruong(el);
-          } }, [the('span', { class: 'loai-muc', text: laKhoi ? '⚙' : '✎' }), the('span', { text: ten })]));
+          } }, [the('span', { class: 'loai-muc' }, [ic(laKhoi ? 'cog-6-tooth' : 'pencil')]), the('span', { text: ten })]));
         });
         cotPhai.appendChild(dsEl);
       };
@@ -3539,7 +3559,7 @@
     document.querySelectorAll('.chi-quan-tri').forEach(function (el) { el.classList.toggle('an', !qt); });
     $('tenNguoiDung').textContent = '';
     if (DL.toi && DL.toi.hoTen) {
-      $('tenNguoiDung').appendChild(document.createTextNode('👤 '));
+      $('tenNguoiDung').appendChild(ic('user-circle')); $('tenNguoiDung').appendChild(document.createTextNode(' '));
       $('tenNguoiDung').appendChild(the('b', { text: DL.toi.hoTen }));
       $('tenNguoiDung').appendChild(document.createTextNode(' · ' + (DL.toi.vaiTro || '') + (qt ? '' : ' · ' + (DL.toi.lop === '*' ? 'tất cả lớp' : (DL.toi.lop || []).length + ' lớp'))));
     }
