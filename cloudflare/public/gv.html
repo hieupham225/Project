@@ -75,6 +75,8 @@
   table.ds > :first-child > tr:first-child > :last-child { border-top-right-radius: calc(var(--r-khung) - 1px); }
   table.ds > :last-child > tr:last-child > :first-child { border-bottom-left-radius: calc(var(--r-khung) - 1px); }
   table.ds > :last-child > tr:last-child > :last-child { border-bottom-right-radius: calc(var(--r-khung) - 1px); }
+  /* tiêu đề cột đang dính ở đầu màn hình: bỏ bo góc, thêm bóng mờ phân tách */
+  table.ds.dinh > thead > tr > th { border-radius: 0 !important; box-shadow: 0 1px 0 var(--vien-dam); }
   .ma { font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-weight: 600; letter-spacing: .5px; }
   /* Badge */
   .nhan { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--r-tron); font-size: 12px; line-height: 16px; font-weight: 600; white-space: nowrap; }
@@ -1092,6 +1094,19 @@
         });
       }, function () { throw new Error('Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.'); });
   }
+  // Đánh dấu bảng có tiêu đề cột đang dính (sticky) để bỏ bo góc trên — chạy khi cuộn trang hoặc cuộn trong hộp
+  (function () {
+    var cho = false;
+    function kiemTra() {
+      cho = false;
+      document.querySelectorAll('table.ds').forEach(function (bang) {
+        var th = bang.querySelector('thead th'); if (!th || !th.offsetParent) { bang.classList.remove('dinh'); return; }
+        bang.classList.toggle('dinh', th.getBoundingClientRect().top - bang.getBoundingClientRect().top > 2);
+      });
+    }
+    document.addEventListener('scroll', function () { if (!cho) { cho = true; requestAnimationFrame(kiemTra); } }, true);
+    window.addEventListener('resize', function () { if (!cho) { cho = true; requestAnimationFrame(kiemTra); } });
+  })();
   function goi(ten) {
     return guiApi('/api/rpc', { ham: ten, thamSo: Array.prototype.slice.call(arguments, 1) });
   }
