@@ -106,7 +106,7 @@
   .tang { color: var(--xanh); font-weight: 700; } .giam { color: var(--do); font-weight: 700; }
   .nhom-dau td { background: #E9EEF8; padding: 0 !important; border-top: 1px solid #D5DEEE; border-bottom: 1px solid #D5DEEE; }
   .nut-nhom { display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; min-height: 46px; padding: 0 14px; border: 0; border-radius: 0; background: none; color: var(--xanh-duong-chu); font: inherit; text-align: left; cursor: pointer; box-shadow: inset 4px 0 0 #3B6FD9; }
-  .nut-nhom:hover { background: rgba(1,113,227,.06); }
+  button.nut-nhom:hover:not(:disabled) { background: #DDE5F4; color: var(--xanh-duong-chu); }
   .nut-nhom .mui-ten { display: inline-block; width: 14px; font-size: 13px; transition: transform .15s var(--em); }
   .nhom-dau.dong .mui-ten { transform: rotate(-90deg); }
   .nut-nhom .ten-nhom { font-weight: 700; font-size: 15px; }
@@ -266,7 +266,7 @@
   .menu-them { position: relative; }
   .cum-dot { justify-content: flex-end; flex-wrap: nowrap; }
   .cum-dot > button { white-space: nowrap; }
-  .menu-hang .nut-them-hang { width: 36px; padding: 0; font-size: 18px; letter-spacing: 1px; }
+  .menu-hang .nut-them-hang { width: var(--cao-nho); height: var(--cao-nho); padding: 0; border-radius: 50%; font-size: 18px; letter-spacing: 1px; }
   .menu-hang .menu-ds { min-width: 170px; }
   .menu-them .nut-icon { font-size: 20px; line-height: 1; letter-spacing: 1px; }
   .menu-ds { position: absolute; right: 0; top: calc(100% + 6px); z-index: 8; min-width: 180px; padding: 6px; background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-phan-tu); box-shadow: var(--bong-cao); display: flex; flex-direction: column; }
@@ -292,9 +292,11 @@
   .ten-the-lop { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; }
   .nhan-mon { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: var(--r-tron); background: var(--xanh-duong-nen); color: var(--xanh-duong-chu); font-size: 12px; font-weight: 600; white-space: nowrap; letter-spacing: 0; }
   .nhan-mon.lon { height: 26px; font-size: 13px; margin-left: 10px; vertical-align: 5px; }
-  .hang-cau-truc { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 14px; margin: 4px 0 16px; padding-bottom: 16px; border-bottom: 1px solid var(--vien); }
+  .hang-cau-truc { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 14px; margin: 4px 0 12px; }
   .hang-cau-truc label.o { flex: 0 1 320px; min-width: 0; }
-  .hang-cau-truc .mo-ta-ct { flex: 1 1 260px; margin: 0; padding-bottom: 8px; color: var(--phu); font-size: 13px; }
+  .chi-tiet-ct .khoi-ct { max-width: 654px; }
+  .chi-tiet-ct { margin: 0 0 16px; padding-bottom: 16px; border-bottom: 1px solid var(--vien); }
+  .chi-tiet-ct:empty { display: none; }
   .hang-mau-nhap { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0 0 12px; }
   .hang-mau-nhap .goi-y { font-size: 12px; }
   td.sbd { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
@@ -824,8 +826,8 @@
         <div class="hang-cau-truc">
           <label class="o">Môn / cấu trúc đề<select id="gCauTruc"></select></label>
           <label class="o">Mẫu phiếu<select id="gMauPhieu"></select></label>
-          <p class="mo-ta-ct" id="moTaCauTruc"></p>
         </div>
+        <div id="chiTietCauTruc" class="chi-tiet-ct"></div>
         <div class="file-o">
           <div>
             <h3>① Bảng kết quả học sinh<button type="button" class="tip" aria-label="Giải thích">i<span class="tip-noi-dung" role="tooltip">Mỗi học sinh 1 dòng: lớp, mã đề, đáp án đã chọn, điểm, nhận xét. Dùng được luôn bảng tổng hợp đang dùng để trộn thư Word.</span></button></h3>
@@ -1361,7 +1363,8 @@
     var sel = $('gCauTruc'); if (!id) return;
     sel.value = id;
     var c = (DL.cauTrucDe || []).filter(function (x) { return x.id === sel.value; })[0];
-    $('moTaCauTruc').textContent = c ? c.moTa : '';
+    var k = $('chiTietCauTruc'); k.textContent = '';
+    if (c) k.appendChild(bangCauTruc(c));
   }
   $('gCauTruc').onchange = function () {
     cauTrucDaChon = true; datCauTruc(this.value);
@@ -2353,7 +2356,7 @@
           try { localStorage.setItem('nhomDotDong', JSON.stringify(NHOM_DOT_DONG)); } catch (e) { /* bỏ qua */ }
           veDot();
         } }, [the('span', { class: 'mui-ten', 'aria-hidden': 'true', text: '▾' }), the('span', { class: 'ten-nhom', text: 'Lớp ' + (ten || '(chưa đặt)') }),
-          the('span', { class: 'dem-nhom', text: cua.length + ' lần thi · ' + cua.reduce(function (a, x) { return a + (x.soPhieu || 0); }, 0) + ' phiếu' + (chuaCB ? ' · ' + chuaCB + ' chưa công bố' : '') })]);
+          the('span', { class: 'dem-nhom', text: soBai(cua) + ' bài thi · ' + cua.reduce(function (a, x) { return a + (x.soPhieu || 0); }, 0) + ' phiếu' + (chuaCB ? ' · ' + chuaCB + ' chưa công bố' : '') })]);
         tb.appendChild(the('tr', { class: 'nhom-dau' + (dong ? ' dong' : '') }, [the('td', { colspan: 7 }, [nut])]));
         nhomTruoc = d.nhom; baiTruoc = null;
       }
@@ -2376,8 +2379,8 @@
         the('td', { text: 'Lần ' + d.lan }), the('td', { text: d.ngayThi }), the('td', { text: d.soPhieu }),
         the('td', {}, [the('span', { class: 'nhan ' + (d.congBo ? 'co' : 'moi'), text: d.congBo ? 'Đã công bố' : 'Chưa công bố' })]),
         the('td', {}, [the('div', { class: 'cum-thao-tac cum-dot' }, [
-          d.soPhieu ? the('button', { class: 'phu nho', text: 'Xem phiếu', onclick: function () { hopDsPhieu(d); } }) : null,
           nutCongBo,
+          d.soPhieu ? the('button', { class: 'phu nho', text: 'Xem phiếu', onclick: function () { hopDsPhieu(d); } }) : null,
           menuThem([['✏️', 'Sửa', function () { suaBaiThi(d); }], ['🗑️', 'Xóa lần này', xoa, true]], 'Thao tác khác · ' + tenLanThi(d))])])
       ]));
       baiTruoc = d.baiThi;
@@ -2767,34 +2770,38 @@
   var DANG_CHON = [['trac_nghiem', 'Trắc nghiệm ABCD'], ['dung_sai', 'Trắc nghiệm Đúng / Sai'], ['tra_loi_ngan', 'Trả lời ngắn (hệ thống tự chấm đáp số)'], ['tu_luan', 'Tự luận (giáo viên chấm, nhập điểm)'], ['dien_tu', 'Điền từ / viết lại câu'], ['sap_xep', 'Sắp xếp câu / đoạn']];
   function soVN(n) { return String(Math.round(n * 100) / 100).replace('.', ','); }
   function diemPhan(p) { return p.soCau * (p.dang === 'dung_sai' ? ((p.bangDiem || [])[4] || p.diemMoiCau || 1) : p.diemMoiCau); }
+  // Khối bảng chi tiết cấu trúc đề: Phần – Loại câu – Số câu – Điểm/câu – Điểm, dòng tổng
+  function bangCauTruc(c) {
+    var TEN_NGAN = { trac_nghiem: 'Trắc nghiệm ABCD', dung_sai: 'Đúng / Sai', tra_loi_ngan: 'Trả lời ngắn', tu_luan: 'Tự luận', dien_tu: 'Điền từ', sap_xep: 'Sắp xếp' };
+    var LA_MA = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+    var tong = 0, hang = (c.phan || []).map(function (p, i) {
+      var diem = diemPhan(p) || 0; tong += diem;
+      var ds1 = p.dang === 'dung_sai', bd = p.bangDiem || [];
+      return the('tr', {}, [
+        the('td', {}, [the('span', { class: 'ma-phan', text: p.ma || LA_MA[i] || String(i + 1) })]),
+        the('td', {}, [the('b', { text: TEN_NGAN[p.dang] || tenDang(p.dang) }), !c.coSan && p.ten && p.ten !== TEN_NGAN[p.dang] ? the('div', { class: 'ten-phan', text: p.ten }) : null]),
+        the('td', { class: 'so', text: String(p.soCau) }),
+        the('td', { class: 'so', title: ds1 ? 'Điểm mỗi câu theo số ý đúng: ' + [1, 2, 3, 4].map(function (y) { return y + ' ý ' + soVN(bd[y] || 0); }).join(' · ') : null },
+          ds1 ? [soVN(bd[4] || p.diemMoiCau || 1), the('div', { class: 'ten-phan mot-dong', text: 'tối đa' })] : [soVN(p.diemMoiCau)]),
+        the('td', { class: 'so dam', text: soVN(diem) })]);
+    });
+    return the('div', { class: 'khoi-ct' }, [the('table', { class: 'bang-ct' }, [
+      the('thead', {}, [the('tr', {}, ['Phần', 'Loại câu', 'Số câu', 'Điểm/câu', 'Điểm'].map(function (x, i) { return the('th', { class: i > 1 ? 'so' : null, text: x }); }))]),
+      the('tbody', {}, hang),
+      the('tfoot', {}, [the('tr', {}, [the('td', { colspan: 2, text: 'Tổng' }),
+        the('td', { class: 'so', text: String((c.phan || []).reduce(function (a, p) { return a + (p.soCau || 0); }, 0)) }), the('td', {}), the('td', { class: 'so dam', text: soVN(tong) })])])])]);
+  }
   function veDsCauTruc() {
     var k = $('dsCauTruc'); if (!k) return; k.textContent = '';
     var ds = DL.cauTrucDe || [], rieng = ds.filter(function (c) { return !c.coSan; });
     $('moTaCauTruc').textContent = ds.length + ' cấu trúc · ' + rieng.length + ' tự tạo';
     var mon = []; ds.forEach(function (c) { if (mon.indexOf(c.mon || 'Khác') < 0) mon.push(c.mon || 'Khác'); });
-    var TEN_NGAN = { trac_nghiem: 'Trắc nghiệm ABCD', dung_sai: 'Đúng / Sai', tra_loi_ngan: 'Trả lời ngắn', tu_luan: 'Tự luận', dien_tu: 'Điền từ', sap_xep: 'Sắp xếp' };
-    var LA_MA = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
     var luoi = the('div', { class: 'luoi-lop luoi-ct' }); k.appendChild(luoi);
     mon.forEach(function (m) {
       ds.filter(function (c) { return (c.mon || 'Khác') === m; }).forEach(function (c) {
-        var tong = 0, hang = (c.phan || []).map(function (p, i) {
-          var diem = diemPhan(p) || 0; tong += diem;
-          var ds1 = p.dang === 'dung_sai', bd = p.bangDiem || [];
-          return the('tr', {}, [
-            the('td', {}, [the('span', { class: 'ma-phan', text: p.ma || LA_MA[i] || String(i + 1) })]),
-            the('td', {}, [the('b', { text: TEN_NGAN[p.dang] || tenDang(p.dang) }), !c.coSan && p.ten && p.ten !== TEN_NGAN[p.dang] ? the('div', { class: 'ten-phan', text: p.ten }) : null]),
-            the('td', { class: 'so', text: String(p.soCau) }),
-            the('td', { class: 'so', title: ds1 ? 'Điểm mỗi câu theo số ý đúng: ' + [1, 2, 3, 4].map(function (y) { return y + ' ý ' + soVN(bd[y] || 0); }).join(' · ') : null },
-              ds1 ? [soVN(bd[4] || p.diemMoiCau || 1), the('div', { class: 'ten-phan mot-dong', text: 'tối đa' })] : [soVN(p.diemMoiCau)]),
-            the('td', { class: 'so dam', text: soVN(diem) })]);
-        });
         luoi.appendChild(the('div', { class: 'the-lop the-ct' }, [
           the('div', { class: 'dau-the-lop' }, [the('div', { class: 'ten-the-lop' }, [the('h3', { text: c.ten }), the('span', { class: 'nhan-mon', text: m })]), the('span', { class: 'nhan' + (c.coSan ? '' : ' moi'), text: c.coSan ? 'Có sẵn' : 'Tự tạo' })]),
-          the('div', { class: 'khoi-ct' }, [the('table', { class: 'bang-ct' }, [
-            the('thead', {}, [the('tr', {}, ['Phần', 'Loại câu', 'Số câu', 'Điểm/câu', 'Điểm'].map(function (x, i) { return the('th', { class: i > 1 ? 'so' : null, text: x }); }))]),
-            the('tbody', {}, hang),
-            the('tfoot', {}, [the('tr', {}, [the('td', { colspan: 2, text: 'Tổng' }),
-              the('td', { class: 'so', text: String((c.phan || []).reduce(function (a, p) { return a + (p.soCau || 0); }, 0)) }), the('td', {}), the('td', { class: 'so dam', text: soVN(tong) })])])])]),
+          bangCauTruc(c),
           c.soLanDung ? the('div', { class: 'gan-nhat', text: 'Đang dùng cho ' + c.soLanDung + ' lần thi' }) : null,
           the('div', { class: 'nut-lop' }, [
             the('button', { class: 'phu nho', text: 'Nhân bản', onclick: function () { suaCauTruc(c, true); } }),
