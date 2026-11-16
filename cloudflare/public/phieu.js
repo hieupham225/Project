@@ -94,7 +94,6 @@
     '.bang{width:100%;margin:4px 0 8px}.bang th,.bang td{border:1px solid #000;padding:3px 5px;font-size:11pt;vertical-align:middle}.bang th{font-weight:bold;text-align:center}',
     '.giua{text-align:center}.nho{font-size:10.5pt}.nd{white-space:pre-line}.do{color:#d40000;font-weight:bold}.xanh{color:#00a040;font-weight:bold}',
     '.cd{width:100%;margin:2px 0 6px}.cd th,.cd td{border:1px solid #000;padding:3px 5px;font-size:11pt}.cd th{background:#f2f2f2}',
-    '.ky{width:100%;margin-top:14px}.ky td{border:0;text-align:center;font-weight:bold;vertical-align:top;height:70px}',
     '.chan-trang{margin-top:10px;font-size:9pt;color:#555;text-align:right}',
     '@media (max-width:600px){body{padding:10px}.dau td{display:block;width:auto!important}.dong{white-space:normal}.bang th,.bang td{font-size:10pt;padding:2px 3px}}'
   ].join('\n');
@@ -140,11 +139,11 @@
     h.push('<td>' + KP.dongDiemTuDong(c).map(function (x) { return '<p class="phan-diem">' + e(x.nhan) + ': <b>' + e(x.diem) + '</b>/' + e(x.toiDa) + '</p>'; }).join(''));
     if ((d.lichSu || []).length) h.push('<p class="phan-diem" style="margin-top:4px">So với lần trước: <b class="' + (d.tangDiem ? 'dung' : d.giamDiem ? 'sai' : '') + '">' + e(d.chenhLech) + '</b></p>');
     h.push('</td><td class="nhan-xet">');
-    var coNx = false;
-    if (nx.uu) { h.push('<p>+ Ưu điểm: ' + e(nx.uu) + '</p>'); coNx = true; }
-    if (nx.nhuoc) { h.push('<p>+ ' + e(nx.nhanNhuoc || 'Nhược điểm') + ': ' + e(nx.nhuoc) + '</p>'); coNx = true; }
-    if (nx.khacPhuc) { h.push('<p>+ Hướng khắc phục: ' + e(nx.khacPhuc) + '</p>'); coNx = true; }
-    if (!coNx) h.push('<p style="color:#777">…………………………………………………………</p><p style="color:#777">…………………………………………………………</p>');
+    if (nx.uu) h.push('<p>+ Ưu điểm: ' + e(nx.uu) + '</p>');
+    if (nx.nhuoc) h.push('<p>+ ' + e(nx.nhanNhuoc || 'Nhược điểm') + ': ' + e(nx.nhuoc) + '</p>');
+    if (nx.khacPhuc) h.push('<p>+ Hướng khắc phục: ' + e(nx.khacPhuc) + '</p>');
+    // Lời khuyên nằm luôn trong khung nhận xét (không nhắc lại ở cuối phiếu)
+    h.push('<p>+ Lời khuyên: ' + (nx.loiKhuyen ? e(nx.loiKhuyen) : 'Em hãy ôn lại các chủ đề còn sai và phát huy những phần đã làm tốt. Chúc <b>' + e(d.hoTen) + '</b> đạt kết quả cao trong bài kiểm tra tiếp theo!') + '</p>');
     h.push('</td></tr></table>');
     // Phân tích bài làm: cùng bảng với mẫu mặc định (Câu – Chủ đề – Nội dung – Đáp án của bạn – Đáp án đúng)
     h.push('<div class="bai-lam">PHÂN TÍCH BÀI LÀM</div>');
@@ -168,8 +167,6 @@
       });
       h.push('</table>');
     }
-    h.push('<p><b>Lời khuyên:</b> ' + (nx.loiKhuyen ? e(nx.loiKhuyen) : 'Em hãy ôn lại các chủ đề còn sai ở bảng trên và phát huy những phần đã làm tốt. Chúc <b>' + e(d.hoTen) + '</b> đạt kết quả cao trong bài kiểm tra tiếp theo!') + '</p>');
-    h.push('<table class="ky"><tr><td>Giáo viên</td><td>Chữ ký phụ huynh</td></tr></table>');
     h.push('<div class="chan-trang">Mã phiếu: ' + e(d.maPhieu) + ' · Ngày tạo: ' + e(d.ngay) + '</div></div></body></html>');
     return h.join('');
   }
