@@ -549,6 +549,9 @@
   .the-ct .dau-the-lop { align-items: flex-start; }
   .goc-the { display: flex; align-items: center; gap: 6px; flex: none; margin: -4px -6px 0 0; }
   .the-ct { position: relative; }
+  .the-ct.bam-duoc { cursor: pointer; }
+  @media (hover: hover) and (min-width: 701px) { .the-ct.bam-duoc:hover { box-shadow: var(--bong-cao) !important; transform: translateY(-2px) !important; border-color: var(--vien-dam) !important; } }
+  .the-ct.bam-duoc:focus-visible { outline: 2px solid var(--thuong-hieu); outline-offset: 2px; }
   .the-ct h3 { font-size: 17px; }
   .khoi-ct { background: #F8F7F4; border: 1px solid var(--vien); border-radius: var(--r-phan-tu); padding: 4px 10px; }
   .bang-ct { width: 100%; border-collapse: collapse; font-size: 13.5px; }
@@ -1458,7 +1461,7 @@
   function veChonMauPhieu() {
     var sel = $('gMauPhieu'), cu = sel.value;
     sel.textContent = '';
-    sel.appendChild(the('option', { value: '', text: 'Phân tích bài thi (mặc định)' }));
+    sel.appendChild(the('option', { value: '', text: 'Kết quả kiểm tra (mặc định)' }));
     (DL.mauPhieu || []).forEach(function (m) { sel.appendChild(the('option', { value: m.id, text: m.ten })); });
     sel.value = (DL.mauPhieu || []).some(function (m) { return m.id === cu; }) ? cu : '';
   }
@@ -2879,7 +2882,7 @@
      Ngôn ngữ cho thầy cô: "chỗ thay đổi theo từng học sinh" (= trường), "phần tự động" (= khối). */
   function veMauPhieu() {
     var k = $('dsMauPhieu'); if (!k) return; k.textContent = '';
-    $('moTaMau').textContent = (DL.mauPhieu || []).length + 1 + ' mẫu · mẫu "Phân tích bài thi" có sẵn, luôn dùng được';
+    $('moTaMau').textContent = (DL.mauPhieu || []).length + 1 + ' mẫu · mẫu "Kết quả kiểm tra" có sẵn, luôn dùng được';
     var luoi = the('div', { class: 'luoi-lop luoi-ct' }); k.appendChild(luoi);
     // Khối thông tin trong thẻ: các dòng nhãn – giá trị
     var khoiTT = function (dong) {
@@ -2887,27 +2890,35 @@
         return the('tr', {}, [the('th', { text: x[0] }), the('td', { text: String(x[1]) })]);
       }))])]);
     };
-    var theMau = function (ten, coSan, dong, nut) {
-      return the('div', { class: 'the-lop the-ct' }, [
+    // Thẻ mẫu: bấm vào thẻ để mở chi tiết (trình chỉnh mẫu); nút ⋯ góc trên chứa các thao tác
+    var theMau = function (ten, coSan, dong, nut, moChiTiet) {
+      var t = the('div', { class: 'the-lop the-ct bam-duoc', tabindex: 0, role: 'button', 'aria-label': 'Xem chi tiết mẫu ' + ten }, [
         the('div', { class: 'dau-the-lop' }, [the('h3', { text: ten }), the('div', { class: 'goc-the' }, [the('span', { class: 'nhan' + (coSan ? '' : ' moi'), text: coSan ? 'Có sẵn' : 'Tự tạo' }),
           nut ? menuThem(nut, 'Thao tác · ' + ten) : null])]),
         khoiTT(dong)]);
+      t.onclick = function (e) { if (!e.target.closest('.menu-hang')) moChiTiet(); };
+      t.onkeydown = function (e) { if (e.target === t && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); moChiTiet(); } };
+      return t;
     };
-    luoi.appendChild(theMau('Phân tích bài thi', true, [
+    var moCoSan = function () { manMau().coSan(); };
+    luoi.appendChild(theMau('Kết quả kiểm tra', true, [
       ['Gồm', 'Thông tin học sinh, điểm từng phần, bảng phân tích từng câu, nhận xét, các lần làm'],
       ['Số câu', 'Tự đủ theo cấu trúc đề của bài thi'],
-      ['Dùng cho', 'Mọi bài thi (mặc định khi gửi kết quả)']]));
+      ['Dùng cho', 'Mọi bài thi (mặc định khi gửi kết quả)']],
+      [['document-duplicate', 'Tạo mẫu mới từ mẫu này', moCoSan]], moCoSan));
     (DL.mauPhieu || []).forEach(function (m) {
+      var mo = function () { goi('gvLayMauPhieu', m.id).then(function (mp) { manMau().chinh({ id: mp.id, ten: mp.ten, html: mp.html, trang: mp.trang, tenTep: mp.tenTep }); }).catch(baoLoi); };
+      var muc = [['pencil-square', 'Mở / chỉnh sửa', mo]];
+      // chỉ mẫu tạo từ file Word mới có "Thay file Word" (mẫu dựng từ mẫu có sẵn không có file gốc)
+      if (m.tenTep) muc.push(['document-arrow-up', 'Thay file Word', function () { manMau().taiFile({ id: m.id, ten: m.ten }); }]);
+      muc.push(['trash', 'Xóa', function () {
+        hoi('Xóa mẫu phiếu "' + m.ten + '"?', { nut: 'Xóa', nguyHiem: true }).then(function (ok) { if (ok) goi('gvXoaMauPhieu', m.id).then(capNhat).catch(baoLoi); });
+      }, true]);
       luoi.appendChild(theMau(m.ten, false, [
+        ['Tạo từ', m.tenTep ? 'File Word: ' + m.tenTep : 'Mẫu có sẵn "Kết quả kiểm tra"'],
         ['Chỗ thay đổi', m.soTruong + ' chỗ theo từng học sinh'],
         ['Tạo ngày', m.ngayTao],
-        ['Từ file', m.tenTep || ''],
-        ['Đang dùng', m.soLanDung ? m.soLanDung + ' lần thi' : 'Chưa dùng']], [
-        ['pencil-square', 'Mở / chỉnh sửa', function () { goi('gvLayMauPhieu', m.id).then(function (mp) { manMau().chinh({ id: mp.id, ten: mp.ten, html: mp.html, trang: mp.trang, tenTep: mp.tenTep }); }).catch(baoLoi); }],
-        ['document-arrow-up', 'Thay file Word', function () { manMau().taiFile({ id: m.id, ten: m.ten }); }],
-        ['trash', 'Xóa', function () {
-          hoi('Xóa mẫu phiếu "' + m.ten + '"?', { nut: 'Xóa', nguyHiem: true }).then(function (ok) { if (ok) goi('gvXoaMauPhieu', m.id).then(capNhat).catch(baoLoi); });
-        }, true]]));
+        ['Đang dùng', m.soLanDung ? m.soLanDung + ' lần thi' : 'Chưa dùng']], muc, mo));
     });
   }
   $('nutTaoMau').onclick = function () { manMau().chonCach(); };
@@ -2973,7 +2984,7 @@
         }, true]);
         (c.coSan ? luoiCoSan : luoiRieng).appendChild(the('div', { class: 'the-lop the-ct' }, [
           the('div', { class: 'dau-the-lop' }, [the('div', { class: 'ten-the-lop' }, [the('h3', { text: c.ten }), the('span', { class: 'nhan-mon', text: m })]),
-            the('div', { class: 'goc-the' }, [the('span', { class: 'nhan' + (c.coSan ? '' : ' moi'), text: c.coSan ? 'Có sẵn' : 'Tự tạo' }), menuThem(mucCT, 'Thao tác · ' + c.ten)])]),
+            the('div', { class: 'goc-the' }, [menuThem(mucCT, 'Thao tác · ' + c.ten)])]),
           bangCauTruc(c),
           c.soLanDung ? the('div', { class: 'gan-nhat', text: 'Đang dùng cho ' + c.soLanDung + ' lần thi' }) : null]));
       });
@@ -3166,7 +3177,7 @@
       var the1 = function (icon, ten, moTa, viec) { return the('button', { type: 'button', class: 'the-cach', onclick: viec }, [the('span', { class: 'icon-cach' }, [ic(icon)]), the('b', { text: ten }), the('span', { class: 'goi-y', text: moTa })]); };
       than.appendChild(the('div', { class: 'luoi-cach' }, [
         the1('document-text', 'Dùng file Word đang dùng', 'File trộn thư (mail merge), hoặc phiếu Word đã điền sẵn của 1 học sinh. Hệ thống giữ nguyên bố cục và tự nhận ra những chỗ thay đổi theo từng học sinh.', function () { taiFile(null); }),
-        the1('sparkles', 'Dùng mẫu có sẵn', 'Mẫu "Phân tích bài thi" gồm thông tin học sinh, điểm, bảng phân tích từng câu, nhận xét — tự đủ số câu theo đề, dùng cho mọi bài thi. Sửa chữ, thêm logo tùy ý.', function () { chinh(mauCoSan()); })]));
+        the1('sparkles', 'Dùng mẫu có sẵn', 'Mẫu "Kết quả kiểm tra" gồm thông tin học sinh, điểm, bảng phân tích từng câu, nhận xét — tự đủ số câu theo đề, dùng cho mọi bài thi. Sửa chữ, thêm logo tùy ý.', function () { chinh(mauCoSan()); })]));
     };
 
     /* Bước 2: tải file Word (+ Excel) */
@@ -3219,7 +3230,7 @@
         '<tr><td>' + p('<b>4. Số báo danh:</b> ' + tr('Số_báo_danh', 'font-weight:normal')) + '</td><td colspan="2">' + p('<b>5. Xếp hạng:</b> ' + k('xep-hang', 'span')) + '</td></tr></tbody></table>' +
         p('<b>6. Kết quả cụ thể:</b>') + '<div class="khoi" data-khoi="bang-diem" data-muc="trac_nghiem:Trắc nghiệm|dung_sai:Đúng sai|tu_luan:Tự luận">Điểm các phần</div>' + k('cac-lan') +
         '<p style="margin:6pt 0;border-bottom:1.5pt solid #000"></p>' + p('<b>B. PHÂN TÍCH BÀI THI</b>') + kp('trac_nghiem') + kp('dung_sai') + kp('tu_luan') + k('nhan-xet') + '</div>';
-      return { id: '', ten: 'Phân tích bài thi (tự đủ số câu)', html: html, trang: { mon: 'Toán', rong: 595.3, cao: 841.9, tren: 36, duoi: 36, trai: 36, phai: 36, rongToiDa: 523 }, tenTep: '' };
+      return { id: '', ten: 'Kết quả kiểm tra (tự đủ số câu)', html: html, trang: { mon: 'Toán', rong: 595.3, cao: 841.9, tren: 36, duoi: 36, trai: 36, phai: 36, rongToiDa: 523 }, tenTep: '' };
     };
 
     /* Bước 3: kiểm tra phiếu (sửa) */
@@ -3642,7 +3653,7 @@
       };
       veDsMuc();
     };
-    _manMau = { chonCach: chonCach, taiFile: taiFile, chinh: chinh };
+    _manMau = { chonCach: chonCach, taiFile: taiFile, chinh: chinh, coSan: function () { chinh(mauCoSan()); } };
     return _manMau;
   }
 

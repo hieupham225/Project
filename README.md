@@ -1,7 +1,7 @@
 # EduLens — phiếu kết quả học tập, mỗi phụ huynh chỉ xem được điểm của con mình
 
 Giáo viên (dạy riêng hoặc trung tâm) **tự đăng ký tài khoản**, tạo lớp, rồi tải lên **2 file**:
-**bảng kết quả học sinh** và **bảng đáp án theo mã đề**. Hệ thống tự ghép từng học sinh với đáp án của đúng mã đề em đó làm, chấm, và tạo **phiếu "Phân tích bài thi"** cho từng em.
+**bảng kết quả học sinh** và **bảng đáp án theo mã đề**. Hệ thống tự ghép từng học sinh với đáp án của đúng mã đề em đó làm, chấm, và tạo **phiếu "Kết quả kiểm tra"** cho từng em.
 Phụ huynh nhập **1 mã tra cứu riêng** để xem tất cả phiếu của con, ở mọi lớp và môn, và tải về dạng PDF.
 
 - **Không ai phải cài đặt gì.** Giáo viên và phụ huynh chỉ cần mở trang web trên máy tính hoặc điện thoại.
@@ -129,7 +129,7 @@ cloudflare/                 Phiên bản chính
   src/logic.js              Đọc 2 file, chấm bài, ghép học sinh theo lớp (logic thuần, dùng lại từ bản trước)
   public/index.html         Trang tra cứu cho phụ huynh
   public/gv.html            Trang giáo viên
-  public/phieu.js           Dựng phiếu "Phân tích bài thi" (dùng chung)
+  public/phieu.js           Dựng phiếu "Kết quả kiểm tra" (dùng chung)
   schema.sql                Cấu trúc cơ sở dữ liệu D1
   test/api.test.mjs         Kiểm thử API đầu-cuối
 apps-script/                Phiên bản cũ (Google Apps Script), không còn phát triển
