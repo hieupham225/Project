@@ -2,6 +2,9 @@
 
 ## Chưa phát hành (staging)
 
+- Mẫu mặc định "Kết quả kiểm tra" vẽ theo đúng các phần của cấu trúc đề (bao nhiêu phần cũng được, bảng theo dạng bài, 2 phần cùng dạng ghi "Phần I/II"); dùng chung logic với các khối của mẫu tự tạo. Đối chiếu 1.285 phiếu thật (bản sao lưu, production, local): hiển thị y hệt trước.
+- Khối "Điểm các phần" có chế độ **Tự động theo cấu trúc đề**; "Tạo mẫu mới từ mẫu có sẵn" dùng khối tự động (Bảng phân tích: Tất cả các phần).
+- Gửi kết quả: mẫu phiếu tự chọn theo lần gửi gần nhất dùng cùng cấu trúc đề; cảnh báo khi mẫu thiếu bảng phân tích cho một dạng bài của đề. Thẻ mẫu phiếu ghi mẫu hiện bảng phân tích cho dạng nào.
 - Đổi tên sản phẩm **EduLens → EduShow** (tên EduLens đã có bên khác dùng, không mua được tên miền); tên miền dự kiến edushow.xyz.
 
 ## v1.1.3 — 16/11/2026 (đã lên production, không có migration)

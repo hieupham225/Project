@@ -1,6 +1,6 @@
 /**
  * Dựng phiếu kết quả (HTML đầy đủ) từ dữ liệu đã chấm. Dùng chung cho trang phụ huynh và trang giáo viên.
- * renderPhieu(d, logo) -> chuỗi HTML (đặt vào iframe srcdoc).  Bố cục theo mẫu "Phân tích bài thi".
+ * renderPhieu(d, logo) -> chuỗi HTML (đặt vào iframe srcdoc).  Bố cục mẫu mặc định "Kết quả kiểm tra"; các phần theo cấu trúc đề (khoi-phieu.js).
  */
 (function (goc) {
   function e(s) {
@@ -63,11 +63,15 @@
       h.push('<tr><td>' + (d.sbd ? '<b>' + (so++) + '. Số báo danh:</b> ' + e(d.sbd) : '') + '</td>');
       h.push('<td colspan="2">' + (d.thuHang ? '<b>' + (so++) + '. Xếp hạng:</b> <span class="do">' + e(d.thuHang) + '</span>' + (d.soXepHang ? ' / ' + e(d.soXepHang) : '') : '') + '</td></tr>');
     }
+    // Các phần theo cấu trúc đề (khoi-phieu.js, dùng chung với mẫu tự tạo); chưa nạp được thì dùng 3 phần cố định như v1
+    var KP = goc.KhoiPhieu && goc.KhoiPhieu.cacPhan ? goc.KhoiPhieu : null;
+    var dsPhan = KP ? KP.cacPhan(c).filter(function (p) { return (p.cau || []).length; }) : null;
     h.push('<tr><td colspan="3"><b>' + (so++) + '. Kết quả cụ thể:</b> ');
-    // phiếu mặc định: ghi theo loại câu (mục 3 = Tự luận) thay cho "Phần 1/2/3"
-    if (c.phan1.length) h.push('Trắc nghiệm: <span class="do">' + e(dm.p1) + '</span>/' + e(dm.max1) + '; ');
-    if (c.phan2.length) h.push('Đúng sai: <span class="do">' + e(dm.p2) + '</span>/' + e(dm.max2) + '; ');
-    if (c.phan3.length) h.push('Tự luận: <span class="do">' + e(dm.p3) + '</span>/' + e(dm.max3) + '; ');
+    if (KP) KP.dongDiemTuDong(c).forEach(function (x) { h.push(e(x.nhan) + ': <span class="do">' + e(x.diem) + '</span>/' + e(x.toiDa) + '; '); });
+    // phiếu mặc định v1: ghi theo loại câu (mục 3 = Tự luận) thay cho "Phần 1/2/3"
+    else if (c.phan1.length) h.push('Trắc nghiệm: <span class="do">' + e(dm.p1) + '</span>/' + e(dm.max1) + '; ');
+    if (!KP && c.phan2.length) h.push('Đúng sai: <span class="do">' + e(dm.p2) + '</span>/' + e(dm.max2) + '; ');
+    if (!KP && c.phan3.length) h.push('Tự luận: <span class="do">' + e(dm.p3) + '</span>/' + e(dm.max3) + '; ');
     h.push('<b>Tổng điểm: <span class="do">' + e(dm.tong) + '</span>/' + e(dm.maxTong) + '</b></td></tr></table>');
 
     // Kết quả các lần làm trước
@@ -85,7 +89,39 @@
     var tieuDeBang = function (them) {
       return '<tr><th style="width:6%">Câu</th><th style="width:22%">Chủ đề kiến thức</th><th>Nội dung phân tích cụ thể</th>' + them + '</tr>';
     };
-    if (c.phan1.length) {
+    // Mỗi phần 1 bảng, kiểu bảng theo DẠNG BÀI (không theo thứ tự phần)
+    if (dsPhan) dsPhan.forEach(function (p) {
+      muc++;
+      var moTa = d.moTaPhan && d.moTaPhan[p.ma], dang = p.dang, cot;
+      h.push('<p><b>' + muc + '. PHẦN ' + e(p.ma) + ': ' + e(KP.tieuDePhan(d, p)) + '</b></p>' + (moTa ? '<p>' + e(moTa) + '</p>' : ''));
+      if (dang === 'dung_sai') {
+        h.push('<table class="bang">' + tieuDeBang('<th style="width:12%">Đáp án<br>của bạn</th><th style="width:10%">Đáp án<br>đúng</th>'));
+        p.cau.forEach(function (q) {
+          var o = (q.kyTu || []).length ? q.kyTu.map(function (k, i) { return (i ? ',' : '') + '<span class="' + (k.ok ? 'xanh' : 'do') + '">' + e(k.c) + '</span>'; }).join('') : '<span class="do">—</span>';
+          h.push('<tr><td class="giua">' + e(q.cau) + '</td><td>' + chuDeO(q) + '</td><td class="nho nd">' + e(q.noiDung) + '</td>' +
+            '<td class="giua">' + o + '</td><td class="giua xanh">' + e(q.dung) + '</td></tr>');
+        });
+        h.push('<tr><td colspan="3" class="giua"><b>Tổng điểm</b></td><td class="giua do">' + e(p.diem) + '</td><td></td></tr></table>');
+      } else if (dang === 'tu_luan') {
+        cot = p.cau.some(function (q) { return q.hs; });
+        h.push('<table class="bang">' + tieuDeBang((cot ? '<th style="width:12%">Đáp án<br>của bạn</th>' : '') + '<th style="width:12%">Đáp số</th>'));
+        p.cau.forEach(function (q) {
+          h.push('<tr><td class="giua">' + e(q.cau) + '</td><td>' + chuDeO(q) + '</td><td class="nho">' + e(q.noiDung) + '</td>' +
+            (cot ? '<td class="giua ' + (q.ok ? 'xanh' : 'do') + '">' + e(q.hs || '—') + '</td>' : '') + '<td class="giua xanh">' + e(q.dung) + '</td></tr>');
+        });
+        h.push('<tr><td colspan="' + (cot ? 4 : 3) + '" class="giua"><b>Tổng điểm của bạn</b></td><td class="giua do">' + e(p.diem) + '/' + e(p.toiDa) + '</td></tr></table>');
+      } else {
+        // Trắc nghiệm ABCD (giữ đúng bố cục v1); Trả lời ngắn / Điền từ / Sắp xếp: cùng kiểu, hệ thống tự chấm
+        var rong = dang === 'trac_nghiem' ? '10%' : '12%';
+        h.push('<table class="bang">' + tieuDeBang('<th style="width:' + rong + '">Đáp án<br>của bạn</th><th style="width:' + rong + '">' + (dang === 'tra_loi_ngan' ? 'Đáp số' : 'Đáp án<br>đúng') + '</th>'));
+        p.cau.forEach(function (q) {
+          h.push('<tr><td class="giua">' + e(q.cau) + '</td><td>' + chuDeO(q) + '</td><td class="nho">' + e(q.noiDung) + '</td>' +
+            '<td class="giua ' + (q.ok ? 'xanh' : 'do') + '">' + e(q.hs || '—') + '</td><td class="giua xanh">' + e(q.dung) + '</td></tr>');
+        });
+        h.push('<tr><td colspan="3" class="giua"><b>Tổng điểm</b></td><td class="giua do">' + e(p.diem) + '</td><td></td></tr></table>');
+      }
+    });
+    if (!dsPhan && c.phan1.length) {
       muc++;
       h.push('<p><b>' + muc + '. PHẦN I: ' + e(d.tenPhan.I) + '</b></p>' + (d.moTaPhan.I ? '<p>' + e(d.moTaPhan.I) + '</p>' : ''));
       h.push('<table class="bang">' + tieuDeBang('<th style="width:10%">Đáp án<br>của bạn</th><th style="width:10%">Đáp án<br>đúng</th>'));
@@ -95,7 +131,7 @@
       });
       h.push('<tr><td colspan="3" class="giua"><b>Tổng điểm</b></td><td class="giua do">' + e(dm.p1) + '</td><td></td></tr></table>');
     }
-    if (c.phan2.length) {
+    if (!dsPhan && c.phan2.length) {
       muc++;
       h.push('<p><b>' + muc + '. PHẦN II: ' + e(d.tenPhan.II) + '</b></p>' + (d.moTaPhan.II ? '<p>' + e(d.moTaPhan.II) + '</p>' : ''));
       h.push('<table class="bang">' + tieuDeBang('<th style="width:12%">Đáp án<br>của bạn</th><th style="width:10%">Đáp án<br>đúng</th>'));
@@ -106,7 +142,7 @@
       });
       h.push('<tr><td colspan="3" class="giua"><b>Tổng điểm</b></td><td class="giua do">' + e(dm.p2) + '</td><td></td></tr></table>');
     }
-    if (c.phan3.length) {
+    if (!dsPhan && c.phan3.length) {
       muc++;
       h.push('<p><b>' + muc + '. PHẦN III: ' + e(d.tenPhan.III) + '</b></p>' + (d.moTaPhan.III ? '<p>' + e(d.moTaPhan.III) + '</p>' : ''));
       h.push('<table class="bang">' + tieuDeBang((c.coTraLoiIII ? '<th style="width:12%">Đáp án<br>của bạn</th>' : '') + '<th style="width:12%">Đáp số</th>'));

@@ -485,7 +485,7 @@ const HAM = {
   async gvTaiDuLieu(c) {
     const nd = c.nd;
     const hs = await c.hocSinh(), lt = await c.lanThi();
-    const mau = (await c.db.prepare('SELECT id, ten, truong, ten_tep, ngay_tao FROM mau_phieu WHERE kg = ? ORDER BY ngay_tao DESC, ten').bind(c.kg).all()).results;
+    const mau = (await c.db.prepare('SELECT id, ten, html, truong, ten_tep, ngay_tao FROM mau_phieu WHERE kg = ? ORDER BY ngay_tao DESC, ten').bind(c.kg).all()).results;
     const phieu = (await c.db.prepare('SELECT lan_thi, hoc_sinh, tong_diem, diem_toi_da FROM phieu WHERE kg = ?').bind(c.kg).all()).results;
     const dem = {};
     phieu.forEach((p) => { dem[p.lan_thi] = (dem[p.lan_thi] || 0) + 1; });
@@ -510,7 +510,7 @@ const HAM = {
       dsMon: L.DS_MON,
       khoiPhieu: KP.CAC_KHOI,
       mauPhieu: mau.map((m) => ({ id: m.id, ten: m.ten, soTruong: JSON.parse(m.truong).length, tenTep: m.ten_tep, ngayTao: m.ngay_tao,
-        soLanDung: lt.filter((d) => d.mauPhieu === m.id).length })),
+        soLanDung: lt.filter((d) => d.mauPhieu === m.id).length, khoiPhan: KP.dangTrongMau(m.html) })),
       cauTrucDe: L.CAU_TRUC_CO_SAN.map((ct) => Object.assign({ coSan: true }, ct)).concat(await c.cauTrucRieng()).map((ct) => ({
         id: ct.id, mon: ct.mon, ten: ct.ten, moTa: L.moTaCauTruc(ct), coSan: !!ct.coSan, ngayTao: ct.ngayTao || '',
         soLanDung: ct.coSan ? 0 : lt.filter((d) => d.cauTruc === ct.id).length,

@@ -20,8 +20,8 @@ var O = 'border:1px solid #000;padding:2pt 4pt;vertical-align:middle';
 var OG = O + ';text-align:center';
 var TH = O + ';text-align:center;font-weight:bold';
 
-/** Các phần của phiếu: theo cấu trúc đề (v2: cham.phan) hoặc 3 phần cố định (v1). */
-function cacPhan(c) {
+/** Các phần của phiếu: theo cấu trúc đề (v2: cham.phan) hoặc 3 phần cố định (v1). Dùng chung cho mẫu mặc định (phieu.js) và các khối. */
+export function cacPhan(c) {
   // phiếu chấm theo cấu trúc có sẵn trước 15/11/2026: phần III ghi "tra_loi_ngan" -> nay là Tự luận
   var cuCoSan = /^thpt2025-/.test((c.cauTruc && c.cauTruc.id) || '');
   if (Array.isArray(c.phan) && c.phan.length) return c.phan.map(function (p, i) { return { ma: p.ma, ten: p.ten, dang: cuCoSan && p.dang === 'tra_loi_ngan' ? 'tu_luan' : p.dang, cau: p.cau, diem: p.diem, toiDa: p.toiDa, so: i + 1 }; });
@@ -32,8 +32,18 @@ function cacPhan(c) {
   return ds;
 }
 
+/** Tiêu đề 1 phần trên phiếu: tên phần trong file đáp án (tab Thông tin) nếu có, không thì tên phần trong cấu trúc đề. */
+export function tieuDePhan(d, p) { return (d.tenPhan && d.tenPhan[p.ma]) || p.ten || TEN_NGAN_DANG[p.dang] || ''; }
+
+/** Dòng điểm tự động theo cấu trúc đề: mỗi phần 1 dòng; nhãn = tên dạng bài, 2 phần cùng dạng thì ghi "Phần I", "Phần II". */
+export function dongDiemTuDong(c) {
+  var ds = cacPhan(c).filter(function (p) { return (p.cau || []).length; }), dem = {};
+  ds.forEach(function (p) { dem[p.dang] = (dem[p.dang] || 0) + 1; });
+  return ds.map(function (p) { return { ma: p.ma, dang: p.dang, nhan: dem[p.dang] > 1 || !TEN_NGAN_DANG[p.dang] ? 'Phần ' + p.ma : TEN_NGAN_DANG[p.dang], diem: p.diem, toiDa: p.toiDa }; });
+}
+
 function bangPhan(d, p, tenRieng) {
-  var tenPhan = tenRieng || (d.tenPhan && d.tenPhan[p.ma]) || p.ten || '', moTa = d.moTaPhan && d.moTaPhan[p.ma];
+  var tenPhan = tenRieng || tieuDePhan(d, p), moTa = d.moTaPhan && d.moTaPhan[p.ma];
   var coHs = p.dang !== 'tu_luan' && (p.dang !== 'tra_loi_ngan' || p.cau.some(function (q) { return q.hs; }));
   // tenRieng: tiêu đề giáo viên tự đặt cho khối (thay cả dòng "1. PHẦN I: …")
   var h = '<p style="margin:6pt 0 2pt"><b>' + (tenRieng ? e(tenRieng) : p.so + '. PHẦN ' + e(p.ma) + ': ' + e(tenPhan)) + '</b></p>' + (moTa ? '<p style="margin:0 0 2pt">' + e(moTa) + '</p>' : '');
@@ -60,9 +70,10 @@ var DUNG = {
   },
   // Điểm theo DẠNG BÀI (không theo số thứ tự phần): data-thutu = thứ tự dạng ("dung_sai,trac_nghiem"),
   // data-nhan = nhãn tự đặt ("trac_nghiem=Phần I – Trắc nghiệm|dung_sai=…"); dạng có trong đề mà chưa xếp thì nối vào cuối
+  // Không có data-muc / data-thutu / data-nhan: tự động theo cấu trúc đề (mỗi phần 1 dòng)
   'bang-diem': function (d, phan, tt) {
-    var c = d.cham || {}, dm = c.diem || {};
-    return '<p style="margin:2pt 0">' + diemTheoDang(c, tt).map(function (x) { return e(x.nhan) + ': <span style="' + DO + '">' + e(x.diem) + '</span>/' + e(x.toiDa) + '; '; }).join('') +
+    var c = d.cham || {}, dm = c.diem || {}, tuDong = !tt.muc && !tt.thutu && !tt.nhan;
+    return '<p style="margin:2pt 0">' + (tuDong ? dongDiemTuDong(c) : diemTheoDang(c, tt)).map(function (x) { return e(x.nhan) + ': <span style="' + DO + '">' + e(x.diem) + '</span>/' + e(x.toiDa) + '; '; }).join('') +
       '<b>Tổng điểm: <span style="' + DO + '">' + e(dm.tong) + '</span>/' + e(dm.maxTong) + '</b></p>';
   },
   'cac-lan': function (d) {
@@ -136,6 +147,19 @@ export function diemTheoDang(c, tt) {
     var x = nhom[k];
     return { dang: k, nhan: nhan[k] || TEN_NGAN_DANG[k] || ('Phần ' + k), diem: x.diem.toFixed(2), toiDa: String(Math.round(x.toiDa * 100) / 100) };
   });
+}
+
+/** Mẫu hiện được những dạng bài nào: { tatCa: có khối "Tất cả các phần", dang: [dạng của các khối Bảng phân tích] } (để cảnh báo mẫu thiếu phần). */
+export function dangTrongMau(html) {
+  var kq = { tatCa: false, dang: [] }, MA = { I: 'trac_nghiem', II: 'dung_sai', III: 'tu_luan' };
+  String(html || '').replace(/<(div|span) (class="khoi"[^>]*)>/g, function (m, the, tt) {
+    var o = docThuocTinh(tt);
+    if (o.khoi !== 'phan-tich') return m;
+    var dg = o.dang || MA[o.phan || ''] || '';
+    if (!dg && !o.phan) kq.tatCa = true; else if (dg && kq.dang.indexOf(dg) < 0) kq.dang.push(dg);
+    return m;
+  });
+  return kq;
 }
 
 /** data-khoi / data-phan / data-ten của thẻ khối (đã bỏ mã hóa &amp; …). */
