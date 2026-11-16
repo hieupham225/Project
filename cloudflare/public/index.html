@@ -12,7 +12,7 @@
     /* Giao diện theo design system Astryx (theme "astryx") */
     :root {
       color-scheme: light;
-      --nen: #F8F4ED; --be-mat: #FFFFFF; --chu: #15110C; --phu: #4E606F;
+      --nen: #FAF9F7; --be-mat: #FFFFFF; --chu: #15110C; --phu: #4E606F;
       --mau: #15110C; --tren-mau: #FFFFFF; --mau-nhat: rgba(21,17,12,.08); --thuong-hieu: #225BFF;
       --vien: rgba(5,54,89,.10); --vien-dam: #CCD3DB; --loi: #AA071E; --xanh: #0D8626;
       --cao-nut: 52px;
@@ -66,6 +66,7 @@
     .bieu-do .chu-giai span { display: inline-flex; align-items: center; gap: 6px; }
     .bieu-do .chu-giai i { display: inline-block; width: 18px; height: 0; }
     .nhom-the h2 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .nhan-nut { display: inline-flex; align-items: center; }
     .nhom-the h2 .ten-nhom { display: inline-flex; align-items: center; }
     .nhom-the h2 .so { font-size: 13px; color: var(--phu); font-weight: 500; }
     .muc-con { font-size: 13px; font-weight: 600; color: var(--phu); text-transform: uppercase; letter-spacing: .04em; margin: 18px 0 0; }
@@ -273,7 +274,7 @@
           cac.slice().reverse().forEach(function (p, i, arr) {
             var nut = taoThe('button', 'phu');
             nut.type = 'button';
-            nut.appendChild(ic('document-text')); nut.appendChild(taoThe('span', null, (cac.length > 1 || p.lan > 1 ? 'Lần ' + p.lan : 'Xem phiếu') + (p.ngayThi ? ' · ' + p.ngayThi : '')));
+            var nhanNut = taoThe('span', 'nhan-nut'); nhanNut.appendChild(ic('document-text')); nut.appendChild(nhanNut); nhanNut.appendChild(taoThe('span', null, (cac.length > 1 || p.lan > 1 ? 'Lần ' + p.lan : 'Xem phiếu') + (p.ngayThi ? ' · ' + p.ngayThi : '')));
             var phai = taoThe('span', 'ngay', p.tongDiem ? p.tongDiem + (p.diemToiDa ? '/' + p.diemToiDa : '') + ' điểm' : '');
             var truoc = arr[i + 1];
             if (truoc && p.tongDiem && truoc.tongDiem) {
