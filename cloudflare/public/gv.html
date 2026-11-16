@@ -3022,18 +3022,28 @@
       [['eye', 'Xem mẫu', xemKieu('bai-kiem-tra', 'Bài kiểm tra')], ['document-duplicate', 'Tạo mẫu mới từ mẫu này', function () { manMau().coSan('bai-kiem-tra'); }]], xemKieu('bai-kiem-tra', 'Bài kiểm tra')));
     (DL.mauPhieu || []).forEach(function (m) {
       var mo = function () { goi('gvLayMauPhieu', m.id).then(function (mp) { manMau().chinh({ id: mp.id, ten: mp.ten, html: mp.html, trang: mp.trang, tenTep: mp.tenTep }); }).catch(baoLoi); };
-      var muc = [['pencil-square', 'Mở / chỉnh sửa', mo]];
+      // bấm thẻ = xem chi tiết (phiếu minh họa điền theo mẫu), giống các mẫu có sẵn; sửa ở nút ⋯
+      var xem = function () {
+        goi('gvLayMauPhieu', m.id).then(function (mp) {
+          var d = phieuMinhHoaDu(''), cd = DL.caiDat || {}, dm = d.cham.diem;
+          var giaTri = { Họ_và_tên: d.hoTen, Lớp: d.lop, Số_báo_danh: d.sbd, SBD: d.sbd, Mã_đề_thi: d.maDe, Tổng_điểm: dm.tong, Lần: d.lan, Ngày_thi: d.ngayThi, Mã_phiếu: d.maPhieu,
+            Tên_trung_tâm: d.trungTam, Tiêu_đề: d.tieuDe, Mô_tả: d.moTa, Logo: cd.logo || '', Môn: 'Toán', Điểm_tối_đa: dm.maxTong, Điểm_bằng_chữ: window.KhoiPhieu.diemBangChu(dm.tong) };
+          d.htmlMau = window.KhoiPhieu.dungKhoi(window.MauWord.dienMau(mp.html, giaTri, { giuTrong: true }), d); d.trangMau = mp.trang;
+          xemPhieuTrongHop('Mẫu "' + m.ten + '" · phiếu minh họa', d, cd.logo);
+        }).catch(baoLoi);
+      };
+      var muc = [['eye', 'Xem mẫu', xem], ['pencil-square', 'Mở / chỉnh sửa', mo]];
       // chỉ mẫu tạo từ file Word mới có "Thay file Word" (mẫu dựng từ mẫu có sẵn không có file gốc)
       if (m.tenTep) muc.push(['document-arrow-up', 'Thay file Word', function () { manMau().taiFile({ id: m.id, ten: m.ten }); }]);
       muc.push(['trash', 'Xóa', function () {
         hoi('Xóa mẫu phiếu "' + m.ten + '"?', { nut: 'Xóa', nguyHiem: true }).then(function (ok) { if (ok) goi('gvXoaMauPhieu', m.id).then(capNhat).catch(baoLoi); });
       }, true]);
       luoi.appendChild(theMau(m.ten, false, [
-        ['Tạo từ', m.tenTep ? 'File Word: ' + m.tenTep : 'Mẫu có sẵn "Kết quả kiểm tra"'],
+        ['Tạo từ', m.tenTep ? 'File Word: ' + m.tenTep : 'Mẫu có sẵn'],
         ['Chỗ thay đổi', m.soTruong + ' chỗ theo từng học sinh'],
         ['Bảng phân tích', !m.khoiPhan ? '' : m.khoiPhan.tatCa ? 'Tất cả các phần (theo cấu trúc đề)' : m.khoiPhan.dang.length ? m.khoiPhan.dang.map(tenDang).join(', ') : 'Không có'],
         ['Tạo ngày', m.ngayTao],
-        ['Đang dùng', m.soLanDung ? m.soLanDung + ' lần thi' : 'Chưa dùng']], muc, mo));
+        ['Đang dùng', m.soLanDung ? m.soLanDung + ' lần thi' : 'Chưa dùng']], muc, xem));
     });
   }
   $('nutTaoMau').onclick = function () { manMau().chonCach(); };
