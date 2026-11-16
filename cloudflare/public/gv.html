@@ -810,7 +810,7 @@
             <button id="nutTongHopLop" class="phu nho"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>Xem tổng hợp</button>
           </div>
           <table class="ds">
-            <thead><tr><th>Bài thi</th><th>Lần</th><th>Ngày thi</th><th>Số phiếu</th><th>Điểm TB</th><th>Trạng thái</th></tr></thead>
+            <thead><tr><th>Bài thi</th><th>Lần</th><th>Ngày thi</th><th>Số phiếu</th><th>Điểm TB</th><th>Trạng thái</th><th></th></tr></thead>
             <tbody id="bangDotLop"></tbody>
           </table>
         </div>
@@ -1509,10 +1509,12 @@
       ]));
     });
     var tbd = $('bangDotLop'); tbd.textContent = '';
-    if (!dot.length) tbd.appendChild(the('tr', {}, [the('td', { colspan: 6, class: 'goi-y', text: 'Chưa có bài thi. Bấm "Gửi kết quả" để tạo phiếu cho lớp.' })]));
+    if (!dot.length) tbd.appendChild(the('tr', {}, [the('td', { colspan: 7, class: 'goi-y', text: 'Chưa có bài thi. Bấm "Gửi kết quả" để tạo phiếu cho lớp.' })]));
     dot.forEach(function (d) {
       tbd.appendChild(the('tr', {}, [the('td', {}, [the('b', { text: d.baiThi })]), the('td', { text: 'Lần ' + d.lan }), the('td', { text: d.ngayThi || '' }),
-        the('td', { text: d.soPhieu }), the('td', {}, [the('b', { text: diemTB([d.maDot]) })]), the('td', {}, [the('span', { class: 'nhan ' + (d.congBo ? 'co' : 'moi'), text: d.congBo ? 'Đã công bố' : 'Chưa công bố' })])]));
+        the('td', { text: d.soPhieu }), the('td', {}, [the('b', { text: diemTB([d.maDot]) })]), the('td', {}, [the('span', { class: 'nhan ' + (d.congBo ? 'co' : 'moi'), text: d.congBo ? 'Đã công bố' : 'Chưa công bố' })]),
+        the('td', {}, [the('div', { class: 'cum-thao-tac cum-dot' }, [nutCongBoCho(d),
+          d.soPhieu ? the('button', { class: 'phu nho', text: 'Xem phiếu', onclick: function () { hopDsPhieu(d); } }) : null])])]));
     });
   }
   $('timLop').oninput = veLop;
@@ -2470,13 +2472,7 @@
         nhomTruoc = d.nhom; baiTruoc = null;
       }
       if (NHOM_DOT_DONG[d.nhom]) return;
-      var nutCongBo = d.congBo
-        ? the('button', { class: 'phu nho', text: 'Ngừng công bố', onclick: function () {
-            hoi('Ngừng công bố ' + tenLanThi(d) + ' (lớp ' + d.nhom + ')?\nPhụ huynh sẽ không xem được ' + d.soPhieu + ' phiếu của lần này cho tới khi công bố lại.', { nut: 'Ngừng công bố', nguyHiem: true })
-              .then(function (ok) { if (ok) doiCongBo(d, false, nutCongBo); });
-          } })
-        : the('button', { class: 'nho', text: 'Công bố', disabled: d.soPhieu ? null : '', title: d.soPhieu ? '' : 'Lần này chưa có phiếu', onclick: function () { doiCongBo(d, true, nutCongBo); } });
-      if (d.soPhieu) nutCongBo.removeAttribute('disabled');
+      var nutCongBo = nutCongBoCho(d);
       var xoa = function () {
         hoi('Xóa ' + tenLanThi(d) + ' (lớp ' + d.nhom + ') và ' + d.soPhieu + ' phiếu?', { nut: 'Xóa', nguyHiem: true }).then(function (ok) { if (!ok) return;
           goi('gvXoaDot', d.maDot).then(function (dl) { capNhat(dl); bao('Đã xóa.'); }).catch(baoLoi); });
@@ -2633,6 +2629,17 @@
       the('p', { class: 'goi-y', style: 'margin:0', text: 'Phiếu của lần này cập nhật theo ngay, kể cả phiếu đã công bố. Tiêu đề phiếu đổi theo nếu đang lấy theo tên bài.' }),
       the('div', { class: 'chan-hop' }, [the('button', { class: 'phu', text: 'Hủy', onclick: function () { $('hop').classList.add('an'); } }), nut])]));
     if (!laCamUng()) setTimeout(function () { oTen.focus(); }, 50); // điện thoại: không bật bàn phím ngay
+  }
+  // Nút Công bố / Ngừng công bố của 1 lần thi (dùng ở tab Bài thi và chi tiết lớp)
+  function nutCongBoCho(d) {
+    var nutCongBo = d.congBo
+        ? the('button', { class: 'phu nho', text: 'Ngừng công bố', onclick: function () {
+            hoi('Ngừng công bố ' + tenLanThi(d) + ' (lớp ' + d.nhom + ')?\nPhụ huynh sẽ không xem được ' + d.soPhieu + ' phiếu của lần này cho tới khi công bố lại.', { nut: 'Ngừng công bố', nguyHiem: true })
+              .then(function (ok) { if (ok) doiCongBo(d, false, nutCongBo); });
+          } })
+        : the('button', { class: 'nho', text: 'Công bố', disabled: d.soPhieu ? null : '', title: d.soPhieu ? '' : 'Lần này chưa có phiếu', onclick: function () { doiCongBo(d, true, nutCongBo); } });
+    if (d.soPhieu) nutCongBo.removeAttribute('disabled');
+    return nutCongBo;
   }
   function doiCongBo(d, congBo, nut) {
     nut.disabled = true;
