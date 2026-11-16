@@ -558,6 +558,8 @@
   .bang-ct .dam { font-weight: 700; }
   .bang-ct b { font-weight: 600; }
   .bang-ct .mot-dong { white-space: nowrap; }
+  .bang-tt th { width: 34%; padding: 7px 4px; font-size: 12px; font-weight: 500; color: var(--phu); text-align: left; vertical-align: top; white-space: nowrap; border-bottom: 1px solid var(--vien); }
+  .bang-tt tbody tr:last-child th { border-bottom: 0; }
   .bang-ct .ten-phan { color: var(--phu); font-size: 11.5px; font-weight: 400; white-space: normal; }
   .ma-phan { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 20px; padding: 0 5px; border-radius: var(--r-tron); background: var(--mau); color: var(--tren-mau); font-size: 11px; font-weight: 700; }
   .the-lop.trong { cursor: default; align-items: flex-start; border-style: dashed; box-shadow: none; background: #FCFBFA; }
@@ -1014,7 +1016,7 @@
         </div>
         <p class="goi-y mo-ta-trang" id="moTaMau"></p>
       </div>
-      <div id="dsMauPhieu" class="ds-mau"></div>
+      <div id="dsMauPhieu" class="ds-ct"></div>
     </section>
 
     <!-- ============ CẤU TRÚC ĐỀ (chỉ quản trị) ============ -->
@@ -2876,17 +2878,33 @@
   function veMauPhieu() {
     var k = $('dsMauPhieu'); if (!k) return; k.textContent = '';
     $('moTaMau').textContent = (DL.mauPhieu || []).length + 1 + ' mẫu · mẫu "Phân tích bài thi" có sẵn, luôn dùng được';
-    k.appendChild(the('div', { class: 'o-mau' }, [the('div', {}, [the('b', { text: 'Phân tích bài thi' }), ' ', the('span', { class: 'nhan', text: 'Có sẵn' }),
-      the('div', { class: 'goi-y', text: 'Mẫu mặc định: thông tin học sinh, điểm từng phần, bảng phân tích từng câu, nhận xét, các lần làm.' })])]));
+    var luoi = the('div', { class: 'luoi-lop luoi-ct' }); k.appendChild(luoi);
+    // Khối thông tin trong thẻ: các dòng nhãn – giá trị
+    var khoiTT = function (dong) {
+      return the('div', { class: 'khoi-ct' }, [the('table', { class: 'bang-ct bang-tt' }, [the('tbody', {}, dong.filter(function (x) { return x && x[1] !== '' && x[1] != null; }).map(function (x) {
+        return the('tr', {}, [the('th', { text: x[0] }), the('td', { text: String(x[1]) })]);
+      }))])]);
+    };
+    var theMau = function (ten, coSan, dong, nut) {
+      return the('div', { class: 'the-lop the-ct' }, [
+        the('div', { class: 'dau-the-lop' }, [the('h3', { text: ten }), the('span', { class: 'nhan' + (coSan ? '' : ' moi'), text: coSan ? 'Có sẵn' : 'Tự tạo' })]),
+        khoiTT(dong), nut ? the('div', { class: 'nut-lop' }, nut) : null]);
+    };
+    luoi.appendChild(theMau('Phân tích bài thi', true, [
+      ['Gồm', 'Thông tin học sinh, điểm từng phần, bảng phân tích từng câu, nhận xét, các lần làm'],
+      ['Số câu', 'Tự đủ theo cấu trúc đề của bài thi'],
+      ['Dùng cho', 'Mọi bài thi (mặc định khi gửi kết quả)']]));
     (DL.mauPhieu || []).forEach(function (m) {
-      k.appendChild(the('div', { class: 'o-mau' }, [
-        the('div', {}, [the('b', { text: m.ten }), the('div', { class: 'goi-y', text: m.soTruong + ' chỗ thay đổi theo học sinh · tạo ' + m.ngayTao + (m.tenTep ? ' từ ' + m.tenTep : '') + (m.soLanDung ? ' · đang dùng cho ' + m.soLanDung + ' lần thi' : '') })]),
-        the('div', { class: 'cum-thao-tac' }, [
-          the('button', { class: 'phu nho', text: 'Mở / chỉnh sửa', onclick: function () { goi('gvLayMauPhieu', m.id).then(function (mp) { manMau().chinh({ id: mp.id, ten: mp.ten, html: mp.html, trang: mp.trang, tenTep: mp.tenTep }); }).catch(baoLoi); } }),
-          the('button', { class: 'phu nho', text: 'Thay file Word', onclick: function () { manMau().taiFile({ id: m.id, ten: m.ten }); } }),
-          the('button', { class: 'nguy nho', text: 'Xóa', onclick: function () {
-            hoi('Xóa mẫu phiếu "' + m.ten + '"?', { nut: 'Xóa', nguyHiem: true }).then(function (ok) { if (ok) goi('gvXoaMauPhieu', m.id).then(capNhat).catch(baoLoi); });
-          } })])]));
+      luoi.appendChild(theMau(m.ten, false, [
+        ['Chỗ thay đổi', m.soTruong + ' chỗ theo từng học sinh'],
+        ['Tạo ngày', m.ngayTao],
+        ['Từ file', m.tenTep || ''],
+        ['Đang dùng', m.soLanDung ? m.soLanDung + ' lần thi' : 'Chưa dùng']], [
+        the('button', { class: 'phu nho', icon: 'pencil-square', text: 'Mở / chỉnh sửa', onclick: function () { goi('gvLayMauPhieu', m.id).then(function (mp) { manMau().chinh({ id: mp.id, ten: mp.ten, html: mp.html, trang: mp.trang, tenTep: mp.tenTep }); }).catch(baoLoi); } }),
+        the('button', { class: 'phu nho', icon: 'document-arrow-up', text: 'Thay file Word', onclick: function () { manMau().taiFile({ id: m.id, ten: m.ten }); } }),
+        the('button', { class: 'nguy nho', icon: 'trash', text: 'Xóa', onclick: function () {
+          hoi('Xóa mẫu phiếu "' + m.ten + '"?', { nut: 'Xóa', nguyHiem: true }).then(function (ok) { if (ok) goi('gvXoaMauPhieu', m.id).then(capNhat).catch(baoLoi); });
+        } })]));
     });
   }
   $('nutTaoMau').onclick = function () { manMau().chonCach(); };
