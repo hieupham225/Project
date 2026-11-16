@@ -1512,8 +1512,9 @@
     var sel = $('gMauPhieu'), cu = sel.value;
     sel.textContent = '';
     sel.appendChild(the('option', { value: '', text: 'Kết quả kiểm tra (mặc định)' }));
+    sel.appendChild(the('option', { value: 'kieu:bai-kiem-tra', text: 'Bài kiểm tra (có sẵn)' }));
     (DL.mauPhieu || []).forEach(function (m) { sel.appendChild(the('option', { value: m.id, text: m.ten })); });
-    sel.value = (DL.mauPhieu || []).some(function (m) { return m.id === cu; }) ? cu : '';
+    sel.value = cu === 'kieu:bai-kiem-tra' || (DL.mauPhieu || []).some(function (m) { return m.id === cu; }) ? cu : '';
   }
   $('gMauPhieu').onchange = function () { mauDaChon = true; canhBaoMau(); if (soHienTai && soHienTai.kq) taiXemTruoc(false); };
   // Mẫu phiếu đi theo cấu trúc đề: tự chọn mẫu của lần gửi gần nhất dùng cấu trúc này (giáo viên chọn tay thì giữ)
@@ -1521,7 +1522,7 @@
   function mauTheoCauTruc(id) {
     var ds = (DL.dot || []).filter(function (d) { return d.cauTruc === id; }).sort(function (a, b) { return (b.sttTao || 0) - (a.sttTao || 0); });
     var m = ds.length ? ds[0].mauPhieu || '' : '';
-    return !m || (DL.mauPhieu || []).some(function (x) { return x.id === m; }) ? m : '';
+    return !m || /^kieu:/.test(m) || (DL.mauPhieu || []).some(function (x) { return x.id === m; }) ? m : '';
   }
   // Cảnh báo khi mẫu phiếu không có bảng phân tích cho một số dạng bài của cấu trúc đề (phần đó sẽ không hiện trên phiếu)
   function canhBaoMau() {
@@ -2970,9 +2971,16 @@
   /* =================== MẪU PHIẾU ===================
      Tab "Mẫu phiếu": danh sách mẫu + màn hình toàn trang 3 bước: chọn cách tạo -> tải file -> kiểm tra phiếu.
      Ngôn ngữ cho thầy cô: "chỗ thay đổi theo từng học sinh" (= trường), "phần tự động" (= khối). */
+  // Phiếu minh họa đủ trường để xem trước các mẫu có sẵn
+  function phieuMinhHoaDu(kieu) {
+    var d = window.KhoiPhieu.phieuMinhHoa(), cd = DL.caiDat || {};
+    return Object.assign(d, { kieu: kieu, trungTam: cd.tenTrungTam || 'Trung tâm', khauHieu: cd.khauHieu || '', tieuDe: 'KIỂM TRA THÁNG 9 NĂM 2026', moTa: 'Bài thi cuối khóa 1 – Lớp 11',
+      lop: 'Toán 11A', sbd: '32000001', maDe: '105', maPhieu: 'MINH-HOA', ngay: new Date().toLocaleDateString('vi-VN'), stt: 3,
+      cham: Object.assign(d.cham, { cauTruc: { mon: 'Toán' } }) });
+  }
   function veMauPhieu() {
     var k = $('dsMauPhieu'); if (!k) return; k.textContent = '';
-    $('moTaMau').textContent = (DL.mauPhieu || []).length + 1 + ' mẫu · mẫu "Kết quả kiểm tra" có sẵn, luôn dùng được';
+    $('moTaMau').textContent = (DL.mauPhieu || []).length + 2 + ' mẫu · 2 mẫu có sẵn, tự đủ các phần theo cấu trúc đề';
     var luoi = the('div', { class: 'luoi-lop luoi-ct' }); k.appendChild(luoi);
     // Khối thông tin trong thẻ: các dòng nhãn – giá trị
     var khoiTT = function (dong) {
@@ -2991,11 +2999,18 @@
       return t;
     };
     var moCoSan = function () { manMau().coSan(); };
+    var soDung = function (id) { var x = (DL.mauCoSan || []).filter(function (y) { return y.id === id; })[0]; return x && x.soLanDung ? x.soLanDung + ' lần thi' : 'Chưa dùng'; };
+    var xemKieu = function (kieu, ten) { return function () { xemPhieuTrongHop('Mẫu "' + ten + '" · phiếu minh họa', phieuMinhHoaDu(kieu), (DL.caiDat || {}).logo); }; };
     luoi.appendChild(theMau('Kết quả kiểm tra', true, [
       ['Gồm', 'Thông tin học sinh, điểm từng phần, bảng phân tích từng câu, nhận xét, các lần làm'],
       ['Số câu', 'Tự đủ theo cấu trúc đề của bài thi'],
       ['Dùng cho', 'Mọi bài thi (mặc định khi gửi kết quả)']],
-      [['document-duplicate', 'Tạo mẫu mới từ mẫu này', moCoSan]], moCoSan));
+      [['eye', 'Xem mẫu', xemKieu('', 'Kết quả kiểm tra')], ['document-duplicate', 'Tạo mẫu mới từ mẫu này', moCoSan]], xemKieu('', 'Kết quả kiểm tra')));
+    luoi.appendChild(theMau('Bài kiểm tra', true, [
+      ['Gồm', 'Đầu phiếu kiểu tờ giấy thi, khung Điểm (kèm điểm bằng chữ) và Nhận xét, phần Bài làm dạng phiếu trả lời, kết quả theo chủ đề, chỗ ký của giáo viên và phụ huynh'],
+      ['Số câu', 'Tự đủ theo cấu trúc đề của bài thi'],
+      ['Đang dùng', soDung('kieu:bai-kiem-tra')]],
+      [['eye', 'Xem mẫu', xemKieu('bai-kiem-tra', 'Bài kiểm tra')]], xemKieu('bai-kiem-tra', 'Bài kiểm tra')));
     (DL.mauPhieu || []).forEach(function (m) {
       var mo = function () { goi('gvLayMauPhieu', m.id).then(function (mp) { manMau().chinh({ id: mp.id, ten: mp.ten, html: mp.html, trang: mp.trang, tenTep: mp.tenTep }); }).catch(baoLoi); };
       var muc = [['pencil-square', 'Mở / chỉnh sửa', mo]];

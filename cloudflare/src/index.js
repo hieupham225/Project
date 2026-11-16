@@ -509,6 +509,7 @@ const HAM = {
       monLop: Object.fromEntries(c.lop.filter((l) => c.duocLopId(l.id)).map((l) => [l.ten, l.mon || ''])),
       dsMon: L.DS_MON,
       khoiPhieu: KP.CAC_KHOI,
+      mauCoSan: Object.keys(KIEU_PHIEU).map((id) => ({ id, ten: KIEU_PHIEU[id].ten, soLanDung: lt.filter((d) => d.mauPhieu === id).length })),
       mauPhieu: mau.map((m) => ({ id: m.id, ten: m.ten, soTruong: JSON.parse(m.truong).length, tenTep: m.ten_tep, ngayTao: m.ngay_tao,
         soLanDung: lt.filter((d) => d.mauPhieu === m.id).length, khoiPhan: KP.dangTrongMau(m.html) })),
       cauTrucDe: L.CAU_TRUC_CO_SAN.map((ct) => Object.assign({ coSan: true }, ct)).concat(await c.cauTrucRieng()).map((ct) => ({
@@ -825,7 +826,7 @@ const HAM = {
       nhom: g.nhom.map((x) => ({ nhom: x.nhom, lopMoi: x.lopMoi, soDong: x.soDong, siSo: x.siSo, vang: x.vang.map(gon) })),
       phieuXemTruoc: dauTien ? (() => {
         const d = duLieuPhieu(c, kq, dauTien.h, dauTien.cham, dauTien.hs, '(xem trước)', { lan: 1, ngayThi: kq.thongTin.ngayThi, lichSu: [], nhom: dauTien.nhom }, mau);
-        if (mau) { d.htmlMau = KP.dungKhoi(MW.dienMau(mau.html, giaTriPhieu(d)), d); d.trangMau = mau.trang; }
+        if (mau && mau.html) { d.htmlMau = KP.dungKhoi(MW.dienMau(mau.html, giaTriPhieu(d)), d); d.trangMau = mau.trang; }
         return d;
       })() : null,
       mauPhieu: mau ? { id: mau.id, ten: mau.ten, truongThieu: truongThieu(mau, kq) } : null
@@ -1456,7 +1457,10 @@ async function taoLop(c, ten, mon = '') {
 }
 
 /** Mẫu phiếu theo id (trong không gian). */
+// Mẫu có sẵn dạng kiểu trình bày (không có HTML, trình duyệt tự dựng theo cấu trúc đề): "kieu:bai-kiem-tra"
+const KIEU_PHIEU = { 'kieu:bai-kiem-tra': { kieu: 'bai-kiem-tra', ten: 'Bài kiểm tra' } };
 async function layMauPhieu(db, kg, id) {
+  if (KIEU_PHIEU[id]) return { id, kieu: KIEU_PHIEU[id].kieu, ten: KIEU_PHIEU[id].ten, html: '', truong: [], trang: {} };
   const m = await db.prepare('SELECT id, ten, html, truong, trang FROM mau_phieu WHERE id = ? AND kg = ?').bind(String(id), kg).first();
   if (!m) throw new Loi('Không tìm thấy mẫu phiếu.');
   return { id: m.id, ten: m.ten, html: m.html, truong: JSON.parse(m.truong), trang: JSON.parse(m.trang) };
@@ -1563,7 +1567,8 @@ function duLieuPhieu(c, kq, h, cham, hs, maPhieu, lanThi, mau) {
   const truoc = lanThi.lichSu.length ? lanThi.lichSu[lanThi.lichSu.length - 1] : null;
   const chenh = truoc ? L.soThuc_(cham.diem.tong, 0) - L.soThuc_(truoc.tong, 0) : 0;
   const them = {};
-  if (mau) { // mẫu phiếu Word: lưu giá trị các trường của mẫu lấy từ dòng Excel của học sinh
+  if (mau && mau.kieu) them.kieu = mau.kieu; // kiểu trình bày có sẵn (VD "Bài kiểm tra")
+  else if (mau) { // mẫu phiếu Word: lưu giá trị các trường của mẫu lấy từ dòng Excel của học sinh
     const theoKhoa = {};
     Object.keys(h.cot || {}).forEach((k) => { theoKhoa[MW.khoaTruong(k)] = h.cot[k]; });
     them.mau = mau.id;
