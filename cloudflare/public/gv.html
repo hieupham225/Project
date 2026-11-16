@@ -459,6 +459,15 @@
   .luoi-cach { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; max-width: 980px; width: 100%; margin: 24px auto; }
   .the-cach { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; text-align: left; padding: 22px; min-height: 0; height: auto; border-radius: var(--r-khung); background: var(--be-mat); color: var(--chu); border: 1px solid var(--vien); box-shadow: var(--bong-thap); white-space: normal; font-size: 14px; }
   .the-cach b { font-size: 17px; } .icon-cach { font-size: 30px; }
+  /* Thẻ chọn cách tạo có hình minh họa phiếu ở trên */
+  .the-cach.co-anh { padding: 0; gap: 0; overflow: hidden; align-items: stretch; justify-content: flex-start; }
+  .anh-cach { height: 220px; padding: 20px 24px 0; background: linear-gradient(160deg, #FBF6EE 0%, #F4EEE6 55%, #F7E9E1 100%); border-bottom: 1px solid var(--vien); }
+  .anh-cach .giay { position: relative; height: 100%; overflow: hidden; background: #fff; border-radius: 10px 10px 0 0; box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.08); }
+  .anh-cach iframe { position: absolute; top: 0; left: 0; width: 640px; max-width: none; height: 1000px; border: 0; transform-origin: 0 0; pointer-events: none; background: #fff; }
+  .chu-cach { display: flex; flex-direction: column; gap: 6px; padding: 18px 22px 22px; text-align: left; }
+  .ten-cach { display: flex; align-items: center; gap: 8px; }
+  .ten-cach .ic { width: 20px; height: 20px; }
+  @media (hover: hover) { button.the-cach.co-anh:hover:not(:disabled) .giay { transform: translateY(-3px); } .anh-cach .giay { transition: transform .2s var(--em); } }
   button.the-cach:hover:not(:disabled), button.the-cach:active { background: var(--be-mat); color: var(--chu); }
   @media (hover: hover) { button.the-cach:hover:not(:disabled) { border-color: var(--vien-dam); box-shadow: var(--bong-cao); transform: translateY(-2px); } }
   .cot-tai { display: flex; flex-direction: column; gap: 14px; max-width: 760px; width: 100%; margin: 16px auto; }
@@ -3283,11 +3292,28 @@
     /* Bước 1: chọn cách tạo */
     var chonCach = function () {
       hienBuoc(1, 'Tạo mẫu phiếu');
-      var the1 = function (icon, ten, moTa, viec) { return the('button', { type: 'button', class: 'the-cach', onclick: viec }, [the('span', { class: 'icon-cach' }, [ic(icon)]), the('b', { text: ten }), the('span', { class: 'goi-y', text: moTa })]); };
+      // Thẻ chọn cách tạo: hình minh họa phiếu ở trên, tên + mô tả ở dưới
+      var the1 = function (icon, ten, moTa, viec, srcdoc) {
+        var giay = the('div', { class: 'giay' }), f = the('iframe', { tabindex: -1, 'aria-hidden': 'true', title: '' });
+        f.srcdoc = srcdoc; giay.appendChild(f);
+        var co = function () { var r = giay.clientWidth; if (r) f.style.transform = 'scale(' + (r / 640) + ')'; };
+        requestAnimationFrame(co); if (window.ResizeObserver) new ResizeObserver(co).observe(giay);
+        return the('button', { type: 'button', class: 'the-cach co-anh', onclick: viec }, [the('div', { class: 'anh-cach' }, [giay]),
+          the('div', { class: 'chu-cach' }, [the('span', { class: 'ten-cach' }, [ic(icon), the('b', { text: ten })]), the('span', { class: 'goi-y', text: moTa })])]);
+      };
+      // Minh họa "file Word": trang giấy có chữ và các chỗ thay đổi «…» tô vàng
+      var anhWord = '<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{margin:0;padding:40px 48px;font:15px/1.6 "Times New Roman",serif;color:#222;background:#fff}' +
+        '.t{text-align:center;font-weight:bold;font-size:22px;margin:6px 0 14px}.f{background:#FFF1B8;outline:1px dashed #C9A227;color:#b00;font-weight:bold;padding:0 3px}' +
+        '.l{height:9px;border-radius:5px;background:#E7E3DC;margin:12px 0}.w{position:absolute;top:28px;right:40px;background:#2B579A;color:#fff;font:bold 13px Arial;padding:4px 9px;border-radius:5px}</style></head><body>' +
+        '<div class="w">DOCX</div><p style="text-align:center;font-weight:bold;color:#1b7a34">«Tên trung tâm»</p><div class="t">PHIẾU KẾT QUẢ KIỂM TRA</div>' +
+        '<p>Họ và tên: <span class="f">«Họ và tên»</span> &nbsp; Lớp: <span class="f">«Lớp»</span></p><p>Tổng điểm: <span class="f">«Tổng điểm»</span> / 10</p>' +
+        '<div class="l" style="width:92%"></div><div class="l" style="width:80%"></div><div class="l" style="width:86%"></div><p>Nhận xét: <span class="f">«Nhận xét»</span></p>' +
+        '<div class="l" style="width:90%"></div><div class="l" style="width:70%"></div><div class="l" style="width:84%"></div><div class="l" style="width:60%"></div></body></html>';
+      var anhMau = function (kieu) { try { return renderPhieu(phieuMinhHoaDu(kieu), (DL.caiDat || {}).logo); } catch (e) { return ''; } };
       than.appendChild(the('div', { class: 'luoi-cach' }, [
-        the1('document-text', 'Dùng file Word đang dùng', 'File trộn thư (mail merge), hoặc phiếu Word đã điền sẵn của 1 học sinh. Hệ thống giữ nguyên bố cục và tự nhận ra những chỗ thay đổi theo từng học sinh.', function () { taiFile(null); }),
-        the1('sparkles', 'Mẫu có sẵn · Classic', 'Giao diện "Kết quả kiểm tra": thông tin học sinh, điểm từng phần, bảng phân tích từng câu, nhận xét — tự đủ các phần theo cấu trúc đề, dùng cho mọi bài thi. Sửa chữ, thêm logo tùy ý.', function () { chinh(mauCoSan()); }),
-        the1('clipboard-document-list', 'Mẫu có sẵn · Bài kiểm tra', 'Giao diện kiểu tờ giấy thi: đầu phiếu trường / bài kiểm tra, khung Điểm (kèm bằng chữ) và Nhận xét, phân tích bài làm từng câu, kết quả theo chủ đề — tự đủ các phần theo cấu trúc đề.', function () { chinh(mauCoSan('bai-kiem-tra')); })]));
+        the1('document-text', 'Dùng file Word đang dùng', 'File trộn thư (mail merge), hoặc phiếu Word đã điền sẵn của 1 học sinh. Hệ thống giữ nguyên bố cục và tự nhận ra những chỗ thay đổi theo từng học sinh.', function () { taiFile(null); }, anhWord),
+        the1('sparkles', 'Mẫu có sẵn · Classic', 'Giao diện "Kết quả kiểm tra": thông tin học sinh, điểm từng phần, bảng phân tích từng câu, nhận xét — tự đủ các phần theo cấu trúc đề, dùng cho mọi bài thi. Sửa chữ, thêm logo tùy ý.', function () { chinh(mauCoSan()); }, anhMau('')),
+        the1('clipboard-document-list', 'Mẫu có sẵn · Bài kiểm tra', 'Giao diện kiểu tờ giấy thi: đầu phiếu trường / bài kiểm tra, khung Điểm (kèm bằng chữ) và Nhận xét, phân tích bài làm từng câu, kết quả theo chủ đề — tự đủ các phần theo cấu trúc đề.', function () { chinh(mauCoSan('bai-kiem-tra')); }, anhMau('bai-kiem-tra'))]));
     };
 
     /* Bước 2: tải file Word (+ Excel) */
