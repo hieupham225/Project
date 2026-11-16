@@ -467,6 +467,26 @@
   .the-lop .so-lieu span, .thong-ke span { color: var(--phu); font-size: 13px; }
   .the-lop .gan-nhat { color: var(--phu); font-size: 13px; min-height: 1.4em; }
   .the-lop .nut-lop { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+  /* Tab Cấu trúc đề: thẻ giống thẻ lớp, khối bảng phần bên trong */
+  .luoi-ct { grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+  .ds-ct .dau-nhom-lop:first-child { margin-top: 4px; }
+  .the-ct { cursor: default; }
+  .the-ct .nhan:not(.moi) { background: var(--phu-hover, #EEE9E1); color: var(--chu); }
+  .the-ct:hover { transform: none !important; box-shadow: var(--bong-thap) !important; border-color: var(--vien) !important; }
+  .the-ct .dau-the-lop { align-items: flex-start; }
+  .the-ct h3 { font-size: 17px; }
+  .khoi-ct { background: #FBF8F3; border: 1px solid var(--vien); border-radius: var(--r-phan-tu); padding: 4px 10px; }
+  .bang-ct { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .bang-ct th { font-size: 11.5px; font-weight: 600; color: var(--phu); text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--vien); white-space: nowrap; }
+  .bang-ct td { padding: 7px 4px; border-bottom: 1px solid var(--vien); vertical-align: top; }
+  .bang-ct tbody tr:last-child td { border-bottom: 0; }
+  .bang-ct tfoot td { border-top: 1px solid var(--vien-dam); border-bottom: 0; font-weight: 600; }
+  .bang-ct .so { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .bang-ct .dam { font-weight: 700; }
+  .bang-ct b { font-weight: 600; }
+  .bang-ct .mot-dong { white-space: nowrap; }
+  .bang-ct .ten-phan { color: var(--phu); font-size: 11.5px; font-weight: 400; white-space: normal; }
+  .ma-phan { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 20px; padding: 0 5px; border-radius: var(--r-tron); background: var(--mau); color: var(--tren-mau); font-size: 11px; font-weight: 700; }
   .the-lop.trong { cursor: default; align-items: flex-start; border-style: dashed; box-shadow: none; background: #FCFAF6; }
   .the-lop.trong:hover { transform: none; }
   .thong-ke { display: flex; flex-wrap: wrap; gap: 12px 32px; }
@@ -925,7 +945,7 @@
         </div>
         <p class="goi-y mo-ta-trang" id="moTaCauTruc"></p>
       </div>
-      <div id="dsCauTruc" class="ds-mau"></div>
+      <div id="dsCauTruc" class="ds-ct"></div>
     </section>
 
     <!-- ============ TÀI KHOẢN GIÁO VIÊN (chỉ quản trị) ============ -->
@@ -2712,13 +2732,31 @@
     var ds = DL.cauTrucDe || [], rieng = ds.filter(function (c) { return !c.coSan; });
     $('moTaCauTruc').textContent = ds.length + ' cấu trúc · ' + rieng.length + ' tự tạo';
     var mon = []; ds.forEach(function (c) { if (mon.indexOf(c.mon || 'Khác') < 0) mon.push(c.mon || 'Khác'); });
+    var TEN_NGAN = { trac_nghiem: 'Trắc nghiệm ABCD', dung_sai: 'Đúng / Sai', tra_loi_ngan: 'Trả lời ngắn', tu_luan: 'Tự luận', dien_tu: 'Điền từ', sap_xep: 'Sắp xếp' };
+    var LA_MA = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+    var luoi = the('div', { class: 'luoi-lop luoi-ct' }); k.appendChild(luoi);
     mon.forEach(function (m) {
-      k.appendChild(the('h3', { class: 'nhom-ct', text: m }));
       ds.filter(function (c) { return (c.mon || 'Khác') === m; }).forEach(function (c) {
-        k.appendChild(the('div', { class: 'o-mau' }, [
-          the('div', {}, [the('b', { text: c.ten }), ' ', the('span', { class: 'nhan' + (c.coSan ? '' : ' moi'), text: c.coSan ? 'Có sẵn' : 'Tự tạo' }),
-            the('div', { class: 'goi-y', text: c.moTa + (c.soLanDung ? ' · đang dùng cho ' + c.soLanDung + ' lần thi' : '') })]),
-          the('div', { class: 'cum-thao-tac' }, [
+        var tong = 0, hang = (c.phan || []).map(function (p, i) {
+          var diem = diemPhan(p) || 0; tong += diem;
+          var ds1 = p.dang === 'dung_sai', bd = p.bangDiem || [];
+          return the('tr', {}, [
+            the('td', {}, [the('span', { class: 'ma-phan', text: p.ma || LA_MA[i] || String(i + 1) })]),
+            the('td', {}, [the('b', { text: TEN_NGAN[p.dang] || tenDang(p.dang) }), !c.coSan && p.ten && p.ten !== TEN_NGAN[p.dang] ? the('div', { class: 'ten-phan', text: p.ten }) : null]),
+            the('td', { class: 'so', text: String(p.soCau) }),
+            the('td', { class: 'so', title: ds1 ? 'Điểm mỗi câu theo số ý đúng: ' + [1, 2, 3, 4].map(function (y) { return y + ' ý ' + soVN(bd[y] || 0); }).join(' · ') : null },
+              ds1 ? [soVN(bd[4] || p.diemMoiCau || 1), the('div', { class: 'ten-phan mot-dong', text: 'tối đa' })] : [soVN(p.diemMoiCau)]),
+            the('td', { class: 'so dam', text: soVN(diem) })]);
+        });
+        luoi.appendChild(the('div', { class: 'the-lop the-ct' }, [
+          the('div', { class: 'dau-the-lop' }, [the('div', { class: 'ten-the-lop' }, [the('h3', { text: c.ten }), the('span', { class: 'nhan-mon', text: m })]), the('span', { class: 'nhan' + (c.coSan ? '' : ' moi'), text: c.coSan ? 'Có sẵn' : 'Tự tạo' })]),
+          the('div', { class: 'khoi-ct' }, [the('table', { class: 'bang-ct' }, [
+            the('thead', {}, [the('tr', {}, ['Phần', 'Loại câu', 'Số câu', 'Điểm/câu', 'Điểm'].map(function (x, i) { return the('th', { class: i > 1 ? 'so' : null, text: x }); }))]),
+            the('tbody', {}, hang),
+            the('tfoot', {}, [the('tr', {}, [the('td', { colspan: 2, text: 'Tổng' }),
+              the('td', { class: 'so', text: String((c.phan || []).reduce(function (a, p) { return a + (p.soCau || 0); }, 0)) }), the('td', {}), the('td', { class: 'so dam', text: soVN(tong) })])])])]),
+          c.soLanDung ? the('div', { class: 'gan-nhat', text: 'Đang dùng cho ' + c.soLanDung + ' lần thi' }) : null,
+          the('div', { class: 'nut-lop' }, [
             the('button', { class: 'phu nho', text: 'Nhân bản', onclick: function () { suaCauTruc(c, true); } }),
             c.coSan ? null : the('button', { class: 'phu nho', text: 'Sửa', onclick: function () { suaCauTruc(c, false); } }),
             c.coSan ? null : the('button', { class: 'nguy nho', text: 'Xóa', onclick: function () {
