@@ -1,5 +1,16 @@
 # Nhật ký phiên bản
 
+## v1.1.3 — 16/11/2026 (đã lên production, không có migration)
+
+Chỉ đổi giao diện, máy chủ và cơ sở dữ liệu giữ nguyên.
+- Bộ icon Heroicons (bộ mặc định của Astryx) thay toàn bộ emoji/ký tự; avatar chữ viết tắt + popover tài khoản (Đổi mật khẩu, Đăng xuất); tab Tổng hợp chuyển ra sau Cấu trúc đề; nền xám ấm nhạt hơn.
+- Bài thi: nhóm lớp nổi bật, thu gọn/mở rộng (nhớ trên trình duyệt), đếm bài thi/phiếu/chưa công bố; cụm Công bố > Xem phiếu > ⋯ (Sửa, Xóa).
+- Xem phiếu: toàn trang 2 cột (danh sách học sinh cuộn trong khung + phiếu đang chọn, ↑/↓ chuyển em); điện thoại giữ dạng danh sách.
+- Cấu trúc đề: lưới thẻ có bảng Phần – Loại câu – Số câu – Điểm/câu – Điểm; chia "tự tạo" / "có sẵn"; thao tác trong nút ⋯. Trang Gửi kết quả hiện bảng cấu trúc đề đã chọn.
+- Mẫu phiếu: lưới thẻ, bấm thẻ để mở, thao tác trong nút ⋯ ("Thay file Word" chỉ với mẫu tạo từ Word); mẫu có sẵn đổi tên "Kết quả kiểm tra".
+- Chi tiết lớp: bỏ khối trắng bọc bảng; bảng bài thi có Công bố / Ngừng công bố, Xem phiếu.
+- Bảng: tiêu đề cột dính khi cuộn thì bỏ bo góc. Trang phụ huynh: tiêu đề thẳng lề với phiếu khi xem phiếu.
+
 ## v1.1.2 — 16/11/2026 (đã lên production, không có migration)
 
 - Menu ⋯ của lớp: biểu tượng đầu mỗi mục, không xuống dòng; thêm **Mã tra cứu cả lớp (Excel)**: STT, Họ và tên, Lớp, SBD, Mã tra cứu, SĐT phụ huynh.
