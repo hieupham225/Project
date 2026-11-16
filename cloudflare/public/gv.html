@@ -110,8 +110,10 @@
   #hop.toan-trang .hop { width: 100%; max-width: 1600px; height: 100%; max-height: none; display: flex; flex-direction: column; overflow: hidden; padding: 18px 20px; }
   #hop.toan-trang #hopNoiDung { flex: 1; min-height: 0; margin-top: 12px; }
   .xem-lan { display: grid; grid-template-columns: minmax(380px, 460px) minmax(0, 1fr); gap: 16px; height: 100%; }
-  .xem-lan .cot-ds { overflow: auto; min-height: 0; overscroll-behavior: contain; }
-  .xem-lan .cot-ds table.ds th { top: 0; }
+  /* Cột danh sách: khung có viền + bo góc tự cuộn bên trong; tiêu đề bảng dính ở đầu khung, không mất viền */
+  .xem-lan .cot-ds { overflow: auto; min-height: 0; overscroll-behavior: contain; align-self: start; max-height: 100%; border: 1px solid var(--vien-dam); border-radius: var(--r-khung); background: var(--be-mat); }
+  .xem-lan .cot-ds table.ds { border: 0; border-radius: 0; }
+  .xem-lan .cot-ds table.ds th { top: 0; z-index: 2; box-shadow: inset 0 -1px 0 var(--vien); border-bottom: 0; border-radius: 0 !important; }
   .xem-lan .cot-phieu { display: flex; flex-direction: column; min-height: 0; gap: 10px; }
   .xem-lan .thanh-phieu { display: flex; align-items: center; gap: 8px; min-height: 36px; }
   .xem-lan .tieu-de-phieu { display: flex; flex-direction: column; min-width: 0; }
@@ -132,7 +134,7 @@
     #hop.toan-trang { padding: 0; }
     #hop.toan-trang .hop { height: 92%; padding: 18px 14px; }
     .xem-lan { display: block; height: auto; }
-    .xem-lan .cot-ds { overflow: visible; }
+    .xem-lan .cot-ds { overflow: visible; border: 0; background: none; max-height: none; }
     .xem-lan .cot-phieu { display: none; }
     .xem-lan .chi-hep { display: inline-flex; }
   }
