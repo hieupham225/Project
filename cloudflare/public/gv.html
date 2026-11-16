@@ -2956,10 +2956,15 @@
     var ds = DL.cauTrucDe || [], rieng = ds.filter(function (c) { return !c.coSan; });
     $('moTaCauTruc').textContent = ds.length + ' cấu trúc · ' + rieng.length + ' tự tạo';
     var mon = []; ds.forEach(function (c) { if (mon.indexOf(c.mon || 'Khác') < 0) mon.push(c.mon || 'Khác'); });
-    var luoi = the('div', { class: 'luoi-lop luoi-ct' }); k.appendChild(luoi);
+    // 2 phần: cấu trúc tự tạo (trên) và cấu trúc đề thi có sẵn (dưới); trong mỗi phần xếp theo môn
+    var luoiRieng = the('div', { class: 'luoi-lop luoi-ct' }), luoiCoSan = the('div', { class: 'luoi-lop luoi-ct' });
+    k.appendChild(the('div', { class: 'dau-nhom-lop' }, [the('h2', { text: 'Cấu trúc đề tự tạo' }), the('span', { class: 'goi-y', text: rieng.length ? rieng.length + ' cấu trúc' : 'Chưa có — bấm "Tạo cấu trúc đề" hoặc "Nhân bản" một cấu trúc có sẵn rồi sửa' })]));
+    if (rieng.length) k.appendChild(luoiRieng);
+    k.appendChild(the('div', { class: 'dau-nhom-lop' }, [the('h2', { text: 'Cấu trúc đề thi có sẵn' }), the('span', { class: 'goi-y', text: (ds.length - rieng.length) + ' cấu trúc · THPT 2025, không sửa được' })]));
+    k.appendChild(luoiCoSan);
     mon.forEach(function (m) {
       ds.filter(function (c) { return (c.mon || 'Khác') === m; }).forEach(function (c) {
-        luoi.appendChild(the('div', { class: 'the-lop the-ct' }, [
+        (c.coSan ? luoiCoSan : luoiRieng).appendChild(the('div', { class: 'the-lop the-ct' }, [
           the('div', { class: 'dau-the-lop' }, [the('div', { class: 'ten-the-lop' }, [the('h3', { text: c.ten }), the('span', { class: 'nhan-mon', text: m })]), the('span', { class: 'nhan' + (c.coSan ? '' : ' moi'), text: c.coSan ? 'Có sẵn' : 'Tự tạo' })]),
           bangCauTruc(c),
           c.soLanDung ? the('div', { class: 'gan-nhat', text: 'Đang dùng cho ' + c.soLanDung + ' lần thi' }) : null,
