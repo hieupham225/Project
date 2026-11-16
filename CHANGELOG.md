@@ -1,5 +1,10 @@
 # Nhật ký phiên bản
 
+## v1.1.2 — 16/11/2026 (đã lên production, không có migration)
+
+- Menu ⋯ của lớp: biểu tượng đầu mỗi mục, không xuống dòng; thêm **Mã tra cứu cả lớp (Excel)**: STT, Họ và tên, Lớp, SBD, Mã tra cứu, SĐT phụ huynh.
+- Tab Mẫu phiếu và Cấu trúc đề: thẻ nền trắng giống các tab khác.
+
 ## v1.1.1 — 16/11/2026 (đã lên production, không có migration)
 
 - Đặt tên sản phẩm **EduLens**: tiêu đề tab trang phụ huynh và trang giáo viên, nhãn trên màn đăng nhập / đăng ký, dòng nhỏ cuối trang tra cứu. Phiếu gửi phụ huynh vẫn mang tên và logo trung tâm; địa chỉ web giữ nguyên.
