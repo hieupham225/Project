@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Giáo viên — Phiếu kết quả học tập</title>
+<title>Giáo viên · EduLens</title>
 <meta name="description" content="Giáo viên quản lý lớp, gửi kết quả thi và phiếu phân tích bài thi cho từng phụ huynh.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -107,6 +107,7 @@
   .nhom-dau td { background: #F4F1EB; font-weight: 700; }
   /* Đăng nhập / đăng ký */
   .dang-nhap { max-width: 400px; margin: 8vh auto; background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); padding: 28px; box-shadow: var(--bong-thap); }
+  .dang-nhap .thuong-hieu { font-size: 15px; font-weight: 700; letter-spacing: .01em; color: var(--thuong-hieu); margin: 0 0 10px; }
   .dang-nhap h1 { font-size: 24px; line-height: 1.33; font-weight: 600; letter-spacing: -.01em; margin: 0 0 6px; }
   .dang-nhap label.o { margin-top: 14px; }
   .dang-nhap input[type=text], .dang-nhap input[type=password], .dang-nhap input[type=email] { width: 100%; font-size: 16px; height: 44px; padding: 0 18px; }
@@ -589,6 +590,7 @@
   <!-- Đăng nhập / đăng ký -->
   <div id="manDangNhap" class="an">
     <form id="formDangNhap" class="dang-nhap">
+      <p class="thuong-hieu">EduLens</p>
       <h1>Đăng nhập giáo viên</h1>
       <p class="goi-y" style="margin:0">Gửi kết quả thi và phiếu phân tích bài thi riêng cho từng phụ huynh.</p>
       <label class="o">Email<input id="dnTen" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
@@ -598,6 +600,7 @@
       <p class="chuyen-dk">Chưa có tài khoản? <a id="denDangKy" href="#dang-ky">Đăng ký miễn phí</a></p>
     </form>
     <form id="formDangKy" class="dang-nhap an">
+      <p class="thuong-hieu">EduLens</p>
       <h1>Đăng ký tài khoản</h1>
       <p class="goi-y" style="margin:0">Dành cho giáo viên dạy riêng hoặc trung tâm. Sau khi đăng ký có thể mời thêm giáo viên khác.</p>
       <label class="o">Họ và tên<input id="dkHoTen" type="text" autocomplete="name" required></label>
@@ -3424,7 +3427,7 @@
     kg.value = DL.toi && DL.toi.khongGian ? DL.toi.khongGian.id : '';
     kg.classList.toggle('an', dsKhongGian.length < 2);
     $('nutDoiMk').classList.remove('an'); $('nutDangXuat').classList.remove('an');
-    document.title = 'Giáo viên — ' + ((DL.toi && DL.toi.khongGian && DL.toi.khongGian.ten) || 'Phiếu kết quả học tập');
+    document.title = ((DL.toi && DL.toi.khongGian && DL.toi.khongGian.ten) || 'Giáo viên') + ' · EduLens';
     var dangChon = document.querySelector('.tab.chon');
     if (!qt && dangChon && dangChon.classList.contains('chi-quan-tri')) document.querySelector('[data-tab=tabLop]').click();
   }

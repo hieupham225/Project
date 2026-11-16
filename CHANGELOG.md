@@ -1,5 +1,11 @@
 # Nhật ký phiên bản
 
+## Chưa phát hành (staging)
+
+- Đặt tên sản phẩm **EduLens**: tiêu đề tab trang phụ huynh và trang giáo viên, nhãn trên màn đăng nhập / đăng ký, dòng nhỏ cuối trang tra cứu. Phiếu gửi phụ huynh vẫn mang tên và logo trung tâm; địa chỉ web giữ nguyên.
+- File đáp án mẫu giữ 2 cột mã đề ví dụ (mã không trộn để trống, mã có trộn điền vị trí câu).
+- Bỏ cảnh báo nhầm "chỉ có 1 bộ chủ đề" khi các mã đề chỉ thay số.
+
 ## v1.1 (1.1.0) — 15/11/2026
 
 Đã lên production (https://phieu-ket-qua.ketquahoctap.workers.dev) ngày 15/11/2026, sau khi sao lưu cơ sở dữ liệu và chạy migration **0003 → 0004 → 0005 → 0006**. Dữ liệu cũ giữ nguyên (11 lớp, 414 học sinh, 6 lần thi, 234 phiếu); lớp và lần thi cũ gắn môn Toán, 234 học sinh nhận SBD từ phiếu cũ.

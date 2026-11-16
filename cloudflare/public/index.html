@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Tra cứu kết quả học tập</title>
+  <title>Tra cứu kết quả học tập · EduLens</title>
   <meta name="description" content="Phụ huynh nhập mã tra cứu để xem phiếu kết quả học tập của con.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,6 +28,8 @@
     .hep { max-width: 560px; margin: 0 auto; }
     h1 { font-size: 29px; line-height: 1.25; font-weight: 600; letter-spacing: -.015em; margin: 8px 0 6px; }
     .mo-ta { color: var(--phu); margin: 0 0 24px; font-size: 15px; }
+    .thuong-hieu-chan { text-align: center; color: var(--phu); font-size: 13px; margin-top: 32px; }
+    .thuong-hieu-chan b { color: var(--chu); font-weight: 600; letter-spacing: .01em; }
     .the { background: var(--be-mat); border: 1px solid var(--vien); border-radius: var(--r-khung); padding: 20px; margin-bottom: 16px; box-shadow: var(--bong-thap); }
     label { display: block; font-weight: 500; font-size: 14px; margin-bottom: 8px; }
     /* Ô mã tra cứu: cao hơn nút, bo góc = 1/2 chiều cao nút "Xem kết quả", chữ nằm giữa */
@@ -368,5 +370,6 @@
       }).catch(function () { khung.textContent = ''; khung.appendChild(taoThe('div', 'the loi', 'Không kết nối được. Vui lòng thử lại.')); });
     }
   </script>
+  <p class="thuong-hieu-chan">Phiếu kết quả được tạo bằng <b>EduLens</b></p>
 </body>
 </html>
