@@ -264,7 +264,8 @@
   #nutThemCoSan, #nutTongHopLop { margin-left: auto; } /* nút ở góc phải tiêu đề thẻ, kể cả trên điện thoại */
   /* Nút ⋯ và menu thao tác khác */
   .menu-them { position: relative; }
-  .cum-dot { justify-content: flex-end; flex-wrap: nowrap; }
+  .cum-dot, .cum-cuoi { justify-content: flex-end; flex-wrap: nowrap; }
+  .cum-cuoi > button { white-space: nowrap; }
   .cum-dot > button { white-space: nowrap; }
   .menu-hang .nut-them-hang { width: var(--cao-nho); height: var(--cao-nho); padding: 0; border-radius: 50%; font-size: 18px; letter-spacing: 1px; }
   .menu-hang .menu-ds { min-width: 170px; }
@@ -2445,7 +2446,7 @@
           the('td', {}, [the('span', { class: 'ten-hang' }, [the('b', { text: p.hoTen }),
             p.hang <= 3 ? the('span', { class: 'huy-hieu h' + p.hang, title: 'Hạng ' + p.hang, text: '#' + p.hang }) : null])]), the('td', { text: p.maHs }),
           the('td', {}, [p.tongDiem + ' / ' + p.diemToiDa, p.suaTay ? the('span', { class: 'da-sua', title: 'Điểm đã được sửa trên app', text: '✎ đã sửa' }) : null]),
-          the('td', {}, [the('div', { class: 'cum-thao-tac' }, [
+          the('td', {}, [the('div', { class: 'cum-thao-tac cum-cuoi' }, [
             the('button', { class: 'phu nho', text: 'Sửa điểm', onclick: function () { suaDiemPhieu(p, dong, d); } }),
             the('button', { class: 'phu nho', text: 'Xem', onclick: function () { moPhieu(i); } })])])]);
         tb.appendChild(dong);
